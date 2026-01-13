@@ -1,24 +1,21 @@
 <template>
   <div class="process-container">
-    <h2>AI Eye Analysis</h2>
+    <h1 class="title">AI Eye Analysis</h1>
 
-    <img :src="image" class="preview" />
+    <div class="image-card">
+      <img :src="image" class="preview" />
+    </div>
 
-    <button @click="sendToAI" :disabled="loading">
+    <button class="analyze-btn" @click="sendToAI" :disabled="loading">
       {{ loading ? "Analyzing..." : "Analyze Image" }}
     </button>
 
     <div class="actions">
-      <button class="secondary" @click="uploadAgain">
-        🔄 Upload Again
-      </button>
-
-      <button class="secondary" @click="goBack">
-        ⬅ Back
-      </button>
+      <button class="secondary" @click="uploadAgain">🔄 Upload Again</button>
+      <button class="secondary" @click="goBack">⬅ Back</button>
     </div>
 
-    <div v-if="result" class="result-box" :class="resultClass">
+    <div v-if="result" class="result-card" :class="resultClass">
       <p class="result-text">
         🧠 Prediction: <strong>{{ result }}</strong>
       </p>
@@ -27,9 +24,7 @@
       </p>
     </div>
 
-    <p v-if="error" class="error">
-      {{ error }}
-    </p>
+    <p v-if="error" class="error">{{ error }}</p>
   </div>
 </template>
 
@@ -48,6 +43,7 @@ export default {
     resultClass() {
       if (this.result === "Healthy") return "healthy"
       if (this.result === "Glaucoma") return "glaucoma"
+      if (this.result === "AMD") return "amd"
       return ""
     }
   },
@@ -69,39 +65,27 @@ export default {
         formData.append("file", blob, "eye.png")
 
         const response = await fetch(
-"https://nonglobular-unmisgivingly-zoie.ngrok-free.dev/predict",
-{
-  method: "POST",
-  body: formData
-}
-)
+          "https://nonglobular-unmisgivingly-zoie.ngrok-free.dev/predict",
+          { method: "POST", body: formData }
+        )
 
         const data = await response.json()
 
         if (data.prediction) {
-          // 🔄 Reverse the result
-          if (data.prediction === "Healthy") {
-            this.result = "Glaucoma"
-          } else if (data.prediction === "Glaucoma") {
-            this.result = "Healthy"
-          }
-
+          this.result = data.prediction
           this.confidence = data.confidence
         } else {
           this.error = "Prediction failed"
         }
-
       } catch (err) {
         this.error = "Backend connection failed"
       } finally {
         this.loading = false
       }
     },
-
     uploadAgain() {
       this.$router.push("/")
     },
-
     goBack() {
       this.$router.back()
     }
@@ -111,67 +95,106 @@ export default {
 
 <style>
 .process-container {
-  text-align: center;
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 25px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 30px 20px;
+  background: #f4f6fa;
+  min-height: 100vh;
+}
+
+.title {
+  font-size: 32px;
+  color: #007bff;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.image-card {
+  background: white;
+  padding: 15px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
 }
 
 .preview {
-  width: 240px;
-  border-radius: 10px;
-  margin-bottom: 15px;
+  max-width: 300px;
+  border-radius: 12px;
+  border: 2px solid #007bff;
 }
 
-button {
-  padding: 10px 16px;
-  background: #007bff;
-  color: white;
+.analyze-btn {
+  padding: 12px 20px;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #007bff, #00c6ff);
+  color: white;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-button:disabled {
-  opacity: 0.6;
+.analyze-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0,198,255,0.4);
 }
 
 .actions {
-  margin-top: 15px;
   display: flex;
-  justify-content: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .secondary {
-  background: #6c757d;
+  background-color: #6c757d;
+  padding: 10px 16px;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.result-box {
+.secondary:hover {
+  background-color: #5a6268;
+}
+
+.result-card {
   margin-top: 20px;
-  padding: 15px;
-  border-radius: 10px;
+  padding: 18px 22px;
+  border-radius: 15px;
+  width: 320px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  color: white;
 }
 
 .healthy {
-  background: #e6f7ec;
-  color: #1e7e34;
+  background: #28a745;
 }
 
 .glaucoma {
-  background: #fdecea;
-  color: #a71d2a;
+  background: #dc3545;
+}
+
+.amd {
+  background: #ffc107;
+  color: #212529;
 }
 
 .result-text {
   font-size: 20px;
+  margin-bottom: 6px;
 }
 
 .confidence {
-  margin-top: 6px;
   font-size: 16px;
 }
 
 .error {
-  margin-top: 10px;
   color: red;
+  margin-top: 10px;
+  font-weight: 600;
 }
 </style>

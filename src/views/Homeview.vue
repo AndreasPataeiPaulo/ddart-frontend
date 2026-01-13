@@ -1,21 +1,23 @@
 <template>
-  <div class="upload-container">
-    <h2 class="app-name">DDART A.I.</h2>
+  <div class="home-container">
+    <h1 class="app-title">DDART A.I.</h1>
 
-    <!-- Upload -->
-    <input type="file" accept="image/*" @change="uploadFile" />
+    <div class="upload-card">
+      <!-- Upload -->
+      <input type="file" accept="image/*" @change="uploadFile" />
 
-    <!-- Single Analyze Button -->
-    <button v-if="uploadedImage" @click="analyzeImage">
-      Analyze Eye 
-    </button>
+      <!-- Preview -->
+      <img
+        v-if="uploadedImage"
+        :src="uploadedImage"
+        class="uploaded-image"
+      />
 
-    <!-- Preview -->
-    <img
-      v-if="uploadedImage"
-      :src="uploadedImage"
-      class="uploaded-image"
-    />
+      <!-- Single Analyze Button -->
+      <button v-if="uploadedImage" class="analyze-btn" @click="analyzeImage">
+        Analyze Eye
+      </button>
+    </div>
 
     <!-- Instructions -->
     <button class="instructions-btn" @click="showInstructions = true">
@@ -34,7 +36,7 @@
           1. Upload a clear eye image of the fundus.<br />
           2. Make sure the eye is well-lit.<br />
           3. Click “Analyze Eye”.<br />
-          4. AI will analyze and compare eye images to detect glaucoma D.R. and other problems.
+          4. AI will analyze and compare eye images to detect glaucoma, D.R., and AMD.
         </p>
         <button @click="showInstructions = false">Close</button>
       </div>
@@ -75,39 +77,81 @@ export default {
 </script>
 
 <style>
-.upload-container {
+.home-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
-  margin-top: 20px;
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 40px 20px;
+  background: #f4f6fa;
+  min-height: 100vh;
 }
 
-.app-name {
-  font-size: 28px;
-  font-weight: bold;
+.app-title {
+  font-size: 36px;
   color: #007bff;
+  margin-bottom: 30px;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+}
+
+.upload-card {
+  background: white;
+  padding: 25px 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 360px;
+  width: 100%;
 }
 
 .uploaded-image {
-  border: 2px solid #008cff;
-  border-radius: 8px;
-  max-width: 320px;
+  border-radius: 12px;
+  max-width: 100%;
+  max-height: 280px;
+  border: 2px solid #007bff;
+  object-fit: contain;
 }
 
-button,
 input[type="file"] {
-  padding: 8px 14px;
-  border: none;
-  border-radius: 6px;
-  background-color: #008cff;
-  color: white;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
   cursor: pointer;
+  width: 100%;
+}
+
+button {
+  padding: 12px 18px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.analyze-btn {
+  background: linear-gradient(90deg, #007bff, #00c6ff);
+  color: white;
+  width: 100%;
+}
+
+.analyze-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 198, 255, 0.4);
 }
 
 .instructions-btn {
+  margin-top: 25px;
   background-color: #6c757d;
+  color: white;
+  padding: 10px 16px;
+}
+
+.instructions-btn:hover {
+  background-color: #5a6268;
 }
 
 .modal-overlay {
@@ -117,19 +161,21 @@ input[type="file"] {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1000;
 }
 
 .modal-content {
   background: white;
-  padding: 20px;
-  border-radius: 8px;
+  padding: 25px 30px;
+  border-radius: 12px;
+  max-width: 400px;
+  text-align: left;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
 }
 
 .footer {
-  position: fixed;
-  bottom: 10px;
-  right: 10px;
-  font-size: 12px;
+  margin-top: 30px;
+  font-size: 13px;
   color: #555;
 }
 </style>
