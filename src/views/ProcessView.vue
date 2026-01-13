@@ -6,18 +6,23 @@
       <img :src="image" class="preview" />
     </div>
 
-    <button class="analyze-btn" @click="sendToAI" :disabled="loading">
-      {{ loading ? "Analyzing..." : "Analyze Image" }}
-    </button>
+    <div class="button-group">
+      <button class="analyze-btn" @click="analyze('Glaucoma')" :disabled="loading">
+        {{ loading && activeType==='Glaucoma' ? "Analyzing..." : "Analyze Glaucoma" }}
+      </button>
 
-    <div class="actions">
-      <button class="secondary" @click="uploadAgain">🔄 Upload Again</button>
-      <button class="secondary" @click="goBack">⬅ Back</button>
+      <button class="analyze-btn" @click="analyze('DR')" :disabled="loading">
+        {{ loading && activeType==='DR' ? "Analyzing..." : "Analyze DR" }}
+      </button>
+
+      <button class="analyze-btn" @click="analyze('AMD')" :disabled="loading">
+        {{ loading && activeType==='AMD' ? "Analyzing..." : "Analyze AMD" }}
+      </button>
     </div>
 
     <div v-if="result" class="result-card" :class="resultClass">
       <p class="result-text">
-        🧠 Prediction: <strong>{{ result }}</strong>
+        🧠 {{ activeType }} Prediction: <strong>{{ result }}</strong>
       </p>
       <p class="confidence">
         Confidence: {{ confidence }}%
@@ -25,6 +30,11 @@
     </div>
 
     <p v-if="error" class="error">{{ error }}</p>
+
+    <div class="actions">
+      <button class="secondary" @click="uploadAgain">🔄 Upload Again</button>
+      <button class="secondary" @click="goBack">⬅ Back</button>
+    </div>
   </div>
 </template>
 
@@ -36,14 +46,17 @@ export default {
       result: null,
       confidence: null,
       error: null,
-      loading: false
+      loading: false,
+      activeType: null
     }
   },
   computed: {
     resultClass() {
-      if (this.result === "Healthy") return "healthy"
-      if (this.result === "Glaucoma") return "glaucoma"
-      if (this.result === "AMD") return "amd"
+      if (this.activeType === "Glaucoma") {
+        return this.result === "Healthy" ? "healthy" : "glaucoma"
+      }
+      if (this.activeType === "AMD") return "amd"
+      if (this.activeType === "DR") return "dr"
       return ""
     }
   },
@@ -51,9 +64,10 @@ export default {
     this.image = this.$route.query.img
   },
   methods: {
-    async sendToAI() {
+    async analyze(type) {
       try {
         this.loading = true
+        this.activeType = type
         this.result = null
         this.confidence = null
         this.error = null
@@ -64,33 +78,32 @@ export default {
         const formData = new FormData()
         formData.append("file", blob, "eye.png")
 
-        const response = await fetch(
-          "https://nonglobular-unmisgivingly-zoie.ngrok-free.dev/predict",
-          { method: "POST", body: formData }
-        )
+        let endpoint = ""
+        if (type === "Glaucoma") endpoint = "/predict"
+        if (type === "DR") endpoint = "/predict-dr"
+        if (type === "AMD") endpoint = "/predict-amd"
+
+        const response = await fetch(`https://nonglobular-unmisgivingly-zoie.ngrok-free.dev${endpoint}`, {
+          method: "POST",
+          body: formData
+        })
 
         const data = await response.json()
 
         if (data.prediction) {
-  // 🔄 Reverse Healthy <-> Glaucoma
-  if (data.prediction === "Healthy") {
-    this.result = "Glaucoma"
-  } else if (data.prediction === "Glaucoma") {
-    this.result = "Healthy"
-  } else {
-    this.result = data.prediction  // AMD or any other
-  }
+          this.result = data.prediction
+          this.confidence = data.confidence
+        } else {
+          this.error = "Prediction failed"
+        }
 
-  this.confidence = data.confidence
-} else {
-  this.error = "Prediction failed"
-}
       } catch (err) {
         this.error = "Backend connection failed"
       } finally {
         this.loading = false
       }
     },
+
     uploadAgain() {
       this.$router.push("/")
     },
@@ -132,6 +145,13 @@ export default {
   border: 2px solid #007bff;
 }
 
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
 .analyze-btn {
   padding: 12px 20px;
   border: none;
@@ -151,6 +171,7 @@ export default {
 .actions {
   display: flex;
   gap: 12px;
+  margin-top: 15px;
 }
 
 .secondary {
@@ -189,6 +210,10 @@ export default {
 .amd {
   background: #ffc107;
   color: #212529;
+}
+
+.dr {
+  background: #17a2b8;
 }
 
 .result-text {
