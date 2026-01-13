@@ -72,11 +72,19 @@ export default {
         const data = await response.json()
 
         if (data.prediction) {
-          this.result = data.prediction
-          this.confidence = data.confidence
-        } else {
-          this.error = "Prediction failed"
-        }
+  // 🔄 Reverse Healthy <-> Glaucoma
+  if (data.prediction === "Healthy") {
+    this.result = "Glaucoma"
+  } else if (data.prediction === "Glaucoma") {
+    this.result = "Healthy"
+  } else {
+    this.result = data.prediction  // AMD or any other
+  }
+
+  this.confidence = data.confidence
+} else {
+  this.error = "Prediction failed"
+}
       } catch (err) {
         this.error = "Backend connection failed"
       } finally {
