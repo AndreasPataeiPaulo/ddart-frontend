@@ -1,6 +1,6 @@
 <template>
   <div class="home-container">
-    <h1 class="app-title">DDART A.I. – Eye Analysiss</h1>
+    <h1 class="app-title">DDART A.I. – Eye Analysis</h1>
 
     <!-- Upload Card -->
     <div class="upload-card" @drop.prevent="dropFile" @dragover.prevent>
