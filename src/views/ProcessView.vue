@@ -168,8 +168,19 @@ export default {
           return
         }
 
-        this.result = data.prediction
-        this.confidence = data.confidence
+        let prediction = data.prediction
+
+// 🔄 Fix swapped Glaucoma labels
+if (type === "Glaucoma") {
+  if (prediction.toLowerCase() === "glaucoma") {
+    prediction = "Healthy"
+  } else if (prediction.toLowerCase() === "healthy") {
+    prediction = "Glaucoma"
+  }
+}
+
+this.result = prediction
+this.confidence = data.confidence
         this.addToRecent(this.image)
 
       } catch (err) {
