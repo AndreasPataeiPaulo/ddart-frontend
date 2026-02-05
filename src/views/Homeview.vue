@@ -1,168 +1,261 @@
 <template>
-    <div class="upload-container">
-      <!-- App Name -->
-      <h2 class="app-name">DDART A.I.</h2>
-  
-      <!-- File Upload -->
-      <input type="file" accept="image/*" @change="uploadFile" />
-  
-      <!-- Confirm Button for Glaucoma -->
-      <button v-if="uploadedImage" @click="confirmImageGlaucoma">
-        Confirm for Glaucoma
-      </button>
-  
-      <!-- Diabetic Retinopathy Button -->
-      <button v-if="uploadedImage" class="dr-btn" @click="goToDR">
-        Diabetic Retinopathy AI
-      </button>
-  
-      <!-- Show uploaded image -->
-      <img :src="uploadedImage" v-if="uploadedImage" class="uploaded-image"/>
-  
-      <!-- Instructions Button -->
-      <button class="instructions-btn" @click="showInstructions = true">
-        Instructions
-      </button>
-  
-      <!-- Instructions Modal -->
-      <div v-if="showInstructions" class="modal-overlay" @click.self="showInstructions = false">
-        <div class="modal-content">
-          <h3>Instructions</h3>
-          <p>
-            1. Upload a clear image of the eye.<br>
-            2. Make sure the eye is well-lit.<br>
-            3. Click "Confirm" to send it for Glaucoma analysis.<br>
-            4. Or click "Diabetic Retinopathy AI" to analyze for DR.
-          </p>
-          <button @click="showInstructions = false">Close</button>
-        </div>
-      </div>
-  
-      <!-- Footer -->
-      <p class="footer">made by andreas</p>
-    </div>
-  </template>
-  
-  <script>
-  export default {
-    data() {
-      return {
-        uploadedImage: null,
-        showInstructions: false
-      }
-    },
-    methods: {
-      uploadFile(event) {
-        const file = event.target.files[0]
-        if (!file) return
-  
-        const reader = new FileReader()
-        reader.onload = e => {
-          this.uploadedImage = e.target.result
-        }
-        reader.readAsDataURL(file)
-      },
-  
-      // Navigate to Glaucoma AI
-      confirmImageGlaucoma() {
-        this.$router.push({ name: 'Process', query: { img: this.uploadedImage } })
-      },
-  
-      // Navigate to Diabetic Retinopathy AI
-      goToDR() {
-        this.$router.push({ name: 'DRProcess', query: { img: this.uploadedImage } })
+  <div class="home-container">
+    <h1 class="app-title">DDART A.I. – Eye Analysis</h1>
 
+    <!-- Upload Card -->
+    <div class="upload-card" @drop.prevent="dropFile" @dragover.prevent>
+      <input type="file" accept="image/*" @change="uploadFile" />
+      <p class="drag-drop-text">Or drag & drop image here</p>
+
+      <!-- Preview -->
+      <img
+        v-if="uploadedImage"
+        :src="uploadedImage"
+        class="uploaded-image"
+      />
+
+      <!-- Disease Selection Buttons -->
+      <div v-if="uploadedImage" class="disease-buttons">
+        <button class="analyze-btn glaucoma" @click="analyzeImage('Glaucoma')">Analyze Glaucoma</button>
+        <button class="analyze-btn dr" @click="analyzeImage('DR')">Analyze DR</button>
+        <button class="analyze-btn amd" @click="analyzeImage('AMD')">Analyze AMD</button>
+      </div>
+    </div>
+
+    <!-- Instructions Panel -->
+    <button class="instructions-btn" @click="showInstructions = true">
+      Instructions
+    </button>
+
+    <div
+      v-if="showInstructions"
+      class="modal-overlay"
+      @click.self="showInstructions = false"
+    >
+      <div class="modal-content">
+        <h3>Instructions</h3>
+        <ol>
+          <li>Upload a clear eye image of the fundus.</li>
+          <li>Ensure proper lighting and focus on the retina.</li>
+          <li>Select the disease type you want to analyze: Glaucoma, AMD, or Diabetic Retinopathy.</li>
+          <li>The AI will process the image and show the prediction with confidence.</li>
+          <li>You can repeat for multiple images by pressing the upload again or go back.</li>
+        </ol>
+        <button @click="showInstructions = false">Close</button>
+      </div>
+    </div>
+
+    <!-- Recent Uploads -->
+    <div v-if="recentUploads.length" class="recent-uploads">
+      <h3>Recent Uploads</h3>
+      <div class="thumbs">
+        <img v-for="(img, idx) in recentUploads" :key="idx" :src="img" class="thumb" />
+      </div>
+    </div>
+
+    <p class="footer">Made by Andreas Lampiris</p>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      uploadedImage: null,
+      recentUploads: [],
+      showInstructions: false
+    }
+  },
+  methods: {
+    uploadFile(event) {
+      const file = event.target.files[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = e => {
+        this.uploadedImage = e.target.result
+        this.recentUploads.unshift(this.uploadedImage)
+        if (this.recentUploads.length > 5) this.recentUploads.pop()
       }
+      reader.readAsDataURL(file)
+    },
+    dropFile(event) {
+      const file = event.dataTransfer.files[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = e => {
+        this.uploadedImage = e.target.result
+        this.recentUploads.unshift(this.uploadedImage)
+        if (this.recentUploads.length > 5) this.recentUploads.pop()
+      }
+      reader.readAsDataURL(file)
+    },
+    analyzeImage(diseaseType) {
+      this.$router.push({
+        name: "Process",
+        query: {
+          img: this.uploadedImage,
+          type: diseaseType
+        }
+      })
     }
   }
-  </script>
-  
-  <style>
-  .upload-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    margin-top: 20px;
-    font-family: Arial, sans-serif;
-    position: relative;
-  }
-  
-  .app-name {
-    font-size: 28px;
-    font-weight: bold;
-    color: #007bff;
-    margin-bottom: 20px;
-  }
-  
-  .uploaded-image {
-    border: 2px solid #008cff;
-    border-radius: 8px;
-    max-width: 320px;
-    max-height: 240px;
-  }
-  
-  button, input[type="file"] {
-    padding: 8px 14px;
-    border: none;
-    border-radius: 6px;
-    background-color: #008cff;
-    color: white;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s;
-  }
-  
-  button:hover, input[type="file"]:hover {
-    background-color: #005bb5;
-  }
-  
-  .instructions-btn {
-    margin-top: 10px;
-    background-color: #6c757d;
-  }
-  
-  .dr-btn {
-    background-color: #28a745;
-    margin-top: 5px;
-  }
-  
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
-  
-  .modal-content {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    text-align: left;
-    max-width: 400px;
-  }
-  
-  .modal-content h3 {
-    margin-top: 0;
-  }
-  
-  .modal-content button {
-    margin-top: 15px;
-    background-color: #007bff;
-  }
-  
-  .footer {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    font-size: 12px;
-    color: #555;
-  }
-  </style>
-  
+}
+</script>
+
+<style>
+.home-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 40px 20px;
+  background: #f4f6fa;
+  min-height: 100vh;
+}
+
+.app-title {
+  font-size: 36px;
+  color: #007bff;
+  margin-bottom: 30px;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+}
+
+.upload-card {
+  background: white;
+  padding: 25px 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 380px;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.upload-card:hover {
+  box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+}
+
+.drag-drop-text {
+  font-size: 14px;
+  color: #555;
+}
+
+.uploaded-image {
+  border-radius: 12px;
+  max-width: 100%;
+  max-height: 280px;
+  border: 2px solid #007bff;
+  object-fit: contain;
+}
+
+input[type="file"] {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  width: 100%;
+}
+
+button {
+  padding: 12px 18px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.analyze-btn {
+  color: white;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.analyze-btn.glaucoma {
+  background: linear-gradient(90deg, #dc3545, #ff6b6b);
+}
+.analyze-btn.dr {
+  background: linear-gradient(90deg, #17a2b8, #6bcff6);
+}
+.analyze-btn.amd {
+  background: linear-gradient(90deg, #ffc107, #ffd95b);
+}
+
+.analyze-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.instructions-btn {
+  margin-top: 25px;
+  background-color: #6c757d;
+  color: white;
+  padding: 10px 16px;
+}
+
+.instructions-btn:hover {
+  background-color: #5a6268;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 25px 30px;
+  border-radius: 12px;
+  max-width: 420px;
+  text-align: left;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.recent-uploads {
+  margin-top: 30px;
+  width: 100%;
+  max-width: 380px;
+}
+
+.thumbs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.thumb {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #007bff;
+}
+
+
+.footer {
+  margin-top: 30px;
+  font-size: 13px;
+  color: #555;
+}
+button {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+}
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+</style>

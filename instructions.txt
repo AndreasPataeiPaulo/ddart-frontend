@@ -5,5 +5,16 @@ npm run dev
 cd ~/Desktop/ai_app/backend
 python3 -m uvicorn app:app --reload --host 0.0.0.0 --port 8000
 
+ngrok:
+
+ngrok http 8000
+
 check the two frontends change links 
 http://127.0.0.1:8000/predict-dr
+
+Improvements : 
+70%-75% inconclusive 
+
+history and age 
+more training on diabetic rhetinopathy 
+
