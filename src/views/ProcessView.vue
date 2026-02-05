@@ -40,9 +40,13 @@
             @click="analyze('Glaucoma')"
             :disabled="loading"
           >
+<<<<<<< HEAD
             {{ loading && activeType === 'Glaucoma'
               ? 'Analyzing...'
               : 'Analyze Glaucoma' }}
+=======
+            Analyze Glaucoma
+>>>>>>> 5450bfa (Initial upload of AI app with ONNX backend)
           </button>
 
           <button
@@ -50,9 +54,13 @@
             @click="analyze('DR')"
             :disabled="loading"
           >
+<<<<<<< HEAD
             {{ loading && activeType === 'DR'
               ? 'Analyzing...'
               : 'Analyze Diabetic Retinopathy' }}
+=======
+            Analyze Diabetic Retinopathy
+>>>>>>> 5450bfa (Initial upload of AI app with ONNX backend)
           </button>
 
           <button
@@ -60,6 +68,7 @@
             @click="analyze('AMD')"
             :disabled="loading"
           >
+<<<<<<< HEAD
             {{ loading && activeType === 'AMD'
               ? 'Analyzing...'
               : 'Analyze AMD' }}
@@ -69,6 +78,28 @@
         <div v-if="result" class="result-card" :class="resultClass">
           <p class="result-text">
             {{ activeType }} Prediction: <strong>{{ result }}</strong>
+=======
+            Analyze AMD
+          </button>
+        </div>
+
+        <!-- 🔄 LOADING STATE -->
+        <div v-if="loading" class="loading-box">
+          <p class="loading-text">{{ loadingText }}</p>
+          <div class="loading-bar-container">
+            <div
+              class="loading-bar"
+              :style="{ width: loadingProgress + '%' }"
+            ></div>
+          </div>
+        </div>
+
+        <!-- ✅ RESULT -->
+        <div v-if="result" class="result-card" :class="resultClass">
+          <p class="result-text">
+            {{ activeType }} Prediction:
+            <strong>{{ result }}</strong>
+>>>>>>> 5450bfa (Initial upload of AI app with ONNX backend)
           </p>
 
           <div class="confidence-bar-container">
@@ -115,15 +146,29 @@ export default {
       error: null,
       loading: false,
       activeType: null,
+<<<<<<< HEAD
       recentUploads: []
+=======
+      recentUploads: [],
+
+      // 🔄 Loading animation
+      loadingText: "",
+      loadingProgress: 0,
+      loadingInterval: null
+>>>>>>> 5450bfa (Initial upload of AI app with ONNX backend)
     }
   },
 
   computed: {
     resultClass() {
+<<<<<<< HEAD
       return this.activeType
         ? this.activeType.toLowerCase()
         : ""
+=======
+      if (this.result === "Inconclusive") return "inconclusive"
+      return this.activeType ? this.activeType.toLowerCase() : ""
+>>>>>>> 5450bfa (Initial upload of AI app with ONNX backend)
     }
   },
 
@@ -133,6 +178,7 @@ export default {
   },
 
   methods: {
+<<<<<<< HEAD
     async analyze(type) {
       if (!this.image) return
 
@@ -163,12 +209,69 @@ export default {
 
         const data = await response.json()
 
+=======
+    startLoadingAnimation() {
+      const steps = [
+        "Preprocessing image…",
+        "Extracting retinal features…",
+        "Running neural inference…",
+        "Finalizing prediction…"
+      ]
+
+      let step = 0
+      this.loadingProgress = 0
+      this.loadingText = steps[0]
+
+      this.loadingInterval = setInterval(() => {
+        if (step >= steps.length - 1) {
+          clearInterval(this.loadingInterval)
+          return
+        }
+
+        step++
+        this.loadingText = steps[step]
+        this.loadingProgress = Math.round(
+          (step / steps.length) * 100
+        )
+      }, Math.floor(Math.random() * 300) + 40)
+    },
+
+    async analyze(type) {
+      if (!this.image) return
+
+      this.loading = true
+      this.startLoadingAnimation()
+
+      this.activeType = type
+      this.result = null
+      this.confidence = null
+      this.error = null
+
+      try {
+        const blob = await (await fetch(this.image)).blob()
+        const formData = new FormData()
+        formData.append("file", blob, "eye.png")
+
+        const endpoints = {
+          Glaucoma: "/predict",
+          DR: "/predict-dr",
+          AMD: "/predict-amd"
+        }
+
+        const response = await fetch(
+  `http://192.168.1.126:8000${endpoints[type]}`,  // <-- changed from ngrok to local server
+  { method: "POST", body: formData }
+)
+
+        const data = await response.json()
+>>>>>>> 5450bfa (Initial upload of AI app with ONNX backend)
         if (!data.prediction) {
           this.error = "Prediction failed"
           return
         }
 
         let prediction = data.prediction
+<<<<<<< HEAD
 
 // 🔄 Fix swapped Glaucoma labels
 if (type === "Glaucoma") {
@@ -187,6 +290,34 @@ this.confidence = data.confidence
         this.error = "Backend connection failed"
       } finally {
         this.loading = false
+=======
+        const conf = Number(data.confidence)
+
+        // 🔄 Fix Glaucoma label inversion
+        if (type === "Glaucoma") {
+          if (prediction.toLowerCase() === "glaucoma") prediction = "Healthy"
+          else if (prediction.toLowerCase() === "healthy") prediction = "Glaucoma"
+        }
+
+        if (conf < 75) {
+          this.result = "Inconclusive"
+          this.confidence = conf
+        } else {
+          this.result = prediction
+          this.confidence = conf
+        }
+
+        this.addToRecent(this.image)
+
+      } catch {
+        this.error = "Backend connection failed"
+      } finally {
+        clearInterval(this.loadingInterval)
+        this.loadingProgress = 100
+        setTimeout(() => {
+          this.loading = false
+        }, 300)
+>>>>>>> 5450bfa (Initial upload of AI app with ONNX backend)
       }
     },
 
@@ -257,7 +388,10 @@ this.confidence = data.confidence
   }
 }
 </script>
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5450bfa (Initial upload of AI app with ONNX backend)
 <style>
 html, body {
   margin: 0;
@@ -379,6 +513,36 @@ html, body {
   border-radius: 6px;
   margin: 6px auto;
 }
+<<<<<<< HEAD
+=======
+.loading-box {
+  background: white;
+  padding: 14px;
+  border-radius: 12px;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+  text-align: center;
+}
+
+.loading-text {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.loading-bar-container {
+  width: 100%;
+  height: 10px;
+  background: #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.loading-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #007bff, #00c6ff);
+  transition: width 0.4s ease;
+}
+>>>>>>> 5450bfa (Initial upload of AI app with ONNX backend)
 
 .confidence-bar {
   height: 100%;
@@ -400,6 +564,13 @@ html, body {
   border: none;
   cursor: pointer;
 }
+<<<<<<< HEAD
+=======
+.inconclusive {
+  background: #6c757d;
+  color: white;
+}
+>>>>>>> 5450bfa (Initial upload of AI app with ONNX backend)
 
 .error {
   color: red;
