@@ -187,9 +187,9 @@ export default {
         };
 
         const response = await fetch(
-          `http://192.168.1.126:8000${endpoints[type]}`,
-          { method: "POST", body: formData }
-        );
+  `http://127.0.0.1:8000${endpoints[type]}`,
+  { method: "POST", body: formData }
+);
 
         const data = await response.json();
         if (!data.prediction) {
