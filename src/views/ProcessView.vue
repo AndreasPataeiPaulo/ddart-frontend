@@ -40,7 +40,9 @@
             @click="analyze('Glaucoma')"
             :disabled="loading"
           >
-            {{ loading && activeType === 'Glaucoma' ? 'Analyzing...' : 'Analyze Glaucoma' }}
+            {{ loading && activeType === 'Glaucoma'
+              ? 'Analyzing...'
+              : 'Analyze Glaucoma' }}
           </button>
 
           <button
@@ -48,7 +50,9 @@
             @click="analyze('DR')"
             :disabled="loading"
           >
-            {{ loading && activeType === 'DR' ? 'Analyzing...' : 'Analyze Diabetic Retinopathy' }}
+            {{ loading && activeType === 'DR'
+              ? 'Analyzing...'
+              : 'Analyze Diabetic Retinopathy' }}
           </button>
 
           <button
@@ -56,22 +60,12 @@
             @click="analyze('AMD')"
             :disabled="loading"
           >
-            {{ loading && activeType === 'AMD' ? 'Analyzing...' : 'Analyze AMD' }}
+            {{ loading && activeType === 'AMD'
+              ? 'Analyzing...'
+              : 'Analyze AMD' }}
           </button>
         </div>
 
-        <!-- 🔄 LOADING STATE -->
-        <div v-if="loading" class="loading-box">
-          <p class="loading-text">{{ loadingText }}</p>
-          <div class="loading-bar-container">
-            <div
-              class="loading-bar"
-              :style="{ width: loadingProgress + '%' }"
-            ></div>
-          </div>
-        </div>
-
-        <!-- ✅ RESULT -->
         <div v-if="result" class="result-card" :class="resultClass">
           <p class="result-text">
             {{ activeType }} Prediction: <strong>{{ result }}</strong>
@@ -121,164 +115,152 @@ export default {
       error: null,
       loading: false,
       activeType: null,
-      recentUploads: [],
-      loadingText: "",
-      loadingProgress: 0,
-      loadingInterval: null
-    };
+      recentUploads: []
+    }
   },
 
   computed: {
     resultClass() {
-      if (this.result === "Inconclusive") return "inconclusive";
-      return this.activeType ? this.activeType.toLowerCase() : "";
+      return this.activeType
+        ? this.activeType.toLowerCase()
+        : ""
     }
   },
 
   mounted() {
-    this.image = this.$route.query.img || null;
-    this.loadRecentUploads();
+    this.image = this.$route.query.img || null
+    this.loadRecentUploads()
   },
 
   methods: {
-    startLoadingAnimation() {
-      const steps = [
-        "Preprocessing image…",
-        "Extracting retinal features…",
-        "Running neural inference…",
-        "Finalizing prediction…"
-      ];
-
-      let step = 0;
-      this.loadingProgress = 0;
-      this.loadingText = steps[0];
-
-      this.loadingInterval = setInterval(() => {
-        if (step >= steps.length - 1) {
-          clearInterval(this.loadingInterval);
-          return;
-        }
-        step++;
-        this.loadingText = steps[step];
-        this.loadingProgress = Math.round((step / steps.length) * 100);
-      }, 300);
-    },
-
     async analyze(type) {
-      if (!this.image) return;
+      if (!this.image) return
 
-      this.loading = true;
-      this.startLoadingAnimation();
-
-      this.activeType = type;
-      this.result = null;
-      this.confidence = null;
-      this.error = null;
+      this.loading = true
+      this.activeType = type
+      this.result = null
+      this.confidence = null
+      this.error = null
 
       try {
-        const blob = await (await fetch(this.image)).blob();
-        const formData = new FormData();
-        formData.append("file", blob, "eye.png");
+        const blob = await (await fetch(this.image)).blob()
+        const formData = new FormData()
+        formData.append("file", blob, "eye.png")
 
         const endpoints = {
-          Glaucoma: "/predict-glaucoma",
+          Glaucoma: "/predict",
           DR: "/predict-dr",
           AMD: "/predict-amd"
-        };
+        }
 
         const response = await fetch(
-  `http://127.0.0.1:8000${endpoints[type]}`,
-  { method: "POST", body: formData }
-);
+          `https://nonglobular-unmisgivingly-zoie.ngrok-free.dev${endpoints[type]}`,
+          {
+            method: "POST",
+            body: formData
+          }
+        )
 
-        const data = await response.json();
+        const data = await response.json()
+
         if (!data.prediction) {
-          this.error = "Prediction failed";
-          return;
+          this.error = "Prediction failed"
+          return
         }
 
-        let prediction = data.prediction;
-        const conf = Number(data.confidence);
+        let prediction = data.prediction
 
-        // 🔄 Fix Glaucoma label inversion
-        if (type === "Glaucoma") {
-          if (prediction.toLowerCase() === "glaucoma") prediction = "Glaucoma";
-          else if (prediction.toLowerCase() === "healthy") prediction = "Healthy";
-        }
+// 🔄 Fix swapped Glaucoma labels
+if (type === "Glaucoma") {
+  if (prediction.toLowerCase() === "glaucoma") {
+    prediction = "Healthy"
+  } else if (prediction.toLowerCase() === "healthy") {
+    prediction = "Glaucoma"
+  }
+}
 
-        // Confidence threshold for inconclusive
-        if (conf < 75) {
-          this.result = "Inconclusive";
-          this.confidence = conf;
-        } else {
-          this.result = prediction;
-          this.confidence = conf;
-        }
+this.result = prediction
+this.confidence = data.confidence
+if (data.confidence < 80) {
+      this.result = "Inconclusive"
+    } else {
+      this.result = prediction
+    }
+        this.addToRecent(this.image)
 
-        this.addToRecent(this.image);
-
-      } catch {
-        this.error = "Backend connection failed";
+      } catch (err) {
+        this.error = "Backend connection failed"
       } finally {
-        clearInterval(this.loadingInterval);
-        this.loadingProgress = 100;
-        setTimeout(() => { this.loading = false }, 300);
+        this.loading = false
       }
     },
 
-    uploadAgain() { this.$refs.fileInput.click(); },
+    uploadAgain() {
+      this.$refs.fileInput.click()
+    },
 
     handleFileUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
+      const file = event.target.files[0]
+      if (!file) return
+
+      const reader = new FileReader()
       reader.onload = e => {
-        this.image = e.target.result;
-        this.result = null;
-        this.confidence = null;
-        this.activeType = null;
-        this.addToRecent(this.image);
-      };
-      reader.readAsDataURL(file);
+        this.image = e.target.result
+        this.result = null
+        this.confidence = null
+        this.activeType = null
+        this.addToRecent(this.image)
+      }
+      reader.readAsDataURL(file)
     },
 
     dropFile(event) {
-      const file = event.dataTransfer.files[0];
-      if (!file) return;
-      const reader = new FileReader();
+      const file = event.dataTransfer.files[0]
+      if (!file) return
+
+      const reader = new FileReader()
       reader.onload = e => {
-        this.image = e.target.result;
-        this.result = null;
-        this.confidence = null;
-        this.activeType = null;
-        this.addToRecent(this.image);
-      };
-      reader.readAsDataURL(file);
+        this.image = e.target.result
+        this.result = null
+        this.confidence = null
+        this.activeType = null
+        this.addToRecent(this.image)
+      }
+      reader.readAsDataURL(file)
     },
 
     addToRecent(img) {
       if (!this.recentUploads.includes(img)) {
-        this.recentUploads.unshift(img);
-        if (this.recentUploads.length > 5) this.recentUploads.pop();
-        localStorage.setItem("recentUploads", JSON.stringify(this.recentUploads));
+        this.recentUploads.unshift(img)
+        if (this.recentUploads.length > 5) {
+          this.recentUploads.pop()
+        }
+        localStorage.setItem(
+          "recentUploads",
+          JSON.stringify(this.recentUploads)
+        )
       }
     },
 
     loadRecentUploads() {
-      const saved = localStorage.getItem("recentUploads");
-      if (saved) this.recentUploads = JSON.parse(saved);
+      const saved = localStorage.getItem("recentUploads")
+      if (saved) {
+        this.recentUploads = JSON.parse(saved)
+      }
     },
 
     selectRecent(img) {
-      this.image = img;
-      this.result = null;
-      this.confidence = null;
-      this.activeType = null;
+      this.image = img
+      this.result = null
+      this.confidence = null
+      this.activeType = null
     },
 
-    goBack() { this.$router.push("/"); }
+    goBack() {
+      this.$router.push("/")
+    }
   }
-};
+}
 </script>
 
 <style>
@@ -409,34 +391,6 @@ html, body {
   border-radius: 6px;
 }
 
-.loading-box {
-  background: white;
-  padding: 14px;
-  border-radius: 12px;
-  box-shadow: 0 6px 15px rgba(0,0,0,0.08);
-  text-align: center;
-}
-
-.loading-text {
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #333;
-}
-
-.loading-bar-container {
-  width: 100%;
-  height: 10px;
-  background: #e0e0e0;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.loading-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #007bff, #00c6ff);
-  transition: width 0.4s ease;
-}
-
 .actions {
   display: flex;
   justify-content: center;
@@ -450,11 +404,6 @@ html, body {
   color: white;
   border: none;
   cursor: pointer;
-}
-
-.inconclusive {
-  background: #6c757d;
-  color: white;
 }
 
 .error {
