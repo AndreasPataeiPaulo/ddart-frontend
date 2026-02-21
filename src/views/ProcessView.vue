@@ -5,15 +5,9 @@
     <div class="layout">
       <!-- LEFT PANEL -->
       <div class="left-panel">
-        <div
-          class="image-card"
-          @drop.prevent="dropFile"
-          @dragover.prevent
-        >
+        <div class="image-card" @drop.prevent="dropFile" @dragover.prevent>
           <img v-if="image" :src="image" class="preview" />
-          <p v-else class="placeholder">
-            Drag & drop or upload an image
-          </p>
+          <p v-else class="placeholder">Drag & drop or upload an image</p>
         </div>
 
         <div class="recent-uploads" v-if="recentUploads.length">
@@ -35,51 +29,30 @@
       <!-- RIGHT PANEL -->
       <div class="right-panel">
         <div class="button-group">
-          <button
-            class="analyze-btn glaucoma"
-            @click="analyze('Glaucoma')"
-            :disabled="loading"
-          >
+          <button class="analyze-btn glaucoma" @click="analyze('Glaucoma')" :disabled="loading">
             {{ loading && activeType === 'Glaucoma' ? 'Analyzing...' : 'Analyze Glaucoma' }}
           </button>
-
-          <button
-            class="analyze-btn dr"
-            @click="analyze('DR')"
-            :disabled="loading"
-          >
+          <button class="analyze-btn dr" @click="analyze('DR')" :disabled="loading">
             {{ loading && activeType === 'DR' ? 'Analyzing...' : 'Analyze Diabetic Retinopathy' }}
           </button>
-
-          <button
-            class="analyze-btn amd"
-            @click="analyze('AMD')"
-            :disabled="loading"
-          >
+          <button class="analyze-btn amd" @click="analyze('AMD')" :disabled="loading">
             {{ loading && activeType === 'AMD' ? 'Analyzing...' : 'Analyze AMD' }}
           </button>
-
-          <button
-            class="analyze-btn all"
-            @click="analyzeAll"
-            :disabled="loading"
-          >
+          <button class="analyze-btn all" @click="analyzeAll" :disabled="loading">
             {{ loading && activeType === 'ALL' ? 'Analyzing All...' : '🔍 Analyze All Conditions' }}
           </button>
         </div>
 
-        <!-- Single result card -->
-        <div v-if="result && activeType !== 'ALL'" class="result-card" :class="resultClass">
-          <p class="result-text">
-            {{ activeType }} Prediction: <strong>{{ result }}</strong>
-          </p>
+        <!-- Single result -->
+        <div v-if="result" class="result-card" :class="activeType ? activeType.toLowerCase() : ''">
+          <p class="result-text">{{ activeType }} Prediction: <strong>{{ result }}</strong></p>
           <div class="confidence-bar-container">
             <div class="confidence-bar" :style="{ width: confidence + '%' }"></div>
           </div>
           <p class="confidence">{{ confidence }}%</p>
         </div>
 
-        <!-- All results card -->
+        <!-- All results -->
         <div v-if="allResults" class="all-results">
           <div
             v-for="r in allResults"
@@ -98,8 +71,12 @@
           </div>
 
           <div class="highest-result">
-            Highest confidence:
-            <strong>{{ highestResult.type }} — {{ highestResult.confidence >= 85 ? highestResult.displayPrediction : 'Inconclusive' }} ({{ highestResult.confidence }}%)</strong>
+            🏆 Highest confidence:
+            <strong>
+              {{ highestResult.type }} —
+              {{ highestResult.confidence >= 85 ? highestResult.displayPrediction : 'Inconclusive' }}
+              ({{ highestResult.confidence }}%)
+            </strong>
           </div>
         </div>
 
@@ -112,14 +89,7 @@
       </div>
     </div>
 
-    <!-- Hidden Input -->
-    <input
-      type="file"
-      accept="image/*"
-      ref="fileInput"
-      hidden
-      @change="handleFileUpload"
-    />
+    <input type="file" accept="image/*" ref="fileInput" hidden @change="handleFileUpload" />
   </div>
 </template>
 
@@ -139,9 +109,6 @@ export default {
   },
 
   computed: {
-    resultClass() {
-      return this.activeType ? this.activeType.toLowerCase() : ""
-    },
     highestResult() {
       if (!this.allResults) return null
       return [...this.allResults].sort((a, b) => b.confidence - a.confidence)[0]
@@ -151,6 +118,16 @@ export default {
   mounted() {
     this.image = this.$route.query.img || null
     this.loadRecentUploads()
+
+    // Auto-run if type was passed from home page
+    const type = this.$route.query.type
+    if (type && this.image) {
+      if (type === 'ALL') {
+        this.analyzeAll()
+      } else {
+        this.analyze(type)
+      }
+    }
   },
 
   methods: {
@@ -189,7 +166,6 @@ export default {
 
         let prediction = data.prediction
 
-        // Fix swapped Glaucoma labels
         if (type === "Glaucoma") {
           if (prediction.toLowerCase() === "glaucoma") prediction = "Healthy"
           else if (prediction.toLowerCase() === "healthy") prediction = "Glaucoma"
@@ -236,8 +212,6 @@ export default {
             const data = await res.json()
 
             let prediction = data.prediction
-
-            // Fix swapped Glaucoma labels
             if (type === "Glaucoma") {
               if (prediction.toLowerCase() === "glaucoma") prediction = "Healthy"
               else if (prediction.toLowerCase() === "healthy") prediction = "Glaucoma"
@@ -328,11 +302,11 @@ export default {
 html, body {
   margin: 0;
   height: 100%;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .process-container {
-  height: 100vh;
+  min-height: 100vh;
   background: #f4f6fa;
   display: flex;
   flex-direction: column;
@@ -352,11 +326,9 @@ html, body {
   gap: 30px;
   width: 100%;
   max-width: 1100px;
-  flex: 1;
 }
 
-.left-panel,
-.right-panel {
+.left-panel, .right-panel {
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -378,16 +350,9 @@ html, body {
 
 .placeholder { color: #777; }
 
-.recent-uploads h3 {
-  font-size: 14px;
-  text-align: center;
-}
+.recent-uploads h3 { font-size: 14px; text-align: center; }
 
-.uploads-list {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-}
+.uploads-list { display: flex; gap: 8px; justify-content: center; }
 
 .upload-thumb {
   width: 60px;
@@ -397,11 +362,7 @@ html, body {
 }
 
 .upload-thumb.active { border-color: #007bff; }
-
-.upload-thumb img {
-  width: 100%;
-  border-radius: 6px;
-}
+.upload-thumb img { width: 100%; border-radius: 6px; }
 
 .button-group {
   display: flex;
@@ -416,17 +377,18 @@ html, body {
   font-weight: 600;
   color: white;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.2s;
 }
 
 .analyze-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.analyze-btn:hover:not(:disabled) { opacity: 0.9; }
+.analyze-btn:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.9; }
 
-.glaucoma { background: #dc3545; }
-.dr { background: #17a2b8; }
-.amd { background: #ffc107; color: #212529; }
-.all { background: #6f42c1; }
+.analyze-btn.glaucoma { background: #dc3545; }
+.analyze-btn.dr       { background: #17a2b8; }
+.analyze-btn.amd      { background: #ffc107; color: #212529; }
+.analyze-btn.all      { background: #6f42c1; }
 
+/* Single result card */
 .result-card {
   padding: 15px;
   border-radius: 12px;
@@ -434,6 +396,10 @@ html, body {
   font-weight: 600;
   color: white;
 }
+
+.result-card.glaucoma { background: #dc3545; }
+.result-card.dr       { background: #17a2b8; }
+.result-card.amd      { background: #ffc107; color: #212529; }
 
 .confidence-bar-container {
   width: 80%;
@@ -450,7 +416,7 @@ html, body {
   transition: width 0.5s ease;
 }
 
-/* All Results */
+/* All results */
 .all-results {
   background: white;
   border-radius: 12px;
@@ -472,15 +438,19 @@ html, body {
   font-size: 14px;
 }
 
+.all-result-row.glaucoma { background: #dc3545; }
+.all-result-row.dr       { background: #17a2b8; }
+.all-result-row.amd      { background: #ffc107; color: #212529; }
+
 .all-result-row .confidence-bar-container {
   flex: 1;
   margin: 0;
   width: auto;
 }
 
-.all-result-type { width: 75px; flex-shrink: 0; }
-.all-result-prediction { width: 110px; flex-shrink: 0; }
-.all-result-confidence { width: 45px; text-align: right; flex-shrink: 0; }
+.all-result-type        { width: 75px; flex-shrink: 0; }
+.all-result-prediction  { width: 110px; flex-shrink: 0; }
+.all-result-confidence  { width: 45px; text-align: right; flex-shrink: 0; }
 
 .highest-result {
   text-align: center;
@@ -505,8 +475,5 @@ html, body {
   cursor: pointer;
 }
 
-.error {
-  color: red;
-  font-weight: 600;
-}
+.error { color: red; font-weight: 600; }
 </style>
