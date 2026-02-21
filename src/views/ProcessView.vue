@@ -154,7 +154,7 @@ export default {
         }
 
         const response = await fetch(
-          `https://nonglobular-unmisgivingly-zoie.ngrok-free.dev${endpoints[type]}`,
+          `https://labiris.myiplist.com${endpoints[type]}`,
           {
             method: "POST",
             body: formData
