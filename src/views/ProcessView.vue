@@ -40,9 +40,7 @@
             @click="analyze('Glaucoma')"
             :disabled="loading"
           >
-            {{ loading && activeType === 'Glaucoma'
-              ? 'Analyzing...'
-              : 'Analyze Glaucoma' }}
+            {{ loading && activeType === 'Glaucoma' ? 'Analyzing...' : 'Analyze Glaucoma' }}
           </button>
 
           <button
@@ -50,9 +48,7 @@
             @click="analyze('DR')"
             :disabled="loading"
           >
-            {{ loading && activeType === 'DR'
-              ? 'Analyzing...'
-              : 'Analyze Diabetic Retinopathy' }}
+            {{ loading && activeType === 'DR' ? 'Analyzing...' : 'Analyze Diabetic Retinopathy' }}
           </button>
 
           <button
@@ -60,36 +56,58 @@
             @click="analyze('AMD')"
             :disabled="loading"
           >
-            {{ loading && activeType === 'AMD'
-              ? 'Analyzing...'
-              : 'Analyze AMD' }}
+            {{ loading && activeType === 'AMD' ? 'Analyzing...' : 'Analyze AMD' }}
+          </button>
+
+          <button
+            class="analyze-btn all"
+            @click="analyzeAll"
+            :disabled="loading"
+          >
+            {{ loading && activeType === 'ALL' ? 'Analyzing All...' : '🔍 Analyze All Conditions' }}
           </button>
         </div>
 
-        <div v-if="result" class="result-card" :class="resultClass">
+        <!-- Single result card -->
+        <div v-if="result && activeType !== 'ALL'" class="result-card" :class="resultClass">
           <p class="result-text">
             {{ activeType }} Prediction: <strong>{{ result }}</strong>
           </p>
-
           <div class="confidence-bar-container">
-            <div
-              class="confidence-bar"
-              :style="{ width: confidence + '%' }"
-            ></div>
+            <div class="confidence-bar" :style="{ width: confidence + '%' }"></div>
+          </div>
+          <p class="confidence">{{ confidence }}%</p>
+        </div>
+
+        <!-- All results card -->
+        <div v-if="allResults" class="all-results">
+          <div
+            v-for="r in allResults"
+            :key="r.type"
+            class="all-result-row"
+            :class="r.type.toLowerCase()"
+          >
+            <span class="all-result-type">{{ r.type }}</span>
+            <span class="all-result-prediction">
+              {{ r.confidence >= 85 ? r.displayPrediction : 'Inconclusive' }}
+            </span>
+            <div class="confidence-bar-container">
+              <div class="confidence-bar" :style="{ width: r.confidence + '%' }"></div>
+            </div>
+            <span class="all-result-confidence">{{ r.confidence }}%</span>
           </div>
 
-          <p class="confidence">{{ confidence }}%</p>
+          <div class="highest-result">
+            Highest confidence:
+            <strong>{{ highestResult.type }} — {{ highestResult.confidence >= 85 ? highestResult.displayPrediction : 'Inconclusive' }} ({{ highestResult.confidence }}%)</strong>
+          </div>
         </div>
 
         <p v-if="error" class="error">{{ error }}</p>
 
         <div class="actions">
-          <button class="secondary" @click="uploadAgain">
-            Upload New Image
-          </button>
-          <button class="secondary" @click="goBack">
-            Back
-          </button>
+          <button class="secondary" @click="uploadAgain">Upload New Image</button>
+          <button class="secondary" @click="goBack">Back</button>
         </div>
       </div>
     </div>
@@ -115,15 +133,18 @@ export default {
       error: null,
       loading: false,
       activeType: null,
-      recentUploads: []
+      recentUploads: [],
+      allResults: null
     }
   },
 
   computed: {
     resultClass() {
-      return this.activeType
-        ? this.activeType.toLowerCase()
-        : ""
+      return this.activeType ? this.activeType.toLowerCase() : ""
+    },
+    highestResult() {
+      if (!this.allResults) return null
+      return [...this.allResults].sort((a, b) => b.confidence - a.confidence)[0]
     }
   },
 
@@ -141,6 +162,7 @@ export default {
       this.result = null
       this.confidence = null
       this.error = null
+      this.allResults = null
 
       try {
         const blob = await (await fetch(this.image)).blob()
@@ -155,10 +177,7 @@ export default {
 
         const response = await fetch(
           `https://labiris.myiplist.com${endpoints[type]}`,
-          {
-            method: "POST",
-            body: formData
-          }
+          { method: "POST", body: formData }
         )
 
         const data = await response.json()
@@ -170,22 +189,70 @@ export default {
 
         let prediction = data.prediction
 
-// 🔄 Fix swapped Glaucoma labels
-if (type === "Glaucoma") {
-  if (prediction.toLowerCase() === "glaucoma") {
-    prediction = "Healthy"
-  } else if (prediction.toLowerCase() === "healthy") {
-    prediction = "Glaucoma"
-  }
-}
+        // Fix swapped Glaucoma labels
+        if (type === "Glaucoma") {
+          if (prediction.toLowerCase() === "glaucoma") prediction = "Healthy"
+          else if (prediction.toLowerCase() === "healthy") prediction = "Glaucoma"
+        }
 
-this.result = prediction
-this.confidence = data.confidence
-if (data.confidence < 80) {
-      this.result = "Inconclusive"
-    } else {
-      this.result = prediction
-    }
+        this.confidence = data.confidence
+        this.result = data.confidence < 85 ? "Inconclusive" : prediction
+        this.addToRecent(this.image)
+
+      } catch (err) {
+        this.error = "Backend connection failed"
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async analyzeAll() {
+      if (!this.image) return
+
+      this.loading = true
+      this.activeType = 'ALL'
+      this.result = null
+      this.confidence = null
+      this.error = null
+      this.allResults = null
+
+      try {
+        const blob = await (await fetch(this.image)).blob()
+
+        const endpoints = {
+          Glaucoma: "/predict",
+          DR: "/predict-dr",
+          AMD: "/predict-amd"
+        }
+
+        const results = await Promise.all(
+          Object.entries(endpoints).map(async ([type, endpoint]) => {
+            const formData = new FormData()
+            formData.append("file", blob, "eye.png")
+            const res = await fetch(`https://labiris.myiplist.com${endpoint}`, {
+              method: "POST",
+              body: formData
+            })
+            const data = await res.json()
+
+            let prediction = data.prediction
+
+            // Fix swapped Glaucoma labels
+            if (type === "Glaucoma") {
+              if (prediction.toLowerCase() === "glaucoma") prediction = "Healthy"
+              else if (prediction.toLowerCase() === "healthy") prediction = "Glaucoma"
+            }
+
+            return {
+              type,
+              prediction: data.prediction,
+              displayPrediction: prediction,
+              confidence: data.confidence
+            }
+          })
+        )
+
+        this.allResults = results
         this.addToRecent(this.image)
 
       } catch (err) {
@@ -202,13 +269,13 @@ if (data.confidence < 80) {
     handleFileUpload(event) {
       const file = event.target.files[0]
       if (!file) return
-
       const reader = new FileReader()
       reader.onload = e => {
         this.image = e.target.result
         this.result = null
         this.confidence = null
         this.activeType = null
+        this.allResults = null
         this.addToRecent(this.image)
       }
       reader.readAsDataURL(file)
@@ -217,13 +284,13 @@ if (data.confidence < 80) {
     dropFile(event) {
       const file = event.dataTransfer.files[0]
       if (!file) return
-
       const reader = new FileReader()
       reader.onload = e => {
         this.image = e.target.result
         this.result = null
         this.confidence = null
         this.activeType = null
+        this.allResults = null
         this.addToRecent(this.image)
       }
       reader.readAsDataURL(file)
@@ -232,21 +299,14 @@ if (data.confidence < 80) {
     addToRecent(img) {
       if (!this.recentUploads.includes(img)) {
         this.recentUploads.unshift(img)
-        if (this.recentUploads.length > 5) {
-          this.recentUploads.pop()
-        }
-        localStorage.setItem(
-          "recentUploads",
-          JSON.stringify(this.recentUploads)
-        )
+        if (this.recentUploads.length > 5) this.recentUploads.pop()
+        localStorage.setItem("recentUploads", JSON.stringify(this.recentUploads))
       }
     },
 
     loadRecentUploads() {
       const saved = localStorage.getItem("recentUploads")
-      if (saved) {
-        this.recentUploads = JSON.parse(saved)
-      }
+      if (saved) this.recentUploads = JSON.parse(saved)
     },
 
     selectRecent(img) {
@@ -254,6 +314,7 @@ if (data.confidence < 80) {
       this.result = null
       this.confidence = null
       this.activeType = null
+      this.allResults = null
     },
 
     goBack() {
@@ -315,9 +376,7 @@ html, body {
   border-radius: 10px;
 }
 
-.placeholder {
-  color: #777;
-}
+.placeholder { color: #777; }
 
 .recent-uploads h3 {
   font-size: 14px;
@@ -337,9 +396,7 @@ html, body {
   border: 2px solid transparent;
 }
 
-.upload-thumb.active {
-  border-color: #007bff;
-}
+.upload-thumb.active { border-color: #007bff; }
 
 .upload-thumb img {
   width: 100%;
@@ -359,11 +416,16 @@ html, body {
   font-weight: 600;
   color: white;
   cursor: pointer;
+  transition: opacity 0.2s;
 }
+
+.analyze-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.analyze-btn:hover:not(:disabled) { opacity: 0.9; }
 
 .glaucoma { background: #dc3545; }
 .dr { background: #17a2b8; }
 .amd { background: #ffc107; color: #212529; }
+.all { background: #6f42c1; }
 
 .result-card {
   padding: 15px;
@@ -372,10 +434,6 @@ html, body {
   font-weight: 600;
   color: white;
 }
-
-.glaucoma { background: #dc3545; }
-.dr { background: #17a2b8; }
-.amd { background: #ffc107; color: #212529; }
 
 .confidence-bar-container {
   width: 80%;
@@ -389,6 +447,47 @@ html, body {
   height: 100%;
   background: white;
   border-radius: 6px;
+  transition: width 0.5s ease;
+}
+
+/* All Results */
+.all-results {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.all-result-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.all-result-row .confidence-bar-container {
+  flex: 1;
+  margin: 0;
+  width: auto;
+}
+
+.all-result-type { width: 75px; flex-shrink: 0; }
+.all-result-prediction { width: 110px; flex-shrink: 0; }
+.all-result-confidence { width: 45px; text-align: right; flex-shrink: 0; }
+
+.highest-result {
+  text-align: center;
+  color: #333;
+  font-size: 14px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
 }
 
 .actions {
