@@ -39,7 +39,7 @@
             {{ loading && activeType === 'AMD' ? 'Analyzing...' : 'Analyze AMD' }}
           </button>
           <button class="analyze-btn all" @click="analyzeAll" :disabled="loading">
-            {{ loading && activeType === 'ALL' ? 'Analyzing All...' : '🔍 Analyze All Conditions' }}
+            {{ loading && activeType === 'ALL' ? 'Analyzing All...' : 'Analyze All Conditions' }}
           </button>
         </div>
 
@@ -71,7 +71,7 @@
           </div>
 
           <div class="highest-result">
-            🏆 Highest confidence:
+             Highest confidence:
             <strong>
               {{ highestResult.type }} —
               {{ highestResult.confidence >= 85 ? highestResult.displayPrediction : 'Inconclusive' }}
