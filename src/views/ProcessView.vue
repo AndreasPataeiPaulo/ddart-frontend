@@ -62,7 +62,7 @@
           >
             <span class="all-result-type">{{ r.type }}</span>
             <span class="all-result-prediction">
-              {{ r.confidence >= 85 ? r.displayPrediction : 'Inconclusive' }}
+              {{ r.confidence >= 90 ? r.displayPrediction : 'Inconclusive' }}
             </span>
             <div class="confidence-bar-container">
               <div class="confidence-bar" :style="{ width: r.confidence + '%' }"></div>
@@ -74,7 +74,7 @@
              Highest confidence:
             <strong>
               {{ highestResult.type }} —
-              {{ highestResult.confidence >= 85 ? highestResult.displayPrediction : 'Inconclusive' }}
+              {{ highestResult.confidence >= 90 ? highestResult.displayPrediction : 'Inconclusive' }}
               ({{ highestResult.confidence }}%)
             </strong>
           </div>
@@ -172,7 +172,7 @@ export default {
         }
 
         this.confidence = data.confidence
-        this.result = data.confidence < 85 ? "Inconclusive" : prediction
+        this.result = data.confidence < 90 ? "Inconclusive" : prediction
         this.addToRecent(this.image)
 
       } catch (err) {

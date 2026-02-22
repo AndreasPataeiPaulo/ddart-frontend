@@ -1,48 +1,64 @@
 <template>
   <div class="home-container">
-    <h1 class="app-title">DDART A.I. – Eye Analysis</h1>
+    <!-- Header -->
+    <div class="header">
+      <p class="university">Democritus University of Thrace – DDART spin-off company</p>
+      <p class="subtitle">Ophthalmology A.I. Screening Program</p>
+      <div class="logo">DDART<span>AI</span></div>
+    </div>
 
-    <div class="main-layout">
-      <!-- LEFT: Upload Card -->
-      <div class="upload-card" @drop.prevent="dropFile" @dragover.prevent>
-        <input type="file" accept="image/*" @change="uploadFile" />
-        <p class="drag-drop-text">Or drag & drop image here</p>
-        <img v-if="uploadedImage" :src="uploadedImage" class="uploaded-image" />
-      </div>
+    <!-- Main Card -->
+    <div class="main-card">
+      <div class="card-inner">
+        <!-- Upload area -->
+        <div class="upload-zone" @drop.prevent="dropFile" @dragover.prevent @click="triggerUpload">
+          <input type="file" accept="image/*" ref="fileInput" hidden @change="uploadFile" />
+          <div v-if="!uploadedImage" class="upload-placeholder">
+            <div class="upload-icon">👁</div>
+            <p>Upload a fundus image to begin screening</p>
+            <span>Click or drag & drop</span>
+          </div>
+          <img v-else :src="uploadedImage" class="uploaded-image" />
+        </div>
 
-      <!-- RIGHT: Buttons -->
-      <div class="side-buttons" v-if="uploadedImage">
-        <button class="analyze-btn glaucoma" @click="analyzeImage('Glaucoma')">Analyze Glaucoma</button>
-        <button class="analyze-btn dr" @click="analyzeImage('DR')">Analyze Diabetic Retinopathy</button>
-        <button class="analyze-btn amd" @click="analyzeImage('AMD')">Analyze AMD</button>
-        <button class="analyze-btn all" @click="analyzeImage('ALL')">🔍 Analyze All Conditions</button>
-      </div>
-
-      <!-- RIGHT placeholder when no image -->
-      <div class="side-buttons placeholder-side" v-else>
-        <p>Upload an image to begin analysis</p>
+        <!-- Description -->
+        <div class="description">
+          <p>
+            DDART-AI is an artificial intelligence platform developed for the automated screening
+            of retinal conditions using fundus photography. The system analyzes eye images and
+            provides predictions for three major ophthalmic conditions: Glaucoma, Diabetic
+            Retinopathy, and Age-Related Macular Degeneration (AMD).
+          </p>
+          <p>
+            The A.I. models are based on deep convolutional neural networks trained on clinical
+            fundus datasets. Results include a confidence score and are intended to assist — not
+            replace — clinical judgment. Images are processed locally and are not stored.
+          </p>
+          <p>
+            For further information on DDART-AI please contact the Department of Ophthalmology
+            at Democritus University of Thrace.
+          </p>
+        </div>
       </div>
     </div>
 
-    <!-- Instructions Button -->
-    <button class="instructions-btn" @click="showInstructions = true">Instructions</button>
-
-    <!-- Instructions Modal -->
-    <div v-if="showInstructions" class="modal-overlay" @click.self="showInstructions = false">
-      <div class="modal-content">
-        <h3>Instructions</h3>
-        <ol>
-          <li>Upload a clear eye image of the fundus.</li>
-          <li>Ensure proper lighting and focus on the retina.</li>
-          <li>Select the disease type you want to analyze: Glaucoma, AMD, Diabetic Retinopathy, or all at once.</li>
-          <li>The AI will process the image and show the prediction with confidence score.</li>
-          <li>Results below 85% confidence are marked as Inconclusive.</li>
-        </ol>
-        <button @click="showInstructions = false">Close</button>
-      </div>
+    <!-- Buttons -->
+    <div class="action-buttons">
+      <button class="action-btn glaucoma" @click="analyzeImage('Glaucoma')" :disabled="!uploadedImage">
+        Glaucoma Screening
+      </button>
+      <button class="action-btn dr" @click="analyzeImage('DR')" :disabled="!uploadedImage">
+        Diabetic Retinopathy
+      </button>
+      <button class="action-btn amd" @click="analyzeImage('AMD')" :disabled="!uploadedImage">
+        AMD Screening
+      </button>
+      <button class="action-btn all" @click="analyzeImage('ALL')" :disabled="!uploadedImage">
+        🔍 Full Screening
+      </button>
     </div>
 
-    <!-- Recent Uploads -->
+    <!-- Recent uploads -->
     <div v-if="recentUploads.length" class="recent-uploads">
       <h3>Recent Uploads</h3>
       <div class="thumbs">
@@ -56,7 +72,16 @@
       </div>
     </div>
 
-    <p class="footer">Made by Andreas Lampiris</p>
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-left">
+        <div class="dept-placeholder">DEPARTMENT OF OPHTHALMOLOGY</div>
+      </div>
+      <div class="footer-right">
+        <p>For technical support please call +3025510 30990 (office hours)</p>
+        <p>email: <a href="mailto:ddart@med.duth.gr">ddart@med.duth.gr</a></p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -66,10 +91,12 @@ export default {
     return {
       uploadedImage: null,
       recentUploads: [],
-      showInstructions: false
     }
   },
   methods: {
+    triggerUpload() {
+      this.$refs.fileInput.click()
+    },
     uploadFile(event) {
       const file = event.target.files[0]
       if (!file) return
@@ -97,191 +124,202 @@ export default {
       }
     },
     analyzeImage(type) {
-      this.$router.push({
-        name: "Process",
-        query: { img: this.uploadedImage, type }
-      })
+      if (!this.uploadedImage) return
+      this.$router.push({ name: "Process", query: { img: this.uploadedImage, type } })
     }
   }
 }
 </script>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; }
+
 html, body {
-  height: 100%;
   margin: 0;
-  overflow: auto;
+  padding: 0;
+  min-height: 100%;
+  background: #f0f4f8;
+  font-family: 'Source Sans 3', sans-serif;
 }
 
 .home-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  padding: 40px 20px;
-  background: #f4f6fa;
+  padding: 30px 20px 0;
   min-height: 100vh;
 }
 
-.app-title {
-  font-size: 36px;
-  color: #007bff;
-  margin-bottom: 30px;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+.header {
+  text-align: center;
+  margin-bottom: 24px;
 }
 
-.main-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  width: 100%;
-  max-width: 800px;
-  align-items: start;
-}
-
-.upload-card {
-  background: white;
-  padding: 25px 30px;
-  border-radius: 15px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-  transition: all 0.2s ease;
-}
-
-.upload-card:hover {
-  box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-}
-
-.drag-drop-text {
+.university {
   font-size: 14px;
-  color: #555;
+  color: #2c5282;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin: 0 0 4px;
 }
+
+.subtitle {
+  font-size: 13px;
+  color: #4a6fa5;
+  margin: 0 0 16px;
+}
+
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 42px;
+  font-weight: 700;
+  color: #2c5282;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.logo span { color: #e53e3e; }
+
+.main-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  width: 100%;
+  max-width: 760px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.card-inner {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 320px;
+}
+
+.upload-zone {
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: #f8fafc;
+  transition: background 0.2s;
+  padding: 20px;
+}
+
+.upload-zone:hover { background: #edf2f7; }
+
+.upload-placeholder { text-align: center; color: #718096; }
+.upload-icon { font-size: 36px; margin-bottom: 10px; }
+.upload-placeholder p { font-size: 14px; margin: 0 0 6px; color: #4a5568; font-weight: 600; }
+.upload-placeholder span { font-size: 12px; color: #a0aec0; }
 
 .uploaded-image {
-  border-radius: 12px;
   max-width: 100%;
-  max-height: 260px;
-  border: 2px solid #007bff;
+  max-height: 280px;
+  border-radius: 4px;
   object-fit: contain;
 }
 
-input[type="file"] {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  cursor: pointer;
-  width: 100%;
-}
-
-.side-buttons {
+.description {
+  padding: 24px 28px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
   justify-content: center;
 }
 
-.placeholder-side {
-  background: white;
-  border-radius: 15px;
-  padding: 30px;
-  text-align: center;
-  color: #aaa;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-  font-size: 14px;
+.description p {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: #4a5568;
+  margin: 0 0 12px;
 }
 
-.analyze-btn {
-  padding: 14px 18px;
-  border: none;
-  border-radius: 10px;
-  font-weight: 600;
-  color: white;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  width: 100%;
-}
+.description p:last-child { margin-bottom: 0; }
 
-.analyze-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-}
-
-.analyze-btn.glaucoma { background: linear-gradient(90deg, #dc3545, #ff6b6b); }
-.analyze-btn.dr       { background: linear-gradient(90deg, #17a2b8, #6bcff6); }
-.analyze-btn.amd      { background: linear-gradient(90deg, #ffc107, #ffd95b); color: #212529; }
-.analyze-btn.all      { background: linear-gradient(90deg, #6f42c1, #a78bfa); }
-
-.instructions-btn {
-  margin-top: 25px;
-  background-color: #6c757d;
-  color: white;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.instructions-btn:hover { background-color: #5a6268; }
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
+.action-buttons {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+  gap: 12px;
+  width: 100%;
+  max-width: 760px;
+  margin-bottom: 24px;
 }
 
-.modal-content {
-  background: white;
-  padding: 25px 30px;
-  border-radius: 12px;
-  max-width: 420px;
-  text-align: left;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-}
-
-.modal-content button {
-  margin-top: 15px;
-  background: #007bff;
-  color: white;
-  padding: 8px 16px;
+.action-btn {
+  flex: 1;
+  padding: 14px 10px;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
   cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.3px;
 }
+
+.action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.action-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+.action-btn.glaucoma { background: #c53030; }
+.action-btn.dr       { background: #2b6cb0; }
+.action-btn.amd      { background: #276749; }
+.action-btn.all      { background: #2d3748; }
 
 .recent-uploads {
-  margin-top: 30px;
   width: 100%;
-  max-width: 800px;
+  max-width: 760px;
+  margin-bottom: 24px;
 }
 
-.thumbs {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+.recent-uploads h3 {
+  font-size: 13px;
+  color: #718096;
+  margin: 0 0 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
+
+.thumbs { display: flex; gap: 8px; }
 
 .thumb {
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid #007bff;
+  border-radius: 4px;
+  border: 2px solid #e2e8f0;
   cursor: pointer;
+  transition: border-color 0.2s;
 }
 
-.thumb:hover { border-color: #0056b3; transform: scale(1.05); }
+.thumb:hover { border-color: #2b6cb0; }
 
 .footer {
-  margin-top: 30px;
-  font-size: 13px;
-  color: #555;
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0 24px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: auto;
 }
+
+.dept-placeholder {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4a6fa5;
+  letter-spacing: 0.5px;
+  border: 1px solid #4a6fa5;
+  padding: 6px 10px;
+  border-radius: 3px;
+}
+
+.footer-right { text-align: right; }
+.footer-right p { font-size: 12px; color: #718096; margin: 2px 0; }
+.footer-right a { color: #2b6cb0; text-decoration: none; }
 </style>
