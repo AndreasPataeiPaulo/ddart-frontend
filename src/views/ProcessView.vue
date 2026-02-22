@@ -1,91 +1,101 @@
 <template>
   <div class="process-container">
-    <h1 class="title">DDART A.I. – Eye Analysis</h1>
+    <!-- Header -->
+    <div class="header">
+      <p class="university">Democritus University of Thrace – DDART tech spin-off application</p>
+      <p class="subtitle">Ophthalmology A.I. Screening Program</p>
+      <div class="logo">DDART<span>AI</span></div>
+    </div>
 
-    <div class="layout">
-      <!-- LEFT PANEL -->
-      <div class="left-panel">
-        <div class="image-card" @drop.prevent="dropFile" @dragover.prevent>
+    <!-- Main Card -->
+    <div class="main-card">
+      <div class="card-inner">
+        <!-- LEFT: Image -->
+        <div class="image-zone" @drop.prevent="dropFile" @dragover.prevent @click="uploadAgain">
           <img v-if="image" :src="image" class="preview" />
-          <p v-else class="placeholder">Drag & drop or upload an image</p>
+          <div v-else class="upload-placeholder">
+            <p>Upload a fundus image to begin screening</p>
+            <span>Click or drag & drop</span>
+          </div>
         </div>
 
-        <div class="recent-uploads" v-if="recentUploads.length">
-          <h3>Recent Uploads</h3>
-          <div class="uploads-list">
-            <div
-              v-for="(img, index) in recentUploads"
-              :key="index"
-              class="upload-thumb"
-              :class="{ active: img === image }"
-              @click="selectRecent(img)"
-            >
-              <img :src="img" />
+        <!-- RIGHT: Buttons + Results -->
+        <div class="right-panel">
+          <div class="button-group">
+            <button class="action-btn" @click="analyze('Glaucoma')" :disabled="loading">
+              {{ loading && activeType === 'Glaucoma' ? 'Analyzing...' : 'Glaucoma Screening' }}
+            </button>
+            <button class="action-btn" @click="analyze('DR')" :disabled="loading">
+              {{ loading && activeType === 'DR' ? 'Analyzing...' : 'Diabetic Retinopathy' }}
+            </button>
+            <button class="action-btn" @click="analyze('AMD')" :disabled="loading">
+              {{ loading && activeType === 'AMD' ? 'Analyzing...' : 'AMD Screening' }}
+            </button>
+            <button class="action-btn all" @click="analyzeAll" :disabled="loading">
+              {{ loading && activeType === 'ALL' ? 'Analyzing All...' : ' Full Screening' }}
+            </button>
+          </div>
+
+          <!-- Loading -->
+          <div v-if="loading" class="loading-indicator">
+            <div class="spinner"></div>
+            <p class="loading-text">{{ activeType === 'ALL' ? 'Running full screening...' : 'Analyzing image...' }}</p>
+            <p class="loading-subtext">Enhancing contrast & running predictions</p>
+          </div>
+
+          <!-- Single result -->
+          <div v-if="result && !loading" class="result-card">
+            <p class="result-label">{{ activeType }} Screening Result</p>
+            <p class="result-value">{{ result }}</p>
+            <div class="bar-container">
+              <div class="bar" :style="{ width: confidence + '%' }"></div>
+            </div>
+            <p class="result-confidence">Confidence: {{ confidence }}%</p>
+          </div>
+
+          <!-- All results -->
+          <div v-if="allResults && !loading" class="all-results">
+            <div v-for="r in allResults" :key="r.type" class="result-row">
+              <span class="row-type">{{ r.type }}</span>
+              <span class="row-prediction">{{ r.confidence >= 85 ? r.displayPrediction : 'Inconclusive' }}</span>
+              <div class="bar-container">
+                <div class="bar" :style="{ width: r.confidence + '%' }"></div>
+              </div>
+              <span class="row-confidence">{{ r.confidence }}%</span>
+            </div>
+            <div class="highest-result">
+              Highest confidence: <strong>{{ highestResult.type }} — {{ highestResult.confidence >= 85 ? highestResult.displayPrediction : 'Inconclusive' }} ({{ highestResult.confidence }}%)</strong>
             </div>
           </div>
+
+          <p v-if="error" class="error">{{ error }}</p>
         </div>
       </div>
+    </div>
 
-      <!-- RIGHT PANEL -->
-      <div class="right-panel">
-        <div class="button-group">
-          <button class="analyze-btn glaucoma" @click="analyze('Glaucoma')" :disabled="loading">
-            {{ loading && activeType === 'Glaucoma' ? 'Analyzing...' : 'Analyze Glaucoma' }}
-          </button>
-          <button class="analyze-btn dr" @click="analyze('DR')" :disabled="loading">
-            {{ loading && activeType === 'DR' ? 'Analyzing...' : 'Analyze Diabetic Retinopathy' }}
-          </button>
-          <button class="analyze-btn amd" @click="analyze('AMD')" :disabled="loading">
-            {{ loading && activeType === 'AMD' ? 'Analyzing...' : 'Analyze AMD' }}
-          </button>
-          <button class="analyze-btn all" @click="analyzeAll" :disabled="loading">
-            {{ loading && activeType === 'ALL' ? 'Analyzing All...' : 'Analyze All Conditions' }}
-          </button>
-        </div>
+    <!-- Recent uploads -->
+    <div v-if="recentUploads.length" class="recent-uploads">
+      <h3>Recent Uploads</h3>
+      <div class="thumbs">
+        <img v-for="(img, idx) in recentUploads" :key="idx" :src="img" class="thumb" @click="selectRecent(img)" />
+      </div>
+    </div>
 
-        <!-- Single result -->
-        <div v-if="result" class="result-card" :class="activeType ? activeType.toLowerCase() : ''">
-          <p class="result-text">{{ activeType }} Prediction: <strong>{{ result }}</strong></p>
-          <div class="confidence-bar-container">
-            <div class="confidence-bar" :style="{ width: confidence + '%' }"></div>
-          </div>
-          <p class="confidence">{{ confidence }}%</p>
-        </div>
+    <!-- Bottom buttons -->
+    <div class="action-buttons">
+      <button class="action-btn" @click="uploadAgain">Upload New Image</button>
+      <button class="action-btn" @click="goBack">Back to Home</button>
+    </div>
 
-        <!-- All results -->
-        <div v-if="allResults" class="all-results">
-          <div
-            v-for="r in allResults"
-            :key="r.type"
-            class="all-result-row"
-            :class="r.type.toLowerCase()"
-          >
-            <span class="all-result-type">{{ r.type }}</span>
-            <span class="all-result-prediction">
-              {{ r.confidence >= 90 ? r.displayPrediction : 'Inconclusive' }}
-            </span>
-            <div class="confidence-bar-container">
-              <div class="confidence-bar" :style="{ width: r.confidence + '%' }"></div>
-            </div>
-            <span class="all-result-confidence">{{ r.confidence }}%</span>
-          </div>
-
-          <div class="highest-result">
-             Highest confidence:
-            <strong>
-              {{ highestResult.type }} —
-              {{ highestResult.confidence >= 90 ? highestResult.displayPrediction : 'Inconclusive' }}
-              ({{ highestResult.confidence }}%)
-            </strong>
-          </div>
-        </div>
-
-        <p v-if="error" class="error">{{ error }}</p>
-
-        <div class="actions">
-          <button class="secondary" @click="uploadAgain">Upload New Image</button>
-          <button class="secondary" @click="goBack">Back</button>
-        </div>
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-left">
+        <div class="dept-placeholder">DEPARTMENT OF OPHTHALMOLOGY</div>
+      </div>
+      <div class="footer-right">
+        <p>For technical support please call +3025510 30990 (office hours)</p>
+        <p>email: <a href="mailto:ddart@med.duth.gr">ddart@med.duth.gr</a></p>
+        <p class="made-by">Made by Andreas</p>
       </div>
     </div>
 
@@ -118,22 +128,16 @@ export default {
   mounted() {
     this.image = this.$route.query.img || null
     this.loadRecentUploads()
-
-    // Auto-run if type was passed from home page
     const type = this.$route.query.type
     if (type && this.image) {
-      if (type === 'ALL') {
-        this.analyzeAll()
-      } else {
-        this.analyze(type)
-      }
+      if (type === 'ALL') this.analyzeAll()
+      else this.analyze(type)
     }
   },
 
   methods: {
     async analyze(type) {
       if (!this.image) return
-
       this.loading = true
       this.activeType = type
       this.result = null
@@ -145,37 +149,19 @@ export default {
         const blob = await (await fetch(this.image)).blob()
         const formData = new FormData()
         formData.append("file", blob, "eye.png")
-
-        const endpoints = {
-          Glaucoma: "/predict",
-          DR: "/predict-dr",
-          AMD: "/predict-amd"
-        }
-
-        const response = await fetch(
-          `https://labiris.myiplist.com${endpoints[type]}`,
-          { method: "POST", body: formData }
-        )
-
+        const endpoints = { Glaucoma: "/predict", DR: "/predict-dr", AMD: "/predict-amd" }
+        const response = await fetch(`https://labiris.myiplist.com${endpoints[type]}`, { method: "POST", body: formData })
         const data = await response.json()
-
-        if (!data.prediction) {
-          this.error = "Prediction failed"
-          return
-        }
-
+        if (!data.prediction) { this.error = "Prediction failed"; return }
         let prediction = data.prediction
-
         if (type === "Glaucoma") {
           if (prediction.toLowerCase() === "glaucoma") prediction = "Healthy"
           else if (prediction.toLowerCase() === "healthy") prediction = "Glaucoma"
         }
-
         this.confidence = data.confidence
-        this.result = data.confidence < 90 ? "Inconclusive" : prediction
+        this.result = data.confidence < 85 ? "Inconclusive" : prediction
         this.addToRecent(this.image)
-
-      } catch (err) {
+      } catch {
         this.error = "Backend connection failed"
       } finally {
         this.loading = false
@@ -184,7 +170,6 @@ export default {
 
     async analyzeAll() {
       if (!this.image) return
-
       this.loading = true
       this.activeType = 'ALL'
       this.result = null
@@ -194,51 +179,31 @@ export default {
 
       try {
         const blob = await (await fetch(this.image)).blob()
-
-        const endpoints = {
-          Glaucoma: "/predict",
-          DR: "/predict-dr",
-          AMD: "/predict-amd"
-        }
-
+        const endpoints = { Glaucoma: "/predict", DR: "/predict-dr", AMD: "/predict-amd" }
         const results = await Promise.all(
           Object.entries(endpoints).map(async ([type, endpoint]) => {
             const formData = new FormData()
             formData.append("file", blob, "eye.png")
-            const res = await fetch(`https://labiris.myiplist.com${endpoint}`, {
-              method: "POST",
-              body: formData
-            })
+            const res = await fetch(`https://labiris.myiplist.com${endpoint}`, { method: "POST", body: formData })
             const data = await res.json()
-
             let prediction = data.prediction
             if (type === "Glaucoma") {
               if (prediction.toLowerCase() === "glaucoma") prediction = "Healthy"
               else if (prediction.toLowerCase() === "healthy") prediction = "Glaucoma"
             }
-
-            return {
-              type,
-              prediction: data.prediction,
-              displayPrediction: prediction,
-              confidence: data.confidence
-            }
+            return { type, prediction: data.prediction, displayPrediction: prediction, confidence: data.confidence }
           })
         )
-
         this.allResults = results
         this.addToRecent(this.image)
-
-      } catch (err) {
+      } catch {
         this.error = "Backend connection failed"
       } finally {
         this.loading = false
       }
     },
 
-    uploadAgain() {
-      this.$refs.fileInput.click()
-    },
+    uploadAgain() { this.$refs.fileInput.click() },
 
     handleFileUpload(event) {
       const file = event.target.files[0]
@@ -291,189 +256,297 @@ export default {
       this.allResults = null
     },
 
-    goBack() {
-      this.$router.push("/")
-    }
+    goBack() { this.$router.push("/") }
   }
 }
 </script>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; }
+
 html, body {
   margin: 0;
-  height: 100%;
-  overflow: auto;
+  padding: 0;
+  min-height: 100%;
+  background: #f0f4f8;
+  font-family: 'Source Sans 3', sans-serif;
 }
 
 .process-container {
-  min-height: 100vh;
-  background: #f4f6fa;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 15px;
-  font-family: "Segoe UI", Tahoma, sans-serif;
+  padding: 30px 20px 0;
+  min-height: 100vh;
 }
 
-.title {
-  color: #007bff;
-  margin-bottom: 10px;
-}
-
-.layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  width: 100%;
-  max-width: 1100px;
-}
-
-.left-panel, .right-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.image-card {
-  background: white;
-  border-radius: 15px;
-  padding: 15px;
+.header {
   text-align: center;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  margin-bottom: 24px;
 }
+
+.university {
+  font-size: 14px;
+  color: #2c5282;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin: 0 0 4px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #4a6fa5;
+  margin: 0 0 16px;
+}
+
+.logo {
+  font-family: 'Arial Narrow', Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #2c5282;
+  letter-spacing: 3px;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+}
+
+.logo span {
+  color: #e53e3e;
+  font-size: 48px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  font-family: 'Arial Black', Arial, sans-serif;
+}
+
+.main-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  width: 100%;
+  max-width: 760px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.card-inner {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 320px;
+}
+
+.image-zone {
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: #f8fafc;
+  transition: background 0.2s;
+  padding: 20px;
+}
+
+.image-zone:hover { background: #edf2f7; }
+
+.upload-placeholder { text-align: center; color: #718096; }
+.upload-placeholder p { font-size: 14px; margin: 0 0 6px; color: #4a5568; font-weight: 600; }
+.upload-placeholder span { font-size: 12px; color: #a0aec0; }
 
 .preview {
   max-width: 100%;
-  max-height: 260px;
-  border-radius: 10px;
+  max-height: 280px;
+  border-radius: 4px;
+  object-fit: contain;
 }
 
-.placeholder { color: #777; }
-
-.recent-uploads h3 { font-size: 14px; text-align: center; }
-
-.uploads-list { display: flex; gap: 8px; justify-content: center; }
-
-.upload-thumb {
-  width: 60px;
-  cursor: pointer;
-  border-radius: 6px;
-  border: 2px solid transparent;
+.right-panel {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
-
-.upload-thumb.active { border-color: #007bff; }
-.upload-thumb img { width: 100%; border-radius: 6px; }
 
 .button-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
-.analyze-btn {
-  padding: 12px;
-  border-radius: 10px;
+.action-btn {
+  width: 100%;
+  padding: 11px 14px;
   border: none;
+  border-radius: 4px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 13.5px;
   font-weight: 600;
   color: white;
+  background: #2b6cb0;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.2s;
-}
-
-.analyze-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.analyze-btn:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.9; }
-
-.analyze-btn.glaucoma { background: #dc3545; }
-.analyze-btn.dr       { background: #17a2b8; }
-.analyze-btn.amd      { background: #ffc107; color: #212529; }
-.analyze-btn.all      { background: #6f42c1; }
-
-/* Single result card */
-.result-card {
-  padding: 15px;
-  border-radius: 12px;
+  transition: all 0.2s ease;
+  letter-spacing: 0.3px;
   text-align: center;
-  font-weight: 600;
-  color: white;
 }
 
-.result-card.glaucoma { background: #dc3545; }
-.result-card.dr       { background: #17a2b8; }
-.result-card.amd      { background: #ffc107; color: #212529; }
+.action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.action-btn:hover:not(:disabled) { background: #2c5282; transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
+.action-btn.all { background: #2d3748; }
+.action-btn.all:hover:not(:disabled) { background: #1a202c; }
 
-.confidence-bar-container {
-  width: 80%;
-  height: 12px;
-  background: rgba(255,255,255,0.4);
-  border-radius: 6px;
-  margin: 6px auto;
+/* Loading */
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
 }
 
-.confidence-bar {
-  height: 100%;
-  background: white;
-  border-radius: 6px;
-  transition: width 0.5s ease;
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #2b6cb0;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text { font-weight: 600; color: #2d3748; margin: 0; font-size: 14px; }
+.loading-subtext { font-size: 11px; color: #a0aec0; margin: 0; }
+
+/* Single result */
+.result-card {
+  background: #ebf8ff;
+  border: 1px solid #bee3f8;
+  border-radius: 4px;
+  padding: 14px 16px;
+}
+
+.result-label { font-size: 11px; color: #4a6fa5; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 4px; font-weight: 600; }
+.result-value { font-size: 20px; font-weight: 700; color: #2c5282; margin: 0 0 10px; font-family: 'Playfair Display', serif; }
+.result-confidence { font-size: 12px; color: #4a6fa5; margin: 4px 0 0; }
 
 /* All results */
 .all-results {
-  background: white;
-  border-radius: 12px;
-  padding: 15px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  gap: 8px;
 }
 
-.all-result-row {
+.result-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  color: white;
-  font-weight: 600;
-  font-size: 14px;
+  gap: 8px;
+  font-size: 13px;
 }
 
-.all-result-row.glaucoma { background: #dc3545; }
-.all-result-row.dr       { background: #17a2b8; }
-.all-result-row.amd      { background: #ffc107; color: #212529; }
+.row-type { width: 70px; font-weight: 600; color: #2d3748; flex-shrink: 0; }
+.row-prediction { width: 100px; color: #4a5568; flex-shrink: 0; }
+.row-confidence { width: 40px; text-align: right; color: #718096; flex-shrink: 0; font-size: 12px; }
 
-.all-result-row .confidence-bar-container {
+/* Shared bar */
+.bar-container {
   flex: 1;
-  margin: 0;
-  width: auto;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
 }
 
-.all-result-type        { width: 75px; flex-shrink: 0; }
-.all-result-prediction  { width: 110px; flex-shrink: 0; }
-.all-result-confidence  { width: 45px; text-align: right; flex-shrink: 0; }
+.bar {
+  height: 100%;
+  background: #2b6cb0;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
 
 .highest-result {
-  text-align: center;
-  color: #333;
-  font-size: 14px;
+  font-size: 12px;
+  color: #4a5568;
   padding-top: 8px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
 }
 
-.actions {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
+.error { color: #c53030; font-size: 13px; font-weight: 600; }
+
+/* Recent uploads */
+.recent-uploads {
+  width: 100%;
+  max-width: 760px;
+  margin-bottom: 16px;
 }
 
-.secondary {
-  padding: 8px 14px;
-  border-radius: 8px;
-  background: #6c757d;
-  color: white;
-  border: none;
+.recent-uploads h3 {
+  font-size: 13px;
+  color: #718096;
+  margin: 0 0 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.thumbs { display: flex; gap: 8px; }
+
+.thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 2px solid #e2e8f0;
   cursor: pointer;
+  transition: border-color 0.2s;
 }
 
-.error { color: red; font-weight: 600; }
+.thumb:hover { border-color: #2b6cb0; }
+
+/* Bottom action buttons */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 760px;
+  margin-bottom: 20px;
+}
+
+.action-buttons .action-btn { flex: 1; }
+
+/* Footer */
+.footer {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0 24px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: auto;
+}
+
+.dept-placeholder {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4a6fa5;
+  letter-spacing: 0.5px;
+  border: 1px solid #4a6fa5;
+  padding: 6px 10px;
+  border-radius: 3px;
+}
+
+.footer-right { text-align: right; }
+.footer-right p { font-size: 12px; color: #718096; margin: 2px 0; }
+.footer-right a { color: #2b6cb0; text-decoration: none; }
+.made-by { font-size: 10px; color: #cbd5e0; margin-top: 4px; }
 </style>

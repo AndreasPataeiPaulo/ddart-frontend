@@ -14,7 +14,6 @@
         <div class="upload-zone" @drop.prevent="dropFile" @dragover.prevent @click="triggerUpload">
           <input type="file" accept="image/*" ref="fileInput" hidden @change="uploadFile" />
           <div v-if="!uploadedImage" class="upload-placeholder">
-            <div class="upload-icon">👁</div>
             <p>Upload a fundus image to begin screening</p>
             <span>Click or drag & drop</span>
           </div>
@@ -54,7 +53,7 @@
         AMD Screening
       </button>
       <button class="action-btn all" @click="analyzeImage('ALL')" :disabled="!uploadedImage">
-        🔍 Full Screening
+         Full Screening
       </button>
     </div>
 
@@ -80,6 +79,7 @@
       <div class="footer-right">
         <p>For technical support please call +3025510 30990 (office hours)</p>
         <p>email: <a href="mailto:ddart@med.duth.gr">ddart@med.duth.gr</a></p>
+        <p class="made-by">Made by Andreas</p>
       </div>
     </div>
   </div>
@@ -264,10 +264,10 @@ html, body {
 .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .action-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
 
-.action-btn.glaucoma { background: #c53030; }
+.action-btn.glaucoma { background: #2b6cb0; }
 .action-btn.dr       { background: #2b6cb0; }
-.action-btn.amd      { background: #276749; }
-.action-btn.all      { background: #2d3748; }
+.action-btn.amd      { background: #2b6cb0; }
+.action-btn.all      { background: #2b6cb0; }
 
 .recent-uploads {
   width: 100%;
@@ -322,4 +322,5 @@ html, body {
 .footer-right { text-align: right; }
 .footer-right p { font-size: 12px; color: #718096; margin: 2px 0; }
 .footer-right a { color: #2b6cb0; text-decoration: none; }
+.made-by { font-size: 10px; color: #cbd5e0; margin-top: 4px; }
 </style>
