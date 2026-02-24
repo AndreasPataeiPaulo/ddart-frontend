@@ -1,273 +1,310 @@
 <template>
     <div class="login-container">
-      <!-- Header -->
-      <div class="header">
-        <p class="university">Democritus University of Thrace – DDART spin-off company</p>
-        <p class="subtitle">Ophthalmology A.I. Screening Program</p>
-        <div class="logo">DDART<span>AI</span></div>
-      </div>
-  
-      <!-- Card -->
-      <div class="main-card">
-        <div class="card-inner">
-          <!-- Left panel -->
-          <div class="left-panel">
-            <div class="left-content">
-              <h2>Patient Portal</h2>
-              <p>Sign in or create an account to access the DDART-AI screening system and view your screening history.</p>
-              <ul>
-                <li> Your data is stored securely</li>
-                <li> View last 5 screening results</li>
-                <li> AMKA verification required</li>
-              </ul>
-            </div>
-          </div>
-  
-          <!-- Right panel: form -->
-          <div class="right-panel">
-            <!-- Tabs -->
-            <div class="tabs">
-              <button :class="['tab', { active: mode === 'login' }]" @click="mode = 'login'; error = ''">Sign In</button>
-              <button :class="['tab', { active: mode === 'signup' }]" @click="mode = 'signup'; error = ''">Register</button>
-            </div>
-  
-            <!-- Login form -->
-            <div v-if="mode === 'login'" class="form">
-              <div class="field">
-                <label>AMKA</label>
-                <input v-model="amka" type="text" maxlength="11" placeholder="11-digit AMKA number" />
-              </div>
-              <div class="field">
-                <label>Password</label>
-                <input v-model="password" type="password" placeholder="Your password" />
-              </div>
-              <p v-if="error" class="error">{{ error }}</p>
-              <button class="submit-btn" @click="login" :disabled="loading">
-                {{ loading ? 'Signing in...' : 'Sign In' }}
-              </button>
-            </div>
-  
-            <!-- Signup form -->
-            <div v-if="mode === 'signup'" class="form">
-              <div class="field">
-                <label>Full Name</label>
-                <input v-model="fullName" type="text" placeholder="As it appears on your ID" />
-              </div>
-              <div class="field">
-                <label>AMKA</label>
-                <input v-model="amka" type="text" maxlength="11" placeholder="11-digit AMKA number" />
-                <span class="hint">Your Greek social security number</span>
-              </div>
-              <div class="field">
-                <label>Password</label>
-                <input v-model="password" type="password" placeholder="At least 6 characters" />
-              </div>
-              <div class="field">
-                <label>Confirm Password</label>
-                <input v-model="confirmPassword" type="password" placeholder="Repeat password" />
-              </div>
-              <p v-if="error" class="error">{{ error }}</p>
-              <p class="gdpr-note">
-                By registering, you consent to the storage of your personal data for the purpose of
-                ophthalmology screening research at Democritus University of Thrace, in accordance with GDPR.
-              </p>
-              <button class="submit-btn" @click="signup" :disabled="loading">
-                {{ loading ? 'Registering...' : 'Create Account' }}
-              </button>
-            </div>
-          </div>
+        <!-- Header -->
+        <div class="header">
+            <p class="university">Democritus University of Thrace – DDART spin-off company</p>
+            <p class="subtitle">Ophthalmology A.I. Screening Program</p>
+            <div class="logo">DDART<span>AI</span></div>
         </div>
-      </div>
-  
-      <!-- Footer -->
-      <div class="footer">
-        <div class="footer-left">
-          <img src="/democritus.png" class="dept-logo" />
+
+        <!-- Card -->
+        <div class="main-card">
+            <div class="card-inner">
+                <!-- Left panel -->
+                <div class="left-panel">
+                    <div class="left-content">
+                        <h2>Patient Portal</h2>
+                        <p>Sign in or create an account to access the DDART-AI screening system and view your screening
+                            history.</p>
+                        <ul>
+                            <li> Your data is stored securely</li>
+                            <li> View last 5 screening results</li>
+                            <li> AMKA verification required</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Right panel: form -->
+                <div class="right-panel">
+                    <!-- Tabs -->
+                    <div class="tabs">
+                        <button :class="['tab', { active: mode === 'login' }]" @click="mode = 'login'; error = ''">Sign
+                            In</button>
+                        <button :class="['tab', { active: mode === 'signup' }]"
+                            @click="mode = 'signup'; error = ''">Register</button>
+                    </div>
+
+                    <transition name="fade-slide" mode="out-in">
+                        <!-- Login form -->
+                        <div v-if="mode === 'login'" key="login" class="form">
+                            <div class="field">
+                                <label>AMKA</label>
+                                <input v-model="amka" type="text" maxlength="11" placeholder="11-digit AMKA number" />
+                            </div>
+                            <div class="field">
+                                <label>Password</label>
+                                <input v-model="password" type="password" placeholder="Your password" />
+                            </div>
+                            <p v-if="error" class="error">{{ error }}</p>
+                            <button class="submit-btn" @click="login" :disabled="loading">
+                                {{ loading ? 'Signing in...' : 'Sign In' }}
+                            </button>
+                        </div>
+
+                        <!-- Signup form -->
+                        <div v-else key="signup" class="form">
+                            <div class="field">
+                                <label>Full Name</label>
+                                <input v-model="fullName" type="text" placeholder="As it appears on your ID" />
+                            </div>
+                            <div class="field">
+                                <label>AMKA</label>
+                                <input v-model="amka" type="text" maxlength="11" placeholder="11-digit AMKA number" />
+                                <span class="hint">Your Greek social security number</span>
+                            </div>
+                            <div class="field">
+                                <label>Password</label>
+                                <input v-model="password" type="password" placeholder="At least 6 characters" />
+                            </div>
+                            <div class="field">
+                                <label>Confirm Password</label>
+                                <input v-model="confirmPassword" type="password" placeholder="Repeat password" />
+                            </div>
+                            <p v-if="error" class="error">{{ error }}</p>
+                            <p class="gdpr-note">
+                                By registering, you consent to the storage of your personal data for the purpose of
+                                ophthalmology screening research at Democritus University of Thrace, in accordance with
+                                GDPR.
+                            </p>
+                            <button class="submit-btn" @click="signup" :disabled="loading">
+                                {{ loading ? 'Registering...' : 'Create Account' }}
+                            </button>
+                        </div>
+                    </transition>
+                </div>
+            </div>
         </div>
-        <div class="footer-right">
-          <p>For technical support please call +3025510 30990 (office hours)</p>
-          <p>email: <a href="mailto:ddart@med.duth.gr">ddart@med.duth.gr</a></p>
-          <p class="made-by">Made by Andreas</p>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-left">
+                <img src="/democritus.png" class="dept-logo" />
+            </div>
+            <div class="footer-right">
+                <p>For technical support please call +3025510 30990 (office hours)</p>
+                <p>email: <a href="mailto:ddart@med.duth.gr">ddart@med.duth.gr</a></p>
+                <p class="made-by">Made by Andreas</p>
+            </div>
         </div>
-      </div>
     </div>
-  </template>
-  
-  <script>
-  export default {
+</template>
+
+<script>
+export default {
     data() {
-      return {
-        mode: 'login',
-        fullName: '',
-        amka: '',
-        password: '',
-        confirmPassword: '',
-        error: '',
-        loading: false
-      }
+        return {
+            mode: 'login',
+            fullName: '',
+            amka: '',
+            password: '',
+            confirmPassword: '',
+            error: '',
+            loading: false
+        }
     },
-  
+
     mounted() {
-      // If already logged in, redirect to home
-      const patient = localStorage.getItem('ddart_patient')
-      if (patient) this.$router.push('/')
+        const patient = localStorage.getItem('ddart_patient')
+        if (patient) this.$router.push('/')
     },
-  
+
     methods: {
-      async login() {
-        this.error = ''
-        if (!this.amka || !this.password) { this.error = 'Please fill in all fields'; return }
-        this.loading = true
-        try {
-          const res = await fetch('https://labiris.myiplist.com/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amka: this.amka, password: this.password })
-          })
-          const data = await res.json()
-          if (!res.ok) { this.error = data.detail || 'Login failed'; return }
-          localStorage.setItem('ddart_patient', JSON.stringify({ id: data.patient_id, name: data.full_name }))
-          this.$router.push('/')
-        } catch {
-          this.error = 'Connection failed. Please try again.'
-        } finally {
-          this.loading = false
+        async login() {
+            this.error = ''
+            if (!this.amka || !this.password) { this.error = 'Please fill in all fields'; return }
+            this.loading = true
+            try {
+                const res = await fetch('https://labiris.myiplist.com/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amka: this.amka, password: this.password })
+                })
+                const data = await res.json()
+                if (!res.ok) { this.error = data.detail || 'Login failed'; return }
+                localStorage.setItem('ddart_patient', JSON.stringify({ id: data.patient_id, name: data.full_name }))
+                this.$router.push('/')
+            } catch {
+                this.error = 'Connection failed. Please try again.'
+            } finally {
+                this.loading = false
+            }
+        },
+
+        async signup() {
+            this.error = ''
+            if (!this.fullName || !this.amka || !this.password || !this.confirmPassword) {
+                this.error = 'Please fill in all fields'; return
+            }
+            if (this.password !== this.confirmPassword) {
+                this.error = 'Passwords do not match'; return
+            }
+            if (this.amka.length !== 11 || !/^\d+$/.test(this.amka)) {
+                this.error = 'AMKA must be exactly 11 digits'; return
+            }
+            if (this.password.length < 6) {
+                this.error = 'Password must be at least 6 characters'; return
+            }
+            this.loading = true
+            try {
+                const res = await fetch('https://labiris.myiplist.com/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ full_name: this.fullName, amka: this.amka, password: this.password })
+                })
+                const data = await res.json()
+                if (!res.ok) { this.error = data.detail || 'Registration failed'; return }
+                localStorage.setItem('ddart_patient', JSON.stringify({ id: data.patient_id, name: data.full_name }))
+                this.$router.push('/')
+            } catch {
+                this.error = 'Connection failed. Please try again.'
+            } finally {
+                this.loading = false
+            }
         }
-      },
-  
-      async signup() {
-        this.error = ''
-        if (!this.fullName || !this.amka || !this.password || !this.confirmPassword) {
-          this.error = 'Please fill in all fields'; return
-        }
-        if (this.password !== this.confirmPassword) {
-          this.error = 'Passwords do not match'; return
-        }
-        if (this.amka.length !== 11 || !/^\d+$/.test(this.amka)) {
-          this.error = 'AMKA must be exactly 11 digits'; return
-        }
-        if (this.password.length < 6) {
-          this.error = 'Password must be at least 6 characters'; return
-        }
-        this.loading = true
-        try {
-          const res = await fetch('https://labiris.myiplist.com/auth/signup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ full_name: this.fullName, amka: this.amka, password: this.password })
-          })
-          const data = await res.json()
-          if (!res.ok) { this.error = data.detail || 'Registration failed'; return }
-          localStorage.setItem('ddart_patient', JSON.stringify({ id: data.patient_id, name: data.full_name }))
-          this.$router.push('/')
-        } catch {
-          this.error = 'Connection failed. Please try again.'
-        } finally {
-          this.loading = false
-        }
-      }
     }
-  }
-  </script>
-  
-  <style>
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;600&display=swap');
-  
-  *, *::before, *::after { box-sizing: border-box; }
-  
-  html, body {
-    margin: 0; padding: 0; min-height: 100%;
+}
+</script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;600&display=swap');
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
     background: #f0f4f8;
     font-family: 'Source Sans 3', sans-serif;
-  }
-  
-  .login-container {
+}
+
+.login-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 30px 20px 0;
     min-height: 100vh;
-  }
-  
-  .header { text-align: center; margin-bottom: 24px; }
-  .university { font-size: 14px; color: #2c5282; font-weight: 600; margin: 0 0 4px; }
-  .subtitle { font-size: 13px; color: #4a6fa5; margin: 0 0 16px; }
-  
-  .logo {
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.university {
+    font-size: 14px;
+    color: #2c5282;
+    font-weight: 600;
+    margin: 0 0 4px;
+}
+
+.subtitle {
+    font-size: 13px;
+    color: #4a6fa5;
+    margin: 0 0 16px;
+}
+
+.logo {
     font-family: 'Arial Narrow', Arial, sans-serif;
-    font-size: 18px; font-weight: 700; color: #2c5282;
-    letter-spacing: 3px; display: flex; align-items: baseline;
-    justify-content: center; gap: 2px;
-  }
-  .logo span {
-    color: #e53e3e; font-size: 48px; font-weight: 900;
+    font-size: 18px;
+    font-weight: 700;
+    color: #2c5282;
+    letter-spacing: 3px;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 2px;
+}
+
+.logo span {
+    color: #e53e3e;
+    font-size: 48px;
+    font-weight: 900;
     font-family: 'Arial Black', Arial, sans-serif;
-  }
-  
-  .main-card {
+}
+
+.main-card {
     background: white;
     border: 1px solid #e2e8f0;
     border-radius: 4px;
-    width: 100%; max-width: 760px;
+    width: 100%;
+    max-width: 760px;
     margin-bottom: 24px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  }
-  
-  .card-inner {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.card-inner {
     display: grid;
     grid-template-columns: 280px 1fr;
     min-height: 360px;
-  }
-  
-  .left-panel {
+}
+
+.left-panel {
     background: #2b6cb0;
     border-radius: 4px 0 0 4px;
     display: flex;
     align-items: center;
     padding: 32px 28px;
-  }
-  
-  .left-content h2 {
+}
+
+.left-content h2 {
     font-family: 'Playfair Display', serif;
     color: white;
     font-size: 22px;
     margin: 0 0 12px;
-  }
-  
-  .left-content p {
-    color: rgba(255,255,255,0.85);
+}
+
+.left-content p {
+    color: rgba(255, 255, 255, 0.85);
     font-size: 13.5px;
     line-height: 1.7;
     margin: 0 0 16px;
-  }
-  
-  .left-content ul {
+}
+
+.left-content ul {
     list-style: none;
-    padding: 0; margin: 0;
+    padding: 0;
+    margin: 0;
     display: flex;
     flex-direction: column;
     gap: 8px;
-  }
-  
-  .left-content li {
-    color: rgba(255,255,255,0.9);
+}
+
+.left-content li {
+    color: rgba(255, 255, 255, 0.9);
     font-size: 13px;
-  }
-  
-  .right-panel {
+}
+
+.right-panel {
     padding: 28px 32px;
     display: flex;
     flex-direction: column;
     gap: 16px;
-  }
-  
-  .tabs {
+    overflow: hidden;
+}
+
+.tabs {
     display: flex;
     border-bottom: 2px solid #e2e8f0;
     gap: 4px;
-  }
-  
-  .tab {
+}
+
+.tab {
     padding: 8px 20px;
     border: none;
     background: none;
@@ -279,34 +316,34 @@
     border-bottom: 2px solid transparent;
     margin-bottom: -2px;
     transition: all 0.2s;
-  }
-  
-  .tab.active {
+}
+
+.tab.active {
     color: #2b6cb0;
     border-bottom-color: #2b6cb0;
-  }
-  
-  .form {
+}
+
+.form {
     display: flex;
     flex-direction: column;
     gap: 12px;
-  }
-  
-  .field {
+}
+
+.field {
     display: flex;
     flex-direction: column;
     gap: 4px;
-  }
-  
-  .field label {
+}
+
+.field label {
     font-size: 12px;
     font-weight: 600;
     color: #4a5568;
     text-transform: uppercase;
     letter-spacing: 0.4px;
-  }
-  
-  .field input {
+}
+
+.field input {
     padding: 9px 12px;
     border: 1px solid #e2e8f0;
     border-radius: 4px;
@@ -315,13 +352,18 @@
     color: #2d3748;
     transition: border-color 0.2s;
     outline: none;
-  }
-  
-  .field input:focus { border-color: #2b6cb0; }
-  
-  .hint { font-size: 11px; color: #a0aec0; }
-  
-  .gdpr-note {
+}
+
+.field input:focus {
+    border-color: #2b6cb0;
+}
+
+.hint {
+    font-size: 11px;
+    color: #a0aec0;
+}
+
+.gdpr-note {
     font-size: 11px;
     color: #718096;
     line-height: 1.6;
@@ -330,9 +372,9 @@
     border-radius: 4px;
     padding: 8px 10px;
     margin: 0;
-  }
-  
-  .submit-btn {
+}
+
+.submit-btn {
     padding: 11px;
     background: #2b6cb0;
     color: white;
@@ -344,24 +386,78 @@
     cursor: pointer;
     transition: all 0.2s;
     margin-top: 4px;
-  }
-  
-  .submit-btn:hover:not(:disabled) { background: #2c5282; }
-  .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  
-  .error { color: #c53030; font-size: 13px; font-weight: 600; margin: 0; }
-  
-  .footer {
-    width: 100%; max-width: 760px;
-    display: flex; justify-content: space-between; align-items: center;
+}
+
+.submit-btn:hover:not(:disabled) {
+    background: #2c5282;
+}
+
+.submit-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.error {
+    color: #c53030;
+    font-size: 13px;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Transition */
+.fade-slide-enter-active {
+    transition: all 0.25s ease;
+}
+
+.fade-slide-leave-active {
+    transition: all 0.2s ease;
+}
+
+.fade-slide-enter-from {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.fade-slide-leave-to {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.footer {
+    width: 100%;
+    max-width: 760px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: 16px 0 24px;
     border-top: 1px solid #e2e8f0;
     margin-top: auto;
-  }
-  
-  .dept-logo { height: 55px; width: auto; object-fit: contain; }
-  .footer-right { text-align: right; }
-  .footer-right p { font-size: 12px; color: #718096; margin: 2px 0; }
-  .footer-right a { color: #2b6cb0; text-decoration: none; }
-  .made-by { font-size: 10px; color: #cbd5e0; margin-top: 4px; }
-  </style>
+}
+
+.dept-logo {
+    height: 55px;
+    width: auto;
+    object-fit: contain;
+}
+
+.footer-right {
+    text-align: right;
+}
+
+.footer-right p {
+    font-size: 12px;
+    color: #718096;
+    margin: 2px 0;
+}
+
+.footer-right a {
+    color: #2b6cb0;
+    text-decoration: none;
+}
+
+.made-by {
+    font-size: 10px;
+    color: #cbd5e0;
+    margin-top: 4px;
+}
+</style>

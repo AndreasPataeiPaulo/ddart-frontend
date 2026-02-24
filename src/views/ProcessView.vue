@@ -12,11 +12,13 @@
       <div class="card-inner">
         <!-- LEFT: Image -->
         <div class="image-zone" @drop.prevent="dropFile" @dragover.prevent @click="uploadAgain">
-          <img v-if="image" :src="image" class="preview" />
-          <div v-else class="upload-placeholder">
-            <p>Upload a fundus image to begin screening</p>
-            <span>Click or drag & drop</span>
-          </div>
+          <transition name="fade" mode="out-in">
+            <img v-if="image" key="image" :src="image" class="preview" />
+            <div v-else key="placeholder" class="upload-placeholder">
+              <p>Upload a fundus image to begin screening</p>
+              <span>Click or drag & drop</span>
+            </div>
+          </transition>
         </div>
 
         <!-- RIGHT: Buttons + Results -->
@@ -32,54 +34,64 @@
               {{ loading && activeType === 'AMD' ? 'Analyzing...' : 'AMD Screening' }}
             </button>
             <button class="action-btn all" @click="analyzeAll" :disabled="loading">
-              {{ loading && activeType === 'ALL' ? 'Analyzing All...' : '🔍 Full Screening' }}
+              {{ loading && activeType === 'ALL' ? 'Analyzing All...' : ' Full Screening' }}
             </button>
           </div>
 
-          <!-- Loading -->
-          <div v-if="loading" class="loading-indicator">
-            <div class="spinner"></div>
-            <p class="loading-text">{{ activeType === 'ALL' ? 'Running full screening...' : 'Analyzing image...' }}</p>
-            <p class="loading-subtext">Enhancing contrast & running predictions</p>
-          </div>
-
-          <!-- Single result -->
-          <div v-if="result && !loading" class="result-card">
-            <p class="result-label">{{ activeType }} Screening Result</p>
-            <p class="result-value">{{ result }}</p>
-            <div class="bar-container">
-              <div class="bar" :style="{ width: confidence + '%' }"></div>
+          <transition name="fade-slide" mode="out-in">
+            <!-- Loading -->
+            <div v-if="loading" key="loading" class="loading-indicator">
+              <div class="spinner"></div>
+              <p class="loading-text">{{ activeType === 'ALL' ? 'Running full screening...' : 'Analyzing image...' }}
+              </p>
+              <p class="loading-subtext">Enhancing contrast & running predictions</p>
             </div>
-            <p class="result-confidence">Confidence: {{ confidence }}%</p>
-          </div>
 
-          <!-- All results -->
-          <div v-if="allResults && !loading" class="all-results">
-            <div v-for="r in allResults" :key="r.type" class="result-row">
-              <span class="row-type">{{ r.type }}</span>
-              <span class="row-prediction">{{ r.confidence >= 85 ? r.displayPrediction : 'Inconclusive' }}</span>
+            <!-- Single result -->
+            <div v-else-if="result" key="result" class="result-card">
+              <p class="result-label">{{ activeType }} Screening Result</p>
+              <p class="result-value">{{ result }}</p>
               <div class="bar-container">
-                <div class="bar" :style="{ width: r.confidence + '%' }"></div>
+                <div class="bar" :style="{ width: confidence + '%' }"></div>
               </div>
-              <span class="row-confidence">{{ r.confidence }}%</span>
+              <p class="result-confidence">Confidence: {{ confidence }}%</p>
             </div>
-            <div class="highest-result">
-              🏆 Highest confidence: <strong>{{ highestResult.type }} — {{ highestResult.confidence >= 85 ? highestResult.displayPrediction : 'Inconclusive' }} ({{ highestResult.confidence }}%)</strong>
-            </div>
-          </div>
 
-          <p v-if="error" class="error">{{ error }}</p>
+            <!-- All results -->
+            <div v-else-if="allResults" key="allresults" class="all-results">
+              <div v-for="r in allResults" :key="r.type" class="result-row">
+                <span class="row-type">{{ r.type }}</span>
+                <span class="row-prediction">{{ r.confidence >= 85 ? r.displayPrediction : 'Inconclusive' }}</span>
+                <div class="bar-container">
+                  <div class="bar" :style="{ width: r.confidence + '%' }"></div>
+                </div>
+                <span class="row-confidence">{{ r.confidence }}%</span>
+              </div>
+              <div class="highest-result">
+                🏆 Highest confidence: <strong>{{ highestResult.type }} — {{ highestResult.confidence >= 85 ?
+                  highestResult.displayPrediction : 'Inconclusive' }} ({{ highestResult.confidence }}%)</strong>
+              </div>
+            </div>
+
+            <div v-else key="empty"></div>
+          </transition>
+
+          <transition name="fade">
+            <p v-if="error" class="error">{{ error }}</p>
+          </transition>
         </div>
       </div>
     </div>
 
     <!-- Recent uploads -->
-    <div v-if="recentUploads.length" class="recent-uploads">
-      <h3>Recent Uploads</h3>
-      <div class="thumbs">
-        <img v-for="(img, idx) in recentUploads" :key="idx" :src="img" class="thumb" @click="selectRecent(img)" />
+    <transition name="fade-slide">
+      <div v-if="recentUploads.length" class="recent-uploads">
+        <h3>Recent Uploads</h3>
+        <div class="thumbs">
+          <img v-for="(img, idx) in recentUploads" :key="idx" :src="img" class="thumb" @click="selectRecent(img)" />
+        </div>
       </div>
-    </div>
+    </transition>
 
     <!-- Bottom buttons -->
     <div class="action-buttons">
@@ -244,7 +256,7 @@ export default {
             image_b64: this.image
           })
         })
-      } catch {}
+      } catch { }
     },
 
     uploadAgain() { this.$refs.fileInput.click() },
@@ -308,78 +320,419 @@ export default {
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;600&display=swap');
 
-*, *::before, *::after { box-sizing: border-box; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
-html, body {
-  margin: 0; padding: 0; min-height: 100%;
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
   background: #f0f4f8;
   font-family: 'Source Sans 3', sans-serif;
 }
 
-.process-container { display: flex; flex-direction: column; align-items: center; padding: 30px 20px 0; min-height: 100vh; }
+.process-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 20px 0;
+  min-height: 100vh;
+}
 
-.header { text-align: center; margin-bottom: 24px; }
-.university { font-size: 14px; color: #2c5282; font-weight: 600; margin: 0 0 4px; }
-.subtitle { font-size: 13px; color: #4a6fa5; margin: 0 0 16px; }
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+}
 
-.logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 18px; font-weight: 700; color: #2c5282; letter-spacing: 3px; line-height: 1; display: flex; align-items: baseline; justify-content: center; gap: 2px; }
-.logo span { color: #e53e3e; font-size: 48px; font-weight: 900; letter-spacing: -1px; font-family: 'Arial Black', Arial, sans-serif; }
+.university {
+  font-size: 14px;
+  color: #2c5282;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
 
-.main-card { background: white; border: 1px solid #e2e8f0; border-radius: 4px; width: 100%; max-width: 760px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-.card-inner { display: grid; grid-template-columns: 260px 1fr; min-height: 320px; }
+.subtitle {
+  font-size: 13px;
+  color: #4a6fa5;
+  margin: 0 0 16px;
+}
 
-.image-zone { border-right: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #f8fafc; transition: background 0.2s; padding: 20px; }
-.image-zone:hover { background: #edf2f7; }
-.upload-placeholder { text-align: center; color: #718096; }
-.upload-placeholder p { font-size: 14px; margin: 0 0 6px; color: #4a5568; font-weight: 600; }
-.upload-placeholder span { font-size: 12px; color: #a0aec0; }
-.preview { max-width: 100%; max-height: 280px; border-radius: 4px; object-fit: contain; }
+.logo {
+  font-family: 'Arial Narrow', Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #2c5282;
+  letter-spacing: 3px;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+}
 
-.right-panel { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
-.button-group { display: flex; flex-direction: column; gap: 8px; }
+.logo span {
+  color: #e53e3e;
+  font-size: 48px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  font-family: 'Arial Black', Arial, sans-serif;
+}
 
-.action-btn { width: 100%; padding: 11px 14px; border: none; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 13.5px; font-weight: 600; color: white; background: #2b6cb0; cursor: pointer; transition: all 0.2s ease; letter-spacing: 0.3px; text-align: center; }
-.action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.action-btn:hover:not(:disabled) { background: #2c5282; transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
-.action-btn.all { background: #2d3748; }
-.action-btn.all:hover:not(:disabled) { background: #1a202c; }
+.main-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  width: 100%;
+  max-width: 760px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
 
-.loading-indicator { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px; background: #f8fafc; border-radius: 4px; border: 1px solid #e2e8f0; }
-.spinner { width: 36px; height: 36px; border: 4px solid #e2e8f0; border-top-color: #2b6cb0; border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { font-weight: 600; color: #2d3748; margin: 0; font-size: 14px; }
-.loading-subtext { font-size: 11px; color: #a0aec0; margin: 0; }
+.card-inner {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 320px;
+}
 
-.result-card { background: #ebf8ff; border: 1px solid #bee3f8; border-radius: 4px; padding: 14px 16px; }
-.result-label { font-size: 11px; color: #4a6fa5; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 4px; font-weight: 600; }
-.result-value { font-size: 20px; font-weight: 700; color: #2c5282; margin: 0 0 10px; font-family: 'Playfair Display', serif; }
-.result-confidence { font-size: 12px; color: #4a6fa5; margin: 4px 0 0; }
+.image-zone {
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: #f8fafc;
+  transition: background 0.2s;
+  padding: 20px;
+  overflow: hidden;
+}
 
-.all-results { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
-.result-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-.row-type { width: 70px; font-weight: 600; color: #2d3748; flex-shrink: 0; }
-.row-prediction { width: 100px; color: #4a5568; flex-shrink: 0; }
-.row-confidence { width: 40px; text-align: right; color: #718096; flex-shrink: 0; font-size: 12px; }
+.image-zone:hover {
+  background: #edf2f7;
+}
 
-.bar-container { flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
-.bar { height: 100%; background: #2b6cb0; border-radius: 4px; transition: width 0.5s ease; }
+.upload-placeholder {
+  text-align: center;
+  color: #718096;
+}
 
-.highest-result { font-size: 12px; color: #4a5568; padding-top: 8px; border-top: 1px solid #e2e8f0; text-align: center; }
-.error { color: #c53030; font-size: 13px; font-weight: 600; }
+.upload-placeholder p {
+  font-size: 14px;
+  margin: 0 0 6px;
+  color: #4a5568;
+  font-weight: 600;
+}
 
-.recent-uploads { width: 100%; max-width: 760px; margin-bottom: 16px; }
-.recent-uploads h3 { font-size: 13px; color: #718096; margin: 0 0 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-.thumbs { display: flex; gap: 8px; }
-.thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 4px; border: 2px solid #e2e8f0; cursor: pointer; transition: border-color 0.2s; }
-.thumb:hover { border-color: #2b6cb0; }
+.upload-placeholder span {
+  font-size: 12px;
+  color: #a0aec0;
+}
 
-.action-buttons { display: flex; gap: 12px; width: 100%; max-width: 760px; margin-bottom: 20px; }
-.action-buttons .action-btn { flex: 1; }
+.preview {
+  max-width: 100%;
+  max-height: 280px;
+  border-radius: 4px;
+  object-fit: contain;
+}
 
-.footer { width: 100%; max-width: 760px; display: flex; justify-content: space-between; align-items: center; padding: 16px 0 24px; border-top: 1px solid #e2e8f0; margin-top: auto; }
-.dept-logo { height: 55px; width: auto; object-fit: contain; }
-.footer-right { text-align: right; }
-.footer-right p { font-size: 12px; color: #718096; margin: 2px 0; }
-.footer-right a { color: #2b6cb0; text-decoration: none; }
-.made-by { font-size: 10px; color: #cbd5e0; margin-top: 4px; }
+.right-panel {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.action-btn {
+  width: 100%;
+  padding: 11px 14px;
+  border: none;
+  border-radius: 4px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: white;
+  background: #2b6cb0;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  letter-spacing: 0.3px;
+  text-align: center;
+}
+
+.action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.action-btn:hover:not(:disabled) {
+  background: #2c5282;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+
+.action-btn.all {
+  background: #2d3748;
+}
+
+.action-btn.all:hover:not(:disabled) {
+  background: #1a202c;
+}
+
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #2b6cb0;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+  font-size: 14px;
+}
+
+.loading-subtext {
+  font-size: 11px;
+  color: #a0aec0;
+  margin: 0;
+}
+
+.result-card {
+  background: #ebf8ff;
+  border: 1px solid #bee3f8;
+  border-radius: 4px;
+  padding: 14px 16px;
+}
+
+.result-label {
+  font-size: 11px;
+  color: #4a6fa5;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.result-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2c5282;
+  margin: 0 0 10px;
+  font-family: 'Playfair Display', serif;
+}
+
+.result-confidence {
+  font-size: 12px;
+  color: #4a6fa5;
+  margin: 4px 0 0;
+}
+
+.all-results {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.result-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.row-type {
+  width: 70px;
+  font-weight: 600;
+  color: #2d3748;
+  flex-shrink: 0;
+}
+
+.row-prediction {
+  width: 100px;
+  color: #4a5568;
+  flex-shrink: 0;
+}
+
+.row-confidence {
+  width: 40px;
+  text-align: right;
+  color: #718096;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.bar-container {
+  flex: 1;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar {
+  height: 100%;
+  background: #2b6cb0;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.highest-result {
+  font-size: 12px;
+  color: #4a5568;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.error {
+  color: #c53030;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.recent-uploads {
+  width: 100%;
+  max-width: 760px;
+  margin-bottom: 16px;
+}
+
+.recent-uploads h3 {
+  font-size: 13px;
+  color: #718096;
+  margin: 0 0 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.thumbs {
+  display: flex;
+  gap: 8px;
+}
+
+.thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 2px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.thumb:hover {
+  border-color: #2b6cb0;
+  transform: scale(1.05);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 760px;
+  margin-bottom: 20px;
+}
+
+.action-buttons .action-btn {
+  flex: 1;
+}
+
+.footer {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0 24px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: auto;
+}
+
+.dept-logo {
+  height: 55px;
+  width: auto;
+  object-fit: contain;
+}
+
+.footer-right {
+  text-align: right;
+}
+
+.footer-right p {
+  font-size: 12px;
+  color: #718096;
+  margin: 2px 0;
+}
+
+.footer-right a {
+  color: #2b6cb0;
+  text-decoration: none;
+}
+
+.made-by {
+  font-size: 10px;
+  color: #cbd5e0;
+  margin-top: 4px;
+}
+
+/* Transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.fade-slide-enter-active {
+  transition: all 0.3s ease;
+}
+
+.fade-slide-leave-active {
+  transition: all 0.2s ease;
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
 </style>
