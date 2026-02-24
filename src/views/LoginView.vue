@@ -1,26 +1,20 @@
 <template>
     <div class="login-container">
-        <!-- Header -->
         <div class="header">
             <p class="university">Democritus University of Thrace – DDART spin-off company</p>
             <p class="subtitle">Ophthalmology A.I. Screening Program</p>
             <div class="logo">DDART<span>AI</span></div>
         </div>
 
-        <!-- Role toggle -->
         <div class="role-toggle">
-            <button :class="['role-btn', { active: role === 'patient' }]" @click="role = 'patient'; error = ''">
-                Patient
-            </button>
-            <button :class="['role-btn', { active: role === 'doctor' }]" @click="role = 'doctor'; error = ''">
-                Doctor / Staff
-            </button>
+            <button :class="['role-btn', { active: role === 'patient' }]" @click="role = 'patient'; error = ''">👤
+                Patient</button>
+            <button :class="['role-btn', { active: role === 'doctor' }]" @click="role = 'doctor'; error = ''">🩺 Doctor
+                / Staff</button>
         </div>
 
-        <!-- Card -->
         <div class="main-card">
             <div class="card-inner">
-                <!-- Left panel -->
                 <div class="left-panel">
                     <transition name="fade" mode="out-in">
                         <div v-if="role === 'patient'" key="patient-info" class="left-content">
@@ -28,9 +22,9 @@
                             <p>Sign in or create an account to access the DDART-AI screening system and view your
                                 screening history.</p>
                             <ul>
-                                <li> Your data is stored securely</li>
-                                <li> View last 5 screening results</li>
-                                <li> AMKA verification required</li>
+                                <li>🔒 Your data is stored securely</li>
+                                <li>👁 View last 5 screening results</li>
+                                <li>📋 AMKA verification required</li>
                             </ul>
                         </div>
                         <div v-else key="doctor-info" class="left-content">
@@ -38,26 +32,26 @@
                             <p>Access the clinical dashboard to view patient screenings, statistics, and export data for
                                 research.</p>
                             <ul>
-                                <li> View all patient records</li>
-                                <li> Aggregate statistics</li>
-                                <li> Export to CSV</li>
-                                <li> Access approved by administrator</li>
+                                <li>👥 View all patient records</li>
+                                <li>📊 Aggregate statistics</li>
+                                <li>📥 Export to CSV</li>
+                                <li>🔬 Research study participation</li>
+                                <li>✅ Access approved by administrator</li>
                             </ul>
                         </div>
                     </transition>
                 </div>
 
-                <!-- Right panel -->
                 <div class="right-panel">
-                    <!-- Tabs -->
                     <div class="tabs">
                         <button :class="['tab', { active: mode === 'login' }]" @click="mode = 'login'; error = ''">Sign
                             In</button>
                         <button :class="['tab', { active: mode === 'signup' }]"
-                            @click="mode = 'signup'; error = ''">Sign up</button>
+                            @click="mode = 'signup'; error = ''">Apply For Account</button>
                     </div>
 
                     <transition name="fade-slide" mode="out-in">
+
                         <!-- PATIENT LOGIN -->
                         <div v-if="role === 'patient' && mode === 'login'" key="p-login" class="form">
                             <div class="field">
@@ -70,9 +64,8 @@
                                     @keyup.enter="login" />
                             </div>
                             <p v-if="error" class="error">{{ error }}</p>
-                            <button class="submit-btn" @click="login" :disabled="loading">
-                                {{ loading ? 'Signing in...' : 'Sign In' }}
-                            </button>
+                            <button class="submit-btn" @click="login" :disabled="loading">{{ loading ? 'Signing in...' :
+                                'Sign In' }}</button>
                         </div>
 
                         <!-- PATIENT SIGNUP -->
@@ -98,9 +91,8 @@
                             <p class="gdpr-note">By registering, you consent to the storage of your personal data for
                                 ophthalmology screening research at Democritus University of Thrace, in accordance with
                                 GDPR.</p>
-                            <button class="submit-btn" @click="signup" :disabled="loading">
-                                {{ loading ? 'Registering...' : 'Create Account' }}
-                            </button>
+                            <button class="submit-btn" @click="signup" :disabled="loading">{{ loading ? 'Registering...'
+                                : 'Create Account' }}</button>
                         </div>
 
                         <!-- DOCTOR LOGIN -->
@@ -114,10 +106,16 @@
                                 <input v-model="password" type="password" placeholder="Your password"
                                     @keyup.enter="doctorLogin" />
                             </div>
+                            <label class="research-check" :class="{ checked: loginAsResearch }"
+                                @click="loginAsResearch = !loginAsResearch">
+                                <div class="check-box"><span v-if="loginAsResearch">✓</span></div>
+                                <div class="check-text">
+                                    <span class="check-title">🔬 Sign in as Research Team</span>
+                                    <span class="check-desc">Access the AI agreement study panel</span>
+                                </div>
+                            </label>
                             <p v-if="error" class="error">{{ error }}</p>
-                            <button class="submit-btn" @click="doctorLogin" :disabled="loading">
-                                {{ loading ? 'Signing in...' : 'Sign In' }}
-                            </button>
+                            <button class="submit-btn" @click="doctorLogin" :disabled="loading">{{ loading ? 'Signing in...' : 'Sign In' }}</button>
                         </div>
 
                         <!-- DOCTOR SIGNUP -->
@@ -128,7 +126,7 @@
                             </div>
                             <div class="field">
                                 <label>Email</label>
-                                <input v-model="email" type="email" placeholder="Your institutional email" />
+                                <input v-model="email" type="email" placeholder="Your email address" />
                             </div>
                             <div class="field">
                                 <label>Password</label>
@@ -138,23 +136,28 @@
                                 <label>Confirm Password</label>
                                 <input v-model="confirmPassword" type="password" placeholder="Repeat password" />
                             </div>
+                            <label class="research-check" :class="{ checked: isResearch }"
+                                @click="isResearch = !isResearch">
+                                <div class="check-box"><span v-if="isResearch">✓</span></div>
+                                <div class="check-text">
+                                    <span class="check-title">🔬 Part of Research Team</span>
+                                    <span class="check-desc">I will be participating in the AI agreement study</span>
+                                </div>
+                            </label>
                             <p v-if="error" class="error">{{ error }}</p>
                             <p class="gdpr-note">Your account will be reviewed and approved by the DDART administrator
                                 before you can access the doctor panel.</p>
-                            <button class="submit-btn" @click="doctorSignup" :disabled="loading">
-                                {{ loading ? 'Registering...' : 'Request Access' }}
-                            </button>
+                            <button class="submit-btn" @click="doctorSignup" :disabled="loading">{{ loading ?
+                                'Registering...' : 'Request Access' }}</button>
                         </div>
+
                     </transition>
                 </div>
             </div>
         </div>
 
-        <!-- Footer -->
         <div class="footer">
-            <div class="footer-left">
-                <img src="/democritus.png" class="dept-logo" />
-            </div>
+            <div class="footer-left"><img src="/democritus.png" class="dept-logo" /></div>
             <div class="footer-right">
                 <p>For technical support please call +3025510 30990 (office hours)</p>
                 <p>email: <a href="mailto:ddart@med.duth.gr">ddart@med.duth.gr</a></p>
@@ -175,6 +178,8 @@ export default {
             email: '',
             password: '',
             confirmPassword: '',
+            isResearch: false,
+            loginAsResearch: false,
             error: '',
             loading: false
         }
@@ -182,7 +187,10 @@ export default {
 
     mounted() {
         if (localStorage.getItem('ddart_patient')) this.$router.push('/')
-        if (localStorage.getItem('ddart_doctor')) this.$router.push('/doctor')
+        if (localStorage.getItem('ddart_doctor')) {
+            const d = JSON.parse(localStorage.getItem('ddart_doctor'))
+            this.$router.push(d.is_research ? '/research' : '/doctor')
+        }
     },
 
     methods: {
@@ -192,8 +200,7 @@ export default {
             this.loading = true
             try {
                 const res = await fetch('https://labiris.myiplist.com/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ amka: this.amka, password: this.password })
                 })
                 const data = await res.json()
@@ -213,8 +220,7 @@ export default {
             this.loading = true
             try {
                 const res = await fetch('https://labiris.myiplist.com/auth/signup', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ full_name: this.fullName, amka: this.amka, password: this.password })
                 })
                 const data = await res.json()
@@ -231,14 +237,14 @@ export default {
             this.loading = true
             try {
                 const res = await fetch('https://labiris.myiplist.com/doctor/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: this.email, password: this.password })
                 })
                 const data = await res.json()
                 if (!res.ok) { this.error = data.detail || 'Login failed'; return }
-                localStorage.setItem('ddart_doctor', JSON.stringify({ id: data.doctor_id, name: data.full_name }))
-                this.$router.push('/doctor')
+                const isResearch = this.loginAsResearch || data.is_research
+                localStorage.setItem('ddart_doctor', JSON.stringify({ id: data.doctor_id, name: data.full_name, is_research: isResearch }))
+                this.$router.push(isResearch ? '/research' : '/doctor')
             } catch { this.error = 'Connection failed. Please try again.' }
             finally { this.loading = false }
         },
@@ -251,9 +257,8 @@ export default {
             this.loading = true
             try {
                 const res = await fetch('https://labiris.myiplist.com/doctor/signup', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ full_name: this.fullName, email: this.email, password: this.password })
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ full_name: this.fullName, email: this.email, password: this.password, is_research: this.isResearch })
                 })
                 const data = await res.json()
                 if (!res.ok) { this.error = data.detail || 'Registration failed'; return }
@@ -497,6 +502,62 @@ body {
     border-radius: 4px;
     padding: 8px 10px;
     margin: 0;
+}
+
+.research-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+}
+
+.research-check.checked {
+    border-color: #2b6cb0;
+    background: #ebf8ff;
+}
+
+.check-box {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e2e8f0;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    background: white;
+    transition: all 0.2s;
+    margin-top: 1px;
+}
+
+.research-check.checked .check-box {
+    background: #2b6cb0;
+    border-color: #2b6cb0;
+}
+
+.check-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.check-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #2d3748;
+}
+
+.check-desc {
+    font-size: 11px;
+    color: #718096;
 }
 
 .submit-btn {
