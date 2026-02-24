@@ -1,17 +1,6 @@
 cd ~/Desktop/ai_app
 npm run dev
 
-
-cd ~/Desktop/ai_app/backend
-python3 -m uvicorn app:app --reload --host 0.0.0.0 --port 8000
-
-ngrok:
-
-ngrok http 8000
-
-check the two frontends change links 
-http://127.0.0.1:8000/predict-dr
-
 For dataset purposes only:
 
 -- See all registered patients
@@ -24,4 +13,11 @@ JOIN patients p ON s.patient_id = p.id
 ORDER BY s.created_at DESC;
 
 -- Exit when done
+.quit
+
+
+Manage access;
+sqlite3 ~/ddart-backend/patients.db
+SELECT id, full_name, email, created_at FROM doctors WHERE approved = 0;
+UPDATE doctors SET approved = 1 WHERE email = 'doctor@email.com';
 .quit

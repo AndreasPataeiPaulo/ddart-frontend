@@ -7,43 +7,67 @@
             <div class="logo">DDART<span>AI</span></div>
         </div>
 
+        <!-- Role toggle -->
+        <div class="role-toggle">
+            <button :class="['role-btn', { active: role === 'patient' }]" @click="role = 'patient'; error = ''">
+                Patient
+            </button>
+            <button :class="['role-btn', { active: role === 'doctor' }]" @click="role = 'doctor'; error = ''">
+                Doctor / Staff
+            </button>
+        </div>
+
         <!-- Card -->
         <div class="main-card">
             <div class="card-inner">
                 <!-- Left panel -->
                 <div class="left-panel">
-                    <div class="left-content">
-                        <h2>Patient Portal</h2>
-                        <p>Sign in or create an account to access the DDART-AI screening system and view your screening
-                            history.</p>
-                        <ul>
-                            <li> Your data is stored securely</li>
-                            <li> View last 5 screening results</li>
-                            <li> AMKA verification required</li>
-                        </ul>
-                    </div>
+                    <transition name="fade" mode="out-in">
+                        <div v-if="role === 'patient'" key="patient-info" class="left-content">
+                            <h2>Patient Portal</h2>
+                            <p>Sign in or create an account to access the DDART-AI screening system and view your
+                                screening history.</p>
+                            <ul>
+                                <li> Your data is stored securely</li>
+                                <li> View last 5 screening results</li>
+                                <li> AMKA verification required</li>
+                            </ul>
+                        </div>
+                        <div v-else key="doctor-info" class="left-content">
+                            <h2>Doctor Portal</h2>
+                            <p>Access the clinical dashboard to view patient screenings, statistics, and export data for
+                                research.</p>
+                            <ul>
+                                <li> View all patient records</li>
+                                <li> Aggregate statistics</li>
+                                <li> Export to CSV</li>
+                                <li> Access approved by administrator</li>
+                            </ul>
+                        </div>
+                    </transition>
                 </div>
 
-                <!-- Right panel: form -->
+                <!-- Right panel -->
                 <div class="right-panel">
                     <!-- Tabs -->
                     <div class="tabs">
                         <button :class="['tab', { active: mode === 'login' }]" @click="mode = 'login'; error = ''">Sign
                             In</button>
                         <button :class="['tab', { active: mode === 'signup' }]"
-                            @click="mode = 'signup'; error = ''">Register</button>
+                            @click="mode = 'signup'; error = ''">Sign up</button>
                     </div>
 
                     <transition name="fade-slide" mode="out-in">
-                        <!-- Login form -->
-                        <div v-if="mode === 'login'" key="login" class="form">
+                        <!-- PATIENT LOGIN -->
+                        <div v-if="role === 'patient' && mode === 'login'" key="p-login" class="form">
                             <div class="field">
                                 <label>AMKA</label>
                                 <input v-model="amka" type="text" maxlength="11" placeholder="11-digit AMKA number" />
                             </div>
                             <div class="field">
                                 <label>Password</label>
-                                <input v-model="password" type="password" placeholder="Your password" />
+                                <input v-model="password" type="password" placeholder="Your password"
+                                    @keyup.enter="login" />
                             </div>
                             <p v-if="error" class="error">{{ error }}</p>
                             <button class="submit-btn" @click="login" :disabled="loading">
@@ -51,8 +75,8 @@
                             </button>
                         </div>
 
-                        <!-- Signup form -->
-                        <div v-else key="signup" class="form">
+                        <!-- PATIENT SIGNUP -->
+                        <div v-else-if="role === 'patient' && mode === 'signup'" key="p-signup" class="form">
                             <div class="field">
                                 <label>Full Name</label>
                                 <input v-model="fullName" type="text" placeholder="As it appears on your ID" />
@@ -71,13 +95,54 @@
                                 <input v-model="confirmPassword" type="password" placeholder="Repeat password" />
                             </div>
                             <p v-if="error" class="error">{{ error }}</p>
-                            <p class="gdpr-note">
-                                By registering, you consent to the storage of your personal data for the purpose of
+                            <p class="gdpr-note">By registering, you consent to the storage of your personal data for
                                 ophthalmology screening research at Democritus University of Thrace, in accordance with
-                                GDPR.
-                            </p>
+                                GDPR.</p>
                             <button class="submit-btn" @click="signup" :disabled="loading">
                                 {{ loading ? 'Registering...' : 'Create Account' }}
+                            </button>
+                        </div>
+
+                        <!-- DOCTOR LOGIN -->
+                        <div v-else-if="role === 'doctor' && mode === 'login'" key="d-login" class="form">
+                            <div class="field">
+                                <label>Email</label>
+                                <input v-model="email" type="email" placeholder="Your email address" />
+                            </div>
+                            <div class="field">
+                                <label>Password</label>
+                                <input v-model="password" type="password" placeholder="Your password"
+                                    @keyup.enter="doctorLogin" />
+                            </div>
+                            <p v-if="error" class="error">{{ error }}</p>
+                            <button class="submit-btn" @click="doctorLogin" :disabled="loading">
+                                {{ loading ? 'Signing in...' : 'Sign In' }}
+                            </button>
+                        </div>
+
+                        <!-- DOCTOR SIGNUP -->
+                        <div v-else-if="role === 'doctor' && mode === 'signup'" key="d-signup" class="form">
+                            <div class="field">
+                                <label>Full Name</label>
+                                <input v-model="fullName" type="text" placeholder="Dr. First Last" />
+                            </div>
+                            <div class="field">
+                                <label>Email</label>
+                                <input v-model="email" type="email" placeholder="Your institutional email" />
+                            </div>
+                            <div class="field">
+                                <label>Password</label>
+                                <input v-model="password" type="password" placeholder="At least 6 characters" />
+                            </div>
+                            <div class="field">
+                                <label>Confirm Password</label>
+                                <input v-model="confirmPassword" type="password" placeholder="Repeat password" />
+                            </div>
+                            <p v-if="error" class="error">{{ error }}</p>
+                            <p class="gdpr-note">Your account will be reviewed and approved by the DDART administrator
+                                before you can access the doctor panel.</p>
+                            <button class="submit-btn" @click="doctorSignup" :disabled="loading">
+                                {{ loading ? 'Registering...' : 'Request Access' }}
                             </button>
                         </div>
                     </transition>
@@ -103,9 +168,11 @@
 export default {
     data() {
         return {
+            role: 'patient',
             mode: 'login',
             fullName: '',
             amka: '',
+            email: '',
             password: '',
             confirmPassword: '',
             error: '',
@@ -114,8 +181,8 @@ export default {
     },
 
     mounted() {
-        const patient = localStorage.getItem('ddart_patient')
-        if (patient) this.$router.push('/')
+        if (localStorage.getItem('ddart_patient')) this.$router.push('/')
+        if (localStorage.getItem('ddart_doctor')) this.$router.push('/doctor')
     },
 
     methods: {
@@ -133,27 +200,16 @@ export default {
                 if (!res.ok) { this.error = data.detail || 'Login failed'; return }
                 localStorage.setItem('ddart_patient', JSON.stringify({ id: data.patient_id, name: data.full_name }))
                 this.$router.push('/')
-            } catch {
-                this.error = 'Connection failed. Please try again.'
-            } finally {
-                this.loading = false
-            }
+            } catch { this.error = 'Connection failed. Please try again.' }
+            finally { this.loading = false }
         },
 
         async signup() {
             this.error = ''
-            if (!this.fullName || !this.amka || !this.password || !this.confirmPassword) {
-                this.error = 'Please fill in all fields'; return
-            }
-            if (this.password !== this.confirmPassword) {
-                this.error = 'Passwords do not match'; return
-            }
-            if (this.amka.length !== 11 || !/^\d+$/.test(this.amka)) {
-                this.error = 'AMKA must be exactly 11 digits'; return
-            }
-            if (this.password.length < 6) {
-                this.error = 'Password must be at least 6 characters'; return
-            }
+            if (!this.fullName || !this.amka || !this.password || !this.confirmPassword) { this.error = 'Please fill in all fields'; return }
+            if (this.password !== this.confirmPassword) { this.error = 'Passwords do not match'; return }
+            if (this.amka.length !== 11 || !/^\d+$/.test(this.amka)) { this.error = 'AMKA must be exactly 11 digits'; return }
+            if (this.password.length < 6) { this.error = 'Password must be at least 6 characters'; return }
             this.loading = true
             try {
                 const res = await fetch('https://labiris.myiplist.com/auth/signup', {
@@ -165,11 +221,46 @@ export default {
                 if (!res.ok) { this.error = data.detail || 'Registration failed'; return }
                 localStorage.setItem('ddart_patient', JSON.stringify({ id: data.patient_id, name: data.full_name }))
                 this.$router.push('/')
-            } catch {
-                this.error = 'Connection failed. Please try again.'
-            } finally {
-                this.loading = false
-            }
+            } catch { this.error = 'Connection failed. Please try again.' }
+            finally { this.loading = false }
+        },
+
+        async doctorLogin() {
+            this.error = ''
+            if (!this.email || !this.password) { this.error = 'Please fill in all fields'; return }
+            this.loading = true
+            try {
+                const res = await fetch('https://labiris.myiplist.com/doctor/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: this.email, password: this.password })
+                })
+                const data = await res.json()
+                if (!res.ok) { this.error = data.detail || 'Login failed'; return }
+                localStorage.setItem('ddart_doctor', JSON.stringify({ id: data.doctor_id, name: data.full_name }))
+                this.$router.push('/doctor')
+            } catch { this.error = 'Connection failed. Please try again.' }
+            finally { this.loading = false }
+        },
+
+        async doctorSignup() {
+            this.error = ''
+            if (!this.fullName || !this.email || !this.password || !this.confirmPassword) { this.error = 'Please fill in all fields'; return }
+            if (this.password !== this.confirmPassword) { this.error = 'Passwords do not match'; return }
+            if (this.password.length < 6) { this.error = 'Password must be at least 6 characters'; return }
+            this.loading = true
+            try {
+                const res = await fetch('https://labiris.myiplist.com/doctor/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ full_name: this.fullName, email: this.email, password: this.password })
+                })
+                const data = await res.json()
+                if (!res.ok) { this.error = data.detail || 'Registration failed'; return }
+                alert('Account created! Your access is pending approval by the administrator.')
+                this.mode = 'login'
+            } catch { this.error = 'Connection failed. Please try again.' }
+            finally { this.loading = false }
         }
     }
 }
@@ -203,7 +294,7 @@ body {
 
 .header {
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .university {
@@ -238,6 +329,39 @@ body {
     font-family: 'Arial Black', Arial, sans-serif;
 }
 
+.role-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 4px;
+}
+
+.role-btn {
+    flex: 1;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #718096;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: none;
+}
+
+.role-btn.active {
+    background: #2b6cb0;
+    color: white;
+}
+
+.role-btn:hover:not(.active) {
+    background: #f8fafc;
+}
+
 .main-card {
     background: white;
     border: 1px solid #e2e8f0;
@@ -260,6 +384,7 @@ body {
     display: flex;
     align-items: center;
     padding: 32px 28px;
+    overflow: hidden;
 }
 
 .left-content h2 {
@@ -404,7 +529,16 @@ body {
     margin: 0;
 }
 
-/* Transition */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
 .fade-slide-enter-active {
     transition: all 0.25s ease;
 }
