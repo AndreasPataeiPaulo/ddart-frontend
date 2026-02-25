@@ -22,9 +22,9 @@
                             <p>Sign in or create an account to access the DDART-AI screening system and view your
                                 screening history.</p>
                             <ul>
-                                <li>🔒 Your data is stored securely</li>
-                                <li>👁 View last 5 screening results</li>
-                                <li>📋 AMKA verification required</li>
+                                <li> Your data is stored securely</li>
+                                <li> View last 5 screening results</li>
+                                <li> AMKA verification required</li>
                             </ul>
                         </div>
                         <div v-else key="doctor-info" class="left-content">
@@ -32,11 +32,11 @@
                             <p>Access the clinical dashboard to view patient screenings, statistics, and export data for
                                 research.</p>
                             <ul>
-                                <li>👥 View all patient records</li>
-                                <li>📊 Aggregate statistics</li>
-                                <li>📥 Export to CSV</li>
-                                <li>🔬 Research study participation</li>
-                                <li>✅ Access approved by administrator</li>
+                                <li> View all patient records</li>
+                                <li> Aggregate statistics</li>
+                                <li> Export to CSV</li>
+                                <li> Research study participation</li>
+                                <li> Access approved by administrator</li>
                             </ul>
                         </div>
                     </transition>
@@ -47,7 +47,7 @@
                         <button :class="['tab', { active: mode === 'login' }]" @click="mode = 'login'; error = ''">Sign
                             In</button>
                         <button :class="['tab', { active: mode === 'signup' }]"
-                            @click="mode = 'signup'; error = ''">Apply For Account</button>
+                            @click="mode = 'signup'; error = ''">Sign up</button>
                     </div>
 
                     <transition name="fade-slide" mode="out-in">
@@ -110,7 +110,7 @@
                                 @click="loginAsResearch = !loginAsResearch">
                                 <div class="check-box"><span v-if="loginAsResearch">✓</span></div>
                                 <div class="check-text">
-                                    <span class="check-title">🔬 Sign in as Research Team</span>
+                                    <span class="check-title"> Sign in as Research Team</span>
                                     <span class="check-desc">Access the AI agreement study panel</span>
                                 </div>
                             </label>
