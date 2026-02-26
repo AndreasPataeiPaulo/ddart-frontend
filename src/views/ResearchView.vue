@@ -217,6 +217,7 @@
 
 <script>
 export default {
+    
     data() {
         return {
             doctorName: '',
