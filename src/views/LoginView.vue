@@ -1,7 +1,6 @@
 <template>
     <div class="login-container" :class="{ dark: isDark }">
 
-        <!-- ENTRY ANIMATION OVERLAY -->
         <transition name="overlay-fade">
             <div v-if="showOverlay" class="entry-overlay">
                 <div class="entry-content">
@@ -17,15 +16,14 @@
         </transition>
 
         <div class="header">
+            <button class="study-official-btn" @click="$router.push('/study')">Study Official</button>
             <div class="header-controls">
                 <div class="lang-toggle">
                     <button :class="['lang-btn', { active: lang === 'en' }]" @click="setLang('en')">EN</button>
                     <span class="lang-sep">|</span>
                     <button :class="['lang-btn', { active: lang === 'gr' }]" @click="setLang('gr')">EL</button>
                 </div>
-                <button class="dark-btn" @click="toggleDark">
-                    {{ isDark ? 'Light' : 'Dark' }}
-                </button>
+                <button class="dark-btn" @click="toggleDark">{{ isDark ? 'Light' : 'Dark' }}</button>
             </div>
             <transition name="header-fade" mode="out-in">
                 <div :key="lang" class="header-text">
@@ -37,7 +35,7 @@
         </div>
 
         <div class="role-toggle">
-            <button :class="['role-btn', { active: role === 'patient' }]" @click="role = 'patient'; error = ''">{{ t('Patient', 'Ασθενής') }}</button>
+            <button :class="['role-btn', { active: role === 'health-center' }]" @click="role = 'health-center'; error = ''">{{ t('Health Center', 'Κέντρο Υγείας') }}</button>
             <button :class="['role-btn', { active: role === 'doctor' }]" @click="role = 'doctor'; error = ''">{{ t('Doctor / Staff', 'Ιατρός / Προσωπικό') }}</button>
         </div>
 
@@ -45,15 +43,18 @@
             <div class="card-inner">
                 <div class="left-panel">
                     <transition name="panel-slide" mode="out-in">
-                        <div v-if="role === 'patient'" key="patient-info" class="left-content">
-                            <h2>{{ t('Patient Portal', 'Πύλη Ασθενών') }}</h2>
-                            <p>{{ t('Sign in or create an account to access the DDART-AI screening system and view your screening history.', 'Συνδεθείτε ή δημιουργήστε λογαριασμό για πρόσβαση στο σύστημα διάγνωσης DDART-AI και την ιστορία εξετάσεών σας.') }}</p>
+
+                        <div v-if="role === 'health-center'" key="hc-info" class="left-content">
+                            <h2>{{ t('Health Center Portal', 'Πύλη Κέντρου Υγείας') }}</h2>
+                            <p>{{ t('Sign in with your health center credentials to upload patient retinal images for immediate AI screening and research review.', 'Συνδεθείτε με τα στοιχεία του κέντρου υγείας σας για να ανεβάσετε εικόνες αμφιβληστροειδούς για διάγνωση ΤΝ και αξιολόγηση από ερευνητές.') }}</p>
                             <ul>
-                                <li>{{ t('Your data is stored securely', 'Τα δεδομένα σας αποθηκεύονται με ασφάλεια') }}</li>
-                                <li>{{ t('View last 5 screening results', 'Προβολή 5 τελευταίων αποτελεσμάτων') }}</li>
-                                <li>{{ t('AMKA verification required', 'Απαιτείται επαλήθευση ΑΜΚΑ') }}</li>
+                                <li>{{ t('Images analysed instantly by AI', 'Ακαριαία ανάλυση εικόνων από ΤΝ') }}</li>
+                                <li>{{ t('All three conditions screened', 'Έλεγχος και για τις τρεις παθήσεις') }}</li>
+                                <li>{{ t('Results reviewed by research team', 'Αποτελέσματα αξιολογούνται από ερευνητές') }}</li>
+                                <li>{{ t('Access granted by administrator', 'Πρόσβαση χορηγείται από διαχειριστή') }}</li>
                             </ul>
                         </div>
+
                         <div v-else key="doctor-info" class="left-content">
                             <h2>{{ t('Doctor Portal', 'Πύλη Ιατρών') }}</h2>
                             <p>{{ t('Access the clinical dashboard to view patient screenings, statistics, and export data for research.', 'Πρόσβαση στον κλινικό πίνακα για προβολή εξετάσεων, στατιστικών και εξαγωγή δεδομένων.') }}</p>
@@ -65,63 +66,36 @@
                                 <li>{{ t('Access approved by administrator', 'Πρόσβαση εγκεκριμένη από διαχειριστή') }}</li>
                             </ul>
                         </div>
+
                     </transition>
                 </div>
 
                 <div class="right-panel">
                     <div class="tabs">
                         <button :class="['tab', { active: mode === 'login' }]" @click="mode = 'login'; error = ''">{{ t('Sign In', 'Σύνδεση') }}</button>
-                        <button :class="['tab', { active: mode === 'signup' }]" @click="mode = 'signup'; error = ''">{{ t('Sign Up', 'Εγγραφή') }}</button>
+                        <button v-if="role === 'doctor'" :class="['tab', { active: mode === 'signup' }]" @click="mode = 'signup'; error = ''">{{ t('Sign Up', 'Εγγραφή') }}</button>
                     </div>
 
                     <transition name="form-slide" mode="out-in">
 
-                        <!-- PATIENT LOGIN -->
-                        <div v-if="role === 'patient' && mode === 'login'" key="p-login" class="form">
+                        <!-- HEALTH CENTER LOGIN -->
+                        <div v-if="role === 'health-center' && mode === 'login'" key="hc-login" class="form">
                             <div class="field">
-                                <label>AMKA</label>
-                                <input v-model="amka" type="text" maxlength="11" :placeholder="t('11-digit AMKA number', '11-ψήφιος αριθμός ΑΜΚΑ')" />
+                                <label>{{ t('Health Center Name', 'Όνομα Κέντρου Υγείας') }}</label>
+                                <input v-model="centerName" type="text" :placeholder="t('Full name of your health center', 'Πλήρες όνομα κέντρου υγείας')" />
                             </div>
                             <div class="field">
                                 <label>{{ t('Password', 'Κωδικός') }}</label>
-                                <input v-model="password" type="password" :placeholder="t('Your password', 'Ο κωδικός σας')" @keyup.enter="login" />
+                                <input v-model="password" type="password" :placeholder="t('Your password', 'Ο κωδικός σας')" @keyup.enter="healthCenterLogin" />
                             </div>
                             <transition name="error-pop">
                                 <p v-if="error" class="error">{{ error }}</p>
                             </transition>
-                            <button class="submit-btn" @click="login" :disabled="loading">
+                            <button class="submit-btn" @click="healthCenterLogin" :disabled="loading">
                                 <span class="btn-text">{{ loading ? t('Signing in...', 'Σύνδεση...') : t('Sign In', 'Σύνδεση') }}</span>
                                 <span v-if="loading" class="btn-spinner"></span>
                             </button>
-                        </div>
-
-                        <!-- PATIENT SIGNUP -->
-                        <div v-else-if="role === 'patient' && mode === 'signup'" key="p-signup" class="form">
-                            <div class="field">
-                                <label>{{ t('Full Name', 'Ονοματεπώνυμο') }}</label>
-                                <input v-model="fullName" type="text" :placeholder="t('As it appears on your ID', 'Όπως στην ταυτότητά σας')" />
-                            </div>
-                            <div class="field">
-                                <label>AMKA</label>
-                                <input v-model="amka" type="text" maxlength="11" :placeholder="t('11-digit AMKA number', '11-ψήφιος αριθμός ΑΜΚΑ')" />
-                                <span class="hint">{{ t('Your Greek social security number', 'Ο αριθμός κοινωνικής ασφάλισής σας') }}</span>
-                            </div>
-                            <div class="field">
-                                <label>{{ t('Password', 'Κωδικός') }}</label>
-                                <input v-model="password" type="password" :placeholder="t('At least 6 characters', 'Τουλάχιστον 6 χαρακτήρες')" />
-                            </div>
-                            <div class="field">
-                                <label>{{ t('Confirm Password', 'Επιβεβαίωση Κωδικού') }}</label>
-                                <input v-model="confirmPassword" type="password" :placeholder="t('Repeat password', 'Επαναλάβετε τον κωδικό')" />
-                            </div>
-                            <transition name="error-pop">
-                                <p v-if="error" class="error">{{ error }}</p>
-                            </transition>
-                            <p class="gdpr-note">{{ t('By registering, you consent to the storage of your personal data for ophthalmology screening research at Democritus University of Thrace, in accordance with GDPR.', 'Με την εγγραφή σας, συναινείτε στην αποθήκευση των προσωπικών σας δεδομένων για ερευνητικούς σκοπούς οφθαλμολογικής διάγνωσης στο ΔΠΘ, σύμφωνα με τον ΓΚΠΔ.') }}</p>
-                            <button class="submit-btn" @click="signup" :disabled="loading">
-                                <span class="btn-text">{{ loading ? t('Registering...', 'Εγγραφή...') : t('Create Account', 'Δημιουργία Λογαριασμού') }}</span>
-                                <span v-if="loading" class="btn-spinner"></span>
-                            </button>
+                            <p class="access-note">{{ t('Access is granted by the DDART administrator. Contact ddart@med.duth.gr to register your center.', 'Η πρόσβαση χορηγείται από τον διαχειριστή DDART. Επικοινωνήστε με ddart@med.duth.gr για εγγραφή του κέντρου σας.') }}</p>
                         </div>
 
                         <!-- DOCTOR LOGIN -->
@@ -212,10 +186,10 @@ export default {
 
     data() {
         return {
-            role: 'patient',
+            role: 'health-center',
             mode: 'login',
+            centerName: '',
             fullName: '',
-            amka: '',
             email: '',
             password: '',
             confirmPassword: '',
@@ -224,7 +198,6 @@ export default {
             error: '',
             loading: false,
             isDark: localStorage.getItem('ddart_dark') === 'true',
-            // Entry overlay
             showOverlay: false,
             barWidth: 0,
             entryMessage: ''
@@ -232,10 +205,9 @@ export default {
     },
 
     mounted() {
-        if (localStorage.getItem('ddart_patient')) this.$router.push('/')
+        if (localStorage.getItem('ddart_health_center')) this.$router.push('/health-center')
         if (localStorage.getItem('ddart_doctor')) {
-            const d = JSON.parse(localStorage.getItem('ddart_doctor'))
-            this.$router.push(d.is_research ? '/research' : '/doctor')
+            this.$router.push('/research')
         }
     },
 
@@ -249,65 +221,36 @@ export default {
             this.entryMessage = message
             this.showOverlay = true
             this.barWidth = 0
-
-            // Animate bar to 100% over 1.6s then navigate
             const start = performance.now()
             const duration = 1600
             const animate = (now) => {
                 const progress = Math.min((now - start) / duration, 1)
-                // Ease-out curve for the bar
                 this.barWidth = Math.round((1 - Math.pow(1 - progress, 3)) * 100)
                 if (progress < 1) {
                     requestAnimationFrame(animate)
                 } else {
-                    setTimeout(() => {
-                        this.$router.push(destination)
-                    }, 200)
+                    setTimeout(() => this.$router.push(destination), 200)
                 }
             }
             requestAnimationFrame(animate)
         },
 
-        async login() {
+        async healthCenterLogin() {
             this.error = ''
-            if (!this.amka || !this.password) { this.error = this.t('Please fill in all fields', 'Παρακαλώ συμπληρώστε όλα τα πεδία'); return }
+            if (!this.centerName || !this.password) { this.error = this.t('Please fill in all fields', 'Παρακαλώ συμπληρώστε όλα τα πεδία'); return }
             this.loading = true
             try {
-                const res = await fetch('https://labiris.myiplist.com/auth/login', {
+                const res = await fetch('https://labiris.myiplist.com/health-center/login', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ amka: this.amka, password: this.password })
+                    body: JSON.stringify({ name: this.centerName, password: this.password })
                 })
                 const data = await res.json()
                 if (!res.ok) { this.error = data.detail || this.t('Login failed', 'Αποτυχία σύνδεσης'); return }
-                localStorage.setItem('ddart_patient', JSON.stringify({ id: data.patient_id, name: data.full_name }))
+                localStorage.setItem('ddart_health_center', JSON.stringify({ id: data.health_center_id, name: data.name }))
                 this.loading = false
                 this.showEntryAnimation(
-                    this.t('Welcome, ' + data.full_name, 'Καλώς ορίσατε, ' + data.full_name),
-                    '/'
-                )
-            } catch { this.error = this.t('Connection failed. Please try again.', 'Αποτυχία σύνδεσης. Δοκιμάστε ξανά.') }
-            finally { this.loading = false }
-        },
-
-        async signup() {
-            this.error = ''
-            if (!this.fullName || !this.amka || !this.password || !this.confirmPassword) { this.error = this.t('Please fill in all fields', 'Παρακαλώ συμπληρώστε όλα τα πεδία'); return }
-            if (this.password !== this.confirmPassword) { this.error = this.t('Passwords do not match', 'Οι κωδικοί δεν ταιριάζουν'); return }
-            if (this.amka.length !== 11 || !/^\d+$/.test(this.amka)) { this.error = this.t('AMKA must be exactly 11 digits', 'Ο ΑΜΚΑ πρέπει να είναι 11 ψηφία'); return }
-            if (this.password.length < 6) { this.error = this.t('Password must be at least 6 characters', 'Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες'); return }
-            this.loading = true
-            try {
-                const res = await fetch('https://labiris.myiplist.com/auth/signup', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ full_name: this.fullName, amka: this.amka, password: this.password })
-                })
-                const data = await res.json()
-                if (!res.ok) { this.error = data.detail || this.t('Registration failed', 'Αποτυχία εγγραφής'); return }
-                localStorage.setItem('ddart_patient', JSON.stringify({ id: data.patient_id, name: data.full_name }))
-                this.loading = false
-                this.showEntryAnimation(
-                    this.t('Account created. Welcome!', 'Ο λογαριασμός δημιουργήθηκε. Καλώς ορίσατε!'),
-                    '/'
+                    this.t('Welcome, ' + data.name, 'Καλώς ορίσατε, ' + data.name),
+                    '/health-center'
                 )
             } catch { this.error = this.t('Connection failed. Please try again.', 'Αποτυχία σύνδεσης. Δοκιμάστε ξανά.') }
             finally { this.loading = false }
@@ -324,12 +267,11 @@ export default {
                 })
                 const data = await res.json()
                 if (!res.ok) { this.error = data.detail || this.t('Login failed', 'Αποτυχία σύνδεσης'); return }
-                const isResearch = this.loginAsResearch || data.is_research
-                localStorage.setItem('ddart_doctor', JSON.stringify({ id: data.doctor_id, name: data.full_name, is_research: isResearch }))
+                localStorage.setItem('ddart_doctor', JSON.stringify({ id: data.doctor_id, name: data.full_name, is_research: true }))
                 this.loading = false
                 this.showEntryAnimation(
                     this.t('Welcome, Dr. ' + data.full_name, 'Καλώς ορίσατε, Δρ. ' + data.full_name),
-                    isResearch ? '/research' : '/doctor'
+                    '/research'
                 )
             } catch { this.error = this.t('Connection failed. Please try again.', 'Αποτυχία σύνδεσης. Δοκιμάστε ξανά.') }
             finally { this.loading = false }
@@ -348,7 +290,7 @@ export default {
                 })
                 const data = await res.json()
                 if (!res.ok) { this.error = data.detail || this.t('Registration failed', 'Αποτυχία εγγραφής'); return }
-                alert(this.t('Account created! Your access is pending approval by the administrator.', 'Ο λογαριασμός δημιουργήθηκε! Η πρόσβασή σας αναμένει έγκριση από τον διαχειριστή.'))
+                alert(this.t('Account created! You can now sign in.', 'Ο λογαριασμός δημιουργήθηκε! Μπορείτε τώρα να συνδεθείτε.'))
                 this.mode = 'login'
             } catch { this.error = this.t('Connection failed. Please try again.', 'Αποτυχία σύνδεσης. Δοκιμάστε ξανά.') }
             finally { this.loading = false }
@@ -361,88 +303,24 @@ export default {
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;600&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-family: 'Source Sans 3', sans-serif; overflow-x: hidden; }
 
-html, body {
-    margin: 0; padding: 0; min-height: 100%;
-    background: #f0f4f8;
-    font-family: 'Source Sans 3', sans-serif;
-    overflow-x: hidden;
-}
+.login-container { display: flex; flex-direction: column; align-items: center; padding: 30px 20px 0; min-height: 100vh; width: 100%; background: #f0f4f8; transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 
-.login-container {
-    display: flex; flex-direction: column; align-items: center;
-    padding: 30px 20px 0; min-height: 100vh; width: 100%;
-    background: #f0f4f8;
-    transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* ══════════════════════════════════════
-   ENTRY OVERLAY
-══════════════════════════════════════ */
-.entry-overlay {
-    position: fixed; inset: 0; z-index: 9999;
-    background: #1a2a4a;
-    display: flex; align-items: center; justify-content: center;
-}
-.entry-content {
-    display: flex; flex-direction: column; align-items: center; gap: 28px;
-}
-.entry-logo {
-    font-family: 'Arial Narrow', Arial, sans-serif;
-    font-size: 22px; font-weight: 700; color: white;
-    letter-spacing: 4px;
-    display: flex; align-items: baseline; gap: 2px;
-    animation: logo-appear 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
-}
+.entry-overlay { position: fixed; inset: 0; z-index: 9999; background: #1a2a4a; display: flex; align-items: center; justify-content: center; }
+.entry-content { display: flex; flex-direction: column; align-items: center; gap: 28px; }
+.entry-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 22px; font-weight: 700; color: white; letter-spacing: 4px; display: flex; align-items: baseline; gap: 2px; animation: logo-appear 0.6s cubic-bezier(0.4, 0, 0.2, 1) both; }
 .entry-ddart { color: white; }
-.entry-ai {
-    color: #e53e3e; font-size: 72px; font-weight: 900;
-    font-family: 'Arial Black', Arial, sans-serif;
-    line-height: 1;
-}
-.entry-bar {
-    width: 260px; height: 3px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 2px; overflow: hidden;
-}
-.entry-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #4299e1, #63b3ed);
-    border-radius: 2px;
-    transition: width 0.05s linear;
-}
-.entry-msg {
-    color: rgba(255,255,255,0.7);
-    font-size: 14px; font-weight: 400;
-    letter-spacing: 0.3px;
-    margin: 0;
-    animation: msg-appear 0.5s 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
-}
+.entry-ai { color: #e53e3e; font-size: 72px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; line-height: 1; }
+.entry-bar { width: 260px; height: 3px; background: rgba(255,255,255,0.15); border-radius: 2px; overflow: hidden; }
+.entry-bar-fill { height: 100%; background: linear-gradient(90deg, #4299e1, #63b3ed); border-radius: 2px; transition: width 0.05s linear; }
+.entry-msg { color: rgba(255,255,255,0.7); font-size: 14px; font-weight: 400; letter-spacing: 0.3px; margin: 0; animation: msg-appear 0.5s 0.3s cubic-bezier(0.4, 0, 0.2, 1) both; }
+@keyframes logo-appear { from { opacity: 0; transform: scale(0.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes msg-appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.overlay-fade-leave-active { transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+.overlay-fade-leave-to { opacity: 0; transform: scale(1.04); }
 
-@keyframes logo-appear {
-    from { opacity: 0; transform: scale(0.92) translateY(8px); }
-    to   { opacity: 1; transform: scale(1) translateY(0); }
-}
-@keyframes msg-appear {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-/* Overlay fade out */
-.overlay-fade-leave-active {
-    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-                transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.overlay-fade-leave-to {
-    opacity: 0;
-    transform: scale(1.04);
-}
-
-/* ── Header controls ── */
-.header-controls {
-    position: absolute; top: 20px; right: 20px;
-    display: flex; align-items: center; gap: 12px;
-}
+.header-controls { position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 12px; }
 .lang-toggle { display: flex; align-items: center; gap: 4px; }
 .lang-btn { background: none; border: none; font-family: 'Source Sans 3', sans-serif; font-size: 12px; font-weight: 700; color: #a0aec0; cursor: pointer; padding: 3px 6px; border-radius: 3px; transition: color 0.2s ease, background 0.2s ease; letter-spacing: 0.5px; }
 .lang-btn.active { color: #2b6cb0; background: #ebf8ff; }
@@ -450,8 +328,6 @@ html, body {
 .lang-sep { color: #e2e8f0; font-size: 12px; }
 .dark-btn { background: none; border: 1px solid #e2e8f0; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 11px; font-weight: 700; color: #718096; cursor: pointer; padding: 3px 10px; transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease; letter-spacing: 0.4px; }
 .dark-btn:hover { background: #edf2f7; }
-
-/* ── Header ── */
 .header { text-align: center; margin-bottom: 20px; width: 100%; position: relative; }
 .header-text { transition: opacity 0.2s ease; }
 .university { font-size: 14px; color: #2c5282; font-weight: 600; margin: 0 0 4px; transition: color 0.4s ease; }
@@ -459,14 +335,12 @@ html, body {
 .logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 18px; font-weight: 700; color: #2c5282; letter-spacing: 3px; display: flex; align-items: baseline; justify-content: center; gap: 2px; transition: color 0.4s ease; }
 .logo span { color: #e53e3e; font-size: 48px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; }
 
-/* ── Role toggle ── */
 .role-toggle { display: flex; gap: 8px; margin-bottom: 20px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; width: 100%; max-width: 760px; transition: background 0.4s ease, border-color 0.4s ease; }
 .role-btn { flex: 1; padding: 8px 16px; border: none; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; white-space: nowrap; transition: background 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s ease, transform 0.15s ease; }
 .role-btn.active { background: #2b6cb0; color: white; }
 .role-btn:hover:not(.active) { background: #f0f4f8; }
 .role-btn:active { transform: scale(0.98); }
 
-/* ── Card ── */
 .main-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; width: 100%; max-width: 760px; margin-bottom: 24px; box-shadow: 0 2px 16px rgba(0,0,0,0.07); transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease; overflow: hidden; }
 .card-inner { display: grid; grid-template-columns: 260px 1fr; min-height: 360px; }
 .left-panel { background: #2b6cb0; display: flex; align-items: center; padding: 32px 28px; overflow: hidden; transition: background 0.4s ease; }
@@ -476,12 +350,10 @@ html, body {
 .left-content li { color: rgba(255,255,255,0.9); font-size: 13px; }
 .right-panel { padding: 24px 28px; display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
 
-/* ── Tabs ── */
 .tabs { display: flex; border-bottom: 2px solid #e2e8f0; gap: 4px; transition: border-color 0.4s ease; }
 .tab { padding: 8px 20px; border: none; background: none; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-weight: 600; color: #718096; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.2s ease, border-bottom-color 0.2s ease; }
 .tab.active { color: #2b6cb0; border-bottom-color: #2b6cb0; }
 
-/* ── Form ── */
 .form { display: flex; flex-direction: column; gap: 12px; }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { font-size: 12px; font-weight: 600; color: #4a5568; text-transform: uppercase; letter-spacing: 0.4px; transition: color 0.4s ease; }
@@ -489,8 +361,8 @@ html, body {
 .field input:focus { border-color: #2b6cb0; box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.12); }
 .hint { font-size: 11px; color: #a0aec0; transition: color 0.4s ease; }
 .gdpr-note { font-size: 11px; color: #718096; line-height: 1.6; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px 10px; margin: 0; transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease; }
+.access-note { font-size: 11px; color: #718096; line-height: 1.6; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px 10px; margin: 0; transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease; }
 
-/* ── Research checkbox ── */
 .research-check { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 6px; cursor: pointer; background: white; transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease; }
 .research-check:hover { box-shadow: 0 2px 8px rgba(43, 108, 176, 0.1); }
 .research-check.checked { border-color: #2b6cb0; background: #ebf8ff; }
@@ -500,7 +372,6 @@ html, body {
 .check-title { font-size: 13px; font-weight: 700; color: #2d3748; transition: color 0.4s ease; }
 .check-desc { font-size: 11px; color: #718096; transition: color 0.4s ease; }
 
-/* ── Submit button ── */
 .submit-btn { padding: 11px; background: #2b6cb0; color: white; border: none; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 4px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease; }
 .submit-btn:hover:not(:disabled) { background: #2c5282; box-shadow: 0 4px 12px rgba(43, 108, 176, 0.3); transform: translateY(-1px); }
 .submit-btn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
@@ -509,7 +380,6 @@ html, body {
 @keyframes spin { to { transform: rotate(360deg); } }
 .error { color: #c53030; font-size: 13px; font-weight: 600; margin: 0; }
 
-/* ── Footer ── */
 .footer { width: 100%; max-width: 760px; display: flex; justify-content: space-between; align-items: center; padding: 16px 0 24px; border-top: 1px solid #e2e8f0; margin-top: auto; gap: 16px; transition: border-color 0.4s ease; }
 .dept-logo { height: 50px; width: auto; object-fit: contain; }
 .footer-right { text-align: right; }
@@ -517,31 +387,22 @@ html, body {
 .footer-right a { color: #2b6cb0; text-decoration: none; transition: color 0.4s ease; }
 .made-by { font-size: 10px; color: #cbd5e0; margin-top: 4px; }
 
-/* ══════════════════════════════════════
-   TRANSITIONS
-══════════════════════════════════════ */
 .panel-slide-enter-active { transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
 .panel-slide-leave-active { transition: opacity 0.2s cubic-bezier(0.4, 0, 1, 1), transform 0.2s cubic-bezier(0.4, 0, 1, 1); }
 .panel-slide-enter-from { opacity: 0; transform: translateY(12px); }
 .panel-slide-leave-to   { opacity: 0; transform: translateY(-8px); }
-
 .form-slide-enter-active { transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 .form-slide-leave-active { transition: opacity 0.18s cubic-bezier(0.4, 0, 1, 1), transform 0.18s cubic-bezier(0.4, 0, 1, 1); }
 .form-slide-enter-from { opacity: 0; transform: translateX(10px); }
 .form-slide-leave-to   { opacity: 0; transform: translateX(-10px); }
-
 .header-fade-enter-active { transition: opacity 0.25s ease; }
 .header-fade-leave-active { transition: opacity 0.15s ease; }
 .header-fade-enter-from, .header-fade-leave-to { opacity: 0; }
-
 .error-pop-enter-active { transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .error-pop-leave-active { transition: opacity 0.15s ease, transform 0.15s ease; }
 .error-pop-enter-from { opacity: 0; transform: translateY(-4px) scale(0.97); }
 .error-pop-leave-to   { opacity: 0; transform: translateY(-2px); }
 
-/* ══════════════════════════════════════
-   DARK MODE
-══════════════════════════════════════ */
 .dark.login-container { background: #1a202c; }
 .dark .university { color: #90cdf4; }
 .dark .subtitle { color: #7fb3d3; }
@@ -559,7 +420,7 @@ html, body {
 .dark .field input:focus { border-color: #63b3ed; box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.15); }
 .dark .field input::placeholder { color: #4a5568; }
 .dark .hint { color: #718096; }
-.dark .gdpr-note { background: #1a202c; border-color: #4a5568; color: #a0aec0; }
+.dark .gdpr-note, .dark .access-note { background: #1a202c; border-color: #4a5568; color: #a0aec0; }
 .dark .research-check { background: #1a202c; border-color: #4a5568; }
 .dark .research-check:hover { box-shadow: 0 2px 8px rgba(99, 179, 237, 0.12); }
 .dark .research-check.checked { background: #1a365d; border-color: #63b3ed; }
@@ -577,9 +438,11 @@ html, body {
 .dark .footer-right p { color: #718096; }
 .dark .footer-right a { color: #63b3ed; }
 
-/* ══════════════════════════════════════
-   RESPONSIVE
-══════════════════════════════════════ */
+.study-official-btn { position: absolute; top: 0; left: 0; background: none; border: 1px solid #e2e8f0; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 11px; font-weight: 700; color: #718096; cursor: pointer; padding: 4px 10px; letter-spacing: 0.3px; transition: all 0.2s ease; }
+.study-official-btn:hover { color: #2b6cb0; border-color: #2b6cb0; background: #ebf8ff; }
+.dark .study-official-btn { color: #718096; border-color: #4a5568; }
+.dark .study-official-btn:hover { color: #63b3ed; border-color: #63b3ed; background: #1a365d; }
+
 @media (max-width: 768px) {
     .login-container { padding: 20px 16px 0; }
     .header-controls { top: 12px; right: 12px; }
@@ -598,7 +461,6 @@ html, body {
     .dept-logo { height: 40px; }
     .entry-ai { font-size: 56px; }
 }
-
 @media (max-width: 480px) {
     .login-container { padding: 16px 12px 0; }
     .university { font-size: 11px; }

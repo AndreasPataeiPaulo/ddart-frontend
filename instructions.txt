@@ -21,3 +21,10 @@ sqlite3 ~/ddart-backend/patients.db
 SELECT id, full_name, email, created_at FROM doctors WHERE approved = 0;
 UPDATE doctors SET approved = 1 WHERE email = 'doctor@email.com';
 .quit
+
+
+Add health centers:
+sqlite3 ~/ddart-backend/patients.db
+INSERT INTO health_centers (name, password_hash) VALUES ('My Hospital', lower(hex(sha256('their_password'))));
+
+General Hospital of Alexandroupolis / ddart2024
