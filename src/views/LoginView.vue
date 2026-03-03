@@ -1,9 +1,84 @@
 <template>
     <div class="login-container" :class="{ dark: isDark }">
 
+        <!-- Study Official modal -->
+        <transition name="modal-fade">
+            <div v-if="showStudyModal" class="study-modal-backdrop">
+                <div class="study-modal-box">
+                    <div class="modal-logo">DDART<span>AI</span></div>
+                    <h3>Study Official Access</h3>
+                    <p>Enter the study access code to continue.</p>
+                    <div class="field" style="width:100%">
+                        <input v-model="studyCode" type="password" placeholder="Access code" @keyup.enter="studyLogin" autofocus />
+                    </div>
+                    <transition name="error-pop">
+                        <p v-if="studyError" class="error">{{ studyError }}</p>
+                    </transition>
+                    <div class="study-modal-btns">
+                        <button class="study-back-btn" @click="showStudyModal = false; studyCode = ''; studyError = ''">← Back</button>
+                        <button class="submit-btn study-submit" @click="studyLogin" :disabled="!studyCode">Enter</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
         <transition name="overlay-fade">
             <div v-if="showOverlay" class="entry-overlay">
                 <div class="entry-content">
+                    <div class="retinal-scanner">
+                        <svg class="retina-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Outer ring -->
+                            <circle cx="100" cy="100" r="90" stroke="rgba(99,179,237,0.15)" stroke-width="1"/>
+                            <circle cx="100" cy="100" r="90" stroke="url(#ringGrad)" stroke-width="1.5" stroke-dasharray="565" stroke-dashoffset="565" class="ring-draw"/>
+                            <!-- Mid ring -->
+                            <circle cx="100" cy="100" r="66" stroke="rgba(99,179,237,0.1)" stroke-width="1"/>
+                            <circle cx="100" cy="100" r="66" stroke="rgba(99,179,237,0.4)" stroke-width="1" stroke-dasharray="415" stroke-dashoffset="415" class="ring-draw-2"/>
+                            <!-- Inner ring -->
+                            <circle cx="100" cy="100" r="42" stroke="rgba(99,179,237,0.08)" stroke-width="1"/>
+                            <!-- Crosshairs -->
+                            <line x1="100" y1="4" x2="100" y2="30" stroke="rgba(99,179,237,0.3)" stroke-width="1" class="crosshair"/>
+                            <line x1="100" y1="170" x2="100" y2="196" stroke="rgba(99,179,237,0.3)" stroke-width="1" class="crosshair"/>
+                            <line x1="4" y1="100" x2="30" y2="100" stroke="rgba(99,179,237,0.3)" stroke-width="1" class="crosshair"/>
+                            <line x1="170" y1="100" x2="196" y2="100" stroke="rgba(99,179,237,0.3)" stroke-width="1" class="crosshair"/>
+                            <!-- Optic nerve/disc -->
+                            <circle cx="118" cy="88" r="10" fill="none" stroke="rgba(99,179,237,0.25)" stroke-width="1.5"/>
+                            <circle cx="118" cy="88" r="5" fill="rgba(99,179,237,0.12)"/>
+                            <!-- Vessels radiating from disc -->
+                            <path d="M112 84 Q90 75 70 60" stroke="rgba(99,179,237,0.2)" stroke-width="1.2" fill="none" class="vessel"/>
+                            <path d="M110 90 Q88 92 65 98" stroke="rgba(99,179,237,0.2)" stroke-width="1.2" fill="none" class="vessel"/>
+                            <path d="M112 95 Q100 112 90 130" stroke="rgba(99,179,237,0.2)" stroke-width="1.2" fill="none" class="vessel"/>
+                            <path d="M124 83 Q140 70 155 58" stroke="rgba(99,179,237,0.2)" stroke-width="1.2" fill="none" class="vessel"/>
+                            <path d="M126 90 Q145 90 162 95" stroke="rgba(99,179,237,0.2)" stroke-width="1.2" fill="none" class="vessel"/>
+                            <path d="M122 96 Q130 114 128 135" stroke="rgba(99,179,237,0.2)" stroke-width="1.2" fill="none" class="vessel"/>
+                            <!-- Macula -->
+                            <circle cx="82" cy="100" r="8" fill="none" stroke="rgba(229,62,62,0.3)" stroke-width="1" stroke-dasharray="3 3"/>
+                            <circle cx="82" cy="100" r="3" fill="rgba(229,62,62,0.2)"/>
+                            <!-- Scanner beam -->
+                            <defs>
+                                <radialGradient id="beamGrad" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="rgba(99,179,237,0.0)"/>
+                                    <stop offset="85%" stop-color="rgba(99,179,237,0.06)"/>
+                                    <stop offset="100%" stop-color="rgba(99,179,237,0.0)"/>
+                                </radialGradient>
+                                <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#4299e1"/>
+                                    <stop offset="100%" stop-color="#63b3ed"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M100 100 L190 100 A90 90 0 0 1 100 190 Z" fill="url(#beamGrad)" class="scanner-beam"/>
+                            <!-- Corner brackets -->
+                            <path d="M14 40 L14 14 L40 14" stroke="rgba(99,179,237,0.5)" stroke-width="1.5" fill="none" class="bracket"/>
+                            <path d="M160 14 L186 14 L186 40" stroke="rgba(99,179,237,0.5)" stroke-width="1.5" fill="none" class="bracket"/>
+                            <path d="M14 160 L14 186 L40 186" stroke="rgba(99,179,237,0.5)" stroke-width="1.5" fill="none" class="bracket"/>
+                            <path d="M160 186 L186 186 L186 160" stroke="rgba(99,179,237,0.5)" stroke-width="1.5" fill="none" class="bracket"/>
+                        </svg>
+                        <!-- Scan line -->
+                        <div class="scan-line"></div>
+                        <!-- Glint dots around the ring -->
+                        <div class="glint glint-1"></div>
+                        <div class="glint glint-2"></div>
+                        <div class="glint glint-3"></div>
+                    </div>
                     <div class="entry-logo">
                         <span class="entry-ddart">DDART</span><span class="entry-ai">AI</span>
                     </div>
@@ -16,7 +91,7 @@
         </transition>
 
         <div class="header">
-            <button class="study-official-btn" @click="$router.push('/study')">Study Official</button>
+            <button class="study-official-btn" @click="showStudyModal = true">Study Official</button>
             <div class="header-controls">
                 <div class="lang-toggle">
                     <button :class="['lang-btn', { active: lang === 'en' }]" @click="setLang('en')">EN</button>
@@ -108,13 +183,7 @@
                                 <label>{{ t('Password', 'Κωδικός') }}</label>
                                 <input v-model="password" type="password" :placeholder="t('Your password', 'Ο κωδικός σας')" @keyup.enter="doctorLogin" />
                             </div>
-                            <label class="research-check" :class="{ checked: loginAsResearch }" @click="loginAsResearch = !loginAsResearch">
-                                <div class="check-box"><span v-if="loginAsResearch">✓</span></div>
-                                <div class="check-text">
-                                    <span class="check-title">{{ t('Sign in as Research Team', 'Σύνδεση ως Ερευνητική Ομάδα') }}</span>
-                                    <span class="check-desc">{{ t('Access the AI agreement study panel', 'Πρόσβαση στη μελέτη συμφωνίας ΤΝ') }}</span>
-                                </div>
-                            </label>
+
                             <transition name="error-pop">
                                 <p v-if="error" class="error">{{ error }}</p>
                             </transition>
@@ -142,13 +211,7 @@
                                 <label>{{ t('Confirm Password', 'Επιβεβαίωση Κωδικού') }}</label>
                                 <input v-model="confirmPassword" type="password" :placeholder="t('Repeat password', 'Επαναλάβετε τον κωδικό')" />
                             </div>
-                            <label class="research-check" :class="{ checked: isResearch }" @click="isResearch = !isResearch">
-                                <div class="check-box"><span v-if="isResearch">✓</span></div>
-                                <div class="check-text">
-                                    <span class="check-title">{{ t('Part of Research Team', 'Μέλος Ερευνητικής Ομάδας') }}</span>
-                                    <span class="check-desc">{{ t('I will be participating in the AI agreement study', 'Θα συμμετέχω στη μελέτη συμφωνίας ΤΝ') }}</span>
-                                </div>
-                            </label>
+
                             <transition name="error-pop">
                                 <p v-if="error" class="error">{{ error }}</p>
                             </transition>
@@ -193,12 +256,13 @@ export default {
             email: '',
             password: '',
             confirmPassword: '',
-            isResearch: false,
-            loginAsResearch: false,
             error: '',
             loading: false,
             isDark: localStorage.getItem('ddart_dark') === 'true',
             showOverlay: false,
+            showStudyModal: false,
+            studyCode: '',
+            studyError: '',
             barWidth: 0,
             entryMessage: ''
         }
@@ -212,6 +276,17 @@ export default {
     },
 
     methods: {
+        async studyLogin() {
+            this.studyError = ''
+            try {
+                const res = await fetch(`https://labiris.myiplist.com/study/stats?code=${encodeURIComponent(this.studyCode)}`)
+                if (!res.ok) { this.studyError = 'Invalid access code.'; return }
+                localStorage.setItem('ddart_study_code', this.studyCode)
+                this.showStudyModal = false
+                this.$router.push('/study')
+            } catch { this.studyError = 'Connection failed.' }
+        },
+
         toggleDark() {
             this.isDark = !this.isDark
             localStorage.setItem('ddart_dark', this.isDark)
@@ -222,7 +297,7 @@ export default {
             this.showOverlay = true
             this.barWidth = 0
             const start = performance.now()
-            const duration = 1600
+            const duration = 2500
             const animate = (now) => {
                 const progress = Math.min((now - start) / duration, 1)
                 this.barWidth = Math.round((1 - Math.pow(1 - progress, 3)) * 100)
@@ -307,14 +382,53 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 
 .login-container { display: flex; flex-direction: column; align-items: center; padding: 30px 20px 0; min-height: 100vh; width: 100%; background: #f0f4f8; transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 
-.entry-overlay { position: fixed; inset: 0; z-index: 9999; background: #1a2a4a; display: flex; align-items: center; justify-content: center; }
-.entry-content { display: flex; flex-direction: column; align-items: center; gap: 28px; }
-.entry-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 22px; font-weight: 700; color: white; letter-spacing: 4px; display: flex; align-items: baseline; gap: 2px; animation: logo-appear 0.6s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.entry-overlay { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(ellipse at center, #0d1f3c 0%, #060d1a 100%); display: flex; align-items: center; justify-content: center; }
+.entry-content { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+
+/* Retinal scanner */
+.retinal-scanner { position: relative; width: 200px; height: 200px; animation: scanner-appear 0.5s ease both; }
+@keyframes scanner-appear { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+.retina-svg { width: 100%; height: 100%; }
+
+/* Outer ring draw animation */
+.ring-draw { animation: ring-draw 1.8s 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+@keyframes ring-draw { from { stroke-dashoffset: 565; } to { stroke-dashoffset: 0; } }
+.ring-draw-2 { animation: ring-draw-2 1.4s 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+@keyframes ring-draw-2 { from { stroke-dashoffset: 415; } to { stroke-dashoffset: 0; } }
+
+/* Crosshairs fade in */
+.crosshair { opacity: 0; animation: fade-in 0.4s 1s ease forwards; }
+@keyframes fade-in { to { opacity: 1; } }
+
+/* Vessels draw in */
+.vessel { stroke-dasharray: 200; stroke-dashoffset: 200; animation: vessel-draw 1s 0.8s ease forwards; }
+@keyframes vessel-draw { to { stroke-dashoffset: 0; } }
+
+/* Corner brackets */
+.bracket { opacity: 0; animation: fade-in 0.5s 0.2s ease forwards; }
+
+/* Scanner beam rotating */
+.scanner-beam { transform-origin: 100px 100px; animation: scan-rotate 2s linear infinite; }
+@keyframes scan-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Horizontal scan line sweeping */
+.scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(99,179,237,0.0) 20%, rgba(99,179,237,0.6) 50%, rgba(99,179,237,0.0) 80%, transparent 100%); animation: scan-sweep 2s ease-in-out infinite; border-radius: 1px; }
+@keyframes scan-sweep { 0% { top: 10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
+
+/* Glint dots */
+.glint { position: absolute; width: 4px; height: 4px; background: #63b3ed; border-radius: 50%; animation: glint-pulse 2s ease-in-out infinite; box-shadow: 0 0 6px #63b3ed; }
+.glint-1 { top: 6px; left: 50%; animation-delay: 0s; }
+.glint-2 { top: 50%; right: 6px; animation-delay: 0.66s; }
+.glint-3 { bottom: 6px; left: 50%; animation-delay: 1.33s; }
+@keyframes glint-pulse { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); } }
+
+/* Logo & bar */
+.entry-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 22px; font-weight: 700; color: white; letter-spacing: 4px; display: flex; align-items: baseline; gap: 2px; animation: logo-appear 0.6s 0.4s cubic-bezier(0.4, 0, 0.2, 1) both; }
 .entry-ddart { color: white; }
 .entry-ai { color: #e53e3e; font-size: 72px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; line-height: 1; }
-.entry-bar { width: 260px; height: 3px; background: rgba(255,255,255,0.15); border-radius: 2px; overflow: hidden; }
+.entry-bar { width: 200px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
 .entry-bar-fill { height: 100%; background: linear-gradient(90deg, #4299e1, #63b3ed); border-radius: 2px; transition: width 0.05s linear; }
-.entry-msg { color: rgba(255,255,255,0.7); font-size: 14px; font-weight: 400; letter-spacing: 0.3px; margin: 0; animation: msg-appear 0.5s 0.3s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.entry-msg { color: rgba(255,255,255,0.55); font-size: 13px; font-weight: 400; letter-spacing: 1px; text-transform: uppercase; margin: 0; animation: msg-appear 0.5s 0.6s cubic-bezier(0.4, 0, 0.2, 1) both; }
 @keyframes logo-appear { from { opacity: 0; transform: scale(0.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 @keyframes msg-appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 .overlay-fade-leave-active { transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -438,9 +552,47 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .dark .footer-right p { color: #718096; }
 .dark .footer-right a { color: #63b3ed; }
 
+.study-modal-backdrop { position: fixed; inset: 0; background: rgba(10,20,40,0.85); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.study-modal-box { background: white; border-radius: 12px; padding: 36px; width: 300px; display: flex; flex-direction: column; align-items: center; gap: 14px; animation: modal-appear 0.3s cubic-bezier(0.34,1.56,0.64,1) both; }
+@keyframes modal-appear { from { opacity: 0; transform: scale(0.92) translateY(16px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.modal-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 14px; font-weight: 700; color: #2c5282; letter-spacing: 3px; display: flex; align-items: baseline; gap: 2px; }
+.modal-logo span { color: #e53e3e; font-size: 30px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; }
+.study-modal-box h3 { font-family: 'Playfair Display', serif; color: #2d3748; font-size: 17px; margin: 0; }
+.study-modal-box p { font-size: 13px; color: #718096; margin: 0; text-align: center; }
+.study-modal-btns { display: flex; gap: 8px; width: 100%; }
+.study-back-btn { flex: 1; padding: 10px; background: none; border: 1px solid #e2e8f0; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; transition: all 0.2s; }
+.study-back-btn:hover { background: #f8fafc; border-color: #cbd5e0; }
+.submit-btn.study-submit { flex: 1; margin-top: 0; }
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+.dark .study-modal-box { background: #2d3748; }
+.dark .study-modal-box h3 { color: #e2e8f0; }
+.dark .study-modal-box p { color: #a0aec0; }
+.dark .study-back-btn { border-color: #4a5568; color: #a0aec0; }
+.dark .study-back-btn:hover { background: #3d4a5c; }
+
 .study-official-btn { position: absolute; top: 0; left: 0; background: none; border: 1px solid #e2e8f0; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 11px; font-weight: 700; color: #718096; cursor: pointer; padding: 4px 10px; letter-spacing: 0.3px; transition: all 0.2s ease; }
 .study-official-btn:hover { color: #2b6cb0; border-color: #2b6cb0; background: #ebf8ff; }
-.dark .study-official-btn { color: #718096; border-color: #4a5568; }
+.dark .study-modal-backdrop { position: fixed; inset: 0; background: rgba(10,20,40,0.85); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.study-modal-box { background: white; border-radius: 12px; padding: 36px; width: 300px; display: flex; flex-direction: column; align-items: center; gap: 14px; animation: modal-appear 0.3s cubic-bezier(0.34,1.56,0.64,1) both; }
+@keyframes modal-appear { from { opacity: 0; transform: scale(0.92) translateY(16px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.modal-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 14px; font-weight: 700; color: #2c5282; letter-spacing: 3px; display: flex; align-items: baseline; gap: 2px; }
+.modal-logo span { color: #e53e3e; font-size: 30px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; }
+.study-modal-box h3 { font-family: 'Playfair Display', serif; color: #2d3748; font-size: 17px; margin: 0; }
+.study-modal-box p { font-size: 13px; color: #718096; margin: 0; text-align: center; }
+.study-modal-btns { display: flex; gap: 8px; width: 100%; }
+.study-back-btn { flex: 1; padding: 10px; background: none; border: 1px solid #e2e8f0; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; transition: all 0.2s; }
+.study-back-btn:hover { background: #f8fafc; border-color: #cbd5e0; }
+.submit-btn.study-submit { flex: 1; margin-top: 0; }
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+.dark .study-modal-box { background: #2d3748; }
+.dark .study-modal-box h3 { color: #e2e8f0; }
+.dark .study-modal-box p { color: #a0aec0; }
+.dark .study-back-btn { border-color: #4a5568; color: #a0aec0; }
+.dark .study-back-btn:hover { background: #3d4a5c; }
+
+.study-official-btn { color: #718096; border-color: #4a5568; }
 .dark .study-official-btn:hover { color: #63b3ed; border-color: #63b3ed; background: #1a365d; }
 
 @media (max-width: 768px) {

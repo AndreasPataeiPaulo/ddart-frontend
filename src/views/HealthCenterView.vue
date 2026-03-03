@@ -16,21 +16,24 @@
                     <div class="ai-results">
                         <div class="ai-result-row">
                             <span class="ai-label">{{ t('Glaucoma', 'Γλαύκωμα') }}</span>
-                            <span :class="['ai-value', lastResult.ai_glaucoma !== 'Normal' ? 'positive' : 'negative']">
+                            <span v-if="lastResult.ai_glaucoma_conf >= 90" :class="['ai-value', lastResult.ai_glaucoma !== 'Healthy' ? 'positive' : 'negative']">
                                 {{ lastResult.ai_glaucoma }} ({{ lastResult.ai_glaucoma_conf }}%)
                             </span>
+                            <span v-else class="ai-value inconclusive">{{ t('Inconclusive', 'Αναποφάσιστο') }} ({{ lastResult.ai_glaucoma_conf }}%)</span>
                         </div>
                         <div class="ai-result-row">
                             <span class="ai-label">{{ t('Diabetic Retinopathy', 'Διαβητική Αμφιβληστροειδοπάθεια') }}</span>
-                            <span :class="['ai-value', lastResult.ai_dr !== 'No DR' ? 'positive' : 'negative']">
+                            <span v-if="lastResult.ai_dr_conf >= 90" :class="['ai-value', lastResult.ai_dr !== 'No_DR' ? 'positive' : 'negative']">
                                 {{ lastResult.ai_dr }} ({{ lastResult.ai_dr_conf }}%)
                             </span>
+                            <span v-else class="ai-value inconclusive">{{ t('Inconclusive', 'Αναποφάσιστο') }} ({{ lastResult.ai_dr_conf }}%)</span>
                         </div>
                         <div class="ai-result-row">
                             <span class="ai-label">{{ t('AMD', 'ΗΩΕ') }}</span>
-                            <span :class="['ai-value', lastResult.ai_amd !== 'Normal' ? 'positive' : 'negative']">
+                            <span v-if="lastResult.ai_amd_conf >= 90" :class="['ai-value', lastResult.ai_amd !== 'Normal' ? 'positive' : 'negative']">
                                 {{ lastResult.ai_amd }} ({{ lastResult.ai_amd_conf }}%)
                             </span>
+                            <span v-else class="ai-value inconclusive">{{ t('Inconclusive', 'Αναποφάσιστο') }} ({{ lastResult.ai_amd_conf }}%)</span>
                         </div>
                     </div>
                     <button class="success-btn" @click="resetForm">{{ t('Upload Another', 'Ανέβασμα Άλλης') }}</button>
@@ -58,14 +61,13 @@
         <div class="upload-card">
             <div class="upload-card-inner">
 
-                <!-- Left: instructions -->
                 <div class="upload-left">
                     <h2>{{ t('Upload Patient Image', 'Ανέβασμα Εικόνας Ασθενούς') }}</h2>
                     <p>{{ t('Upload a retinal fundus photograph for immediate AI analysis. The image will be screened for Glaucoma, Diabetic Retinopathy, and AMD simultaneously.', 'Ανεβάστε φωτογραφία βυθού αμφιβληστροειδούς για ακαριαία ανάλυση ΤΝ. Η εικόνα θα ελεγχθεί ταυτόχρονα για Γλαύκωμα, Διαβητική Αμφιβληστροειδοπάθεια και ΗΩΕ.') }}</p>
                     <div class="instructions">
                         <div class="instruction-step">
                             <span class="step-num">1</span>
-                            <span>{{ t('Enter the patient\'s AMKA number', 'Εισάγετε τον αριθμό ΑΜΚΑ του ασθενούς') }}</span>
+                            <span>{{ t('Enter the patient\'s social security number', 'Εισάγετε τον αριθμό ΑΜΚΑ του ασθενούς') }}</span>
                         </div>
                         <div class="instruction-step">
                             <span class="step-num">2</span>
@@ -82,16 +84,14 @@
                     </div>
                 </div>
 
-                <!-- Right: form -->
                 <div class="upload-right">
-
                     <div class="field">
-                        <label>{{ t('Patient AMKA', 'ΑΜΚΑ Ασθενούς') }}</label>
+                        <label>{{ t('Patient\'s social security number', 'ΑΜΚΑ Ασθενούς') }}</label>
                         <input
                             v-model="patientAmka"
                             type="text"
                             maxlength="11"
-                            :placeholder="t('11-digit AMKA number', '11-ψήφιος αριθμός ΑΜΚΑ')"
+                            :placeholder="t('11-digit social security number', '11-ψήφιος αριθμός ΑΜΚΑ')"
                             :class="{ invalid: amkaError }"
                         />
                         <transition name="error-pop">
@@ -99,7 +99,6 @@
                         </transition>
                     </div>
 
-                    <!-- Drop zone -->
                     <div
                         class="drop-zone"
                         :class="{ 'drop-active': isDragging, 'has-image': previewUrl }"
@@ -129,16 +128,8 @@
                         <p v-if="uploadError" class="error">{{ uploadError }}</p>
                     </transition>
 
-                    <button
-                        class="submit-btn"
-                        @click="uploadImage"
-                        :disabled="uploading || !selectedFile || !patientAmka"
-                    >
-                        <span class="btn-text">
-                            {{ uploading
-                                ? t('Analysing...', 'Ανάλυση...')
-                                : t('Upload and Analyse', 'Ανέβασμα και Ανάλυση') }}
-                        </span>
+                    <button class="submit-btn" @click="uploadImage" :disabled="uploading || !selectedFile || !patientAmka">
+                        <span class="btn-text">{{ uploading ? t('Analysing...', 'Ανάλυση...') : t('Upload and Analyse', 'Ανέβασμα και Ανάλυση') }}</span>
                         <span v-if="uploading" class="btn-spinner"></span>
                     </button>
 
@@ -233,34 +224,25 @@ export default {
 
         async uploadImage() {
             this.uploadError = ''
-
             if (!this.patientAmka || this.patientAmka.length !== 11 || !/^\d+$/.test(this.patientAmka)) {
-                this.uploadError = this.t('Please enter a valid 11-digit AMKA', 'Παρακαλώ εισάγετε έγκυρο 11-ψήφιο ΑΜΚΑ')
+                this.uploadError = this.t('Please enter a valid 11-digit social security number', 'Παρακαλώ εισάγετε έγκυρο 11-ψήφιο ΑΜΚΑ')
                 return
             }
             if (!this.selectedFile) {
                 this.uploadError = this.t('Please select an image', 'Παρακαλώ επιλέξτε εικόνα')
                 return
             }
-
             this.uploading = true
-
-            // Convert to base64
             const b64 = await new Promise((resolve) => {
                 const reader = new FileReader()
                 reader.onload = (e) => resolve(e.target.result.split(',')[1])
                 reader.readAsDataURL(this.selectedFile)
             })
-
             try {
                 const res = await fetch('https://labiris.myiplist.com/health-center/upload', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        health_center_id: this.healthCenterId,
-                        patient_amka: this.patientAmka,
-                        image_b64: b64
-                    })
+                    body: JSON.stringify({ health_center_id: this.healthCenterId, patient_amka: this.patientAmka, image_b64: b64 })
                 })
                 const data = await res.json()
                 if (!res.ok) { this.uploadError = data.detail || this.t('Upload failed', 'Αποτυχία ανεβάσματος'); return }
@@ -294,7 +276,6 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 
 .hc-container { display: flex; flex-direction: column; align-items: center; padding: 30px 20px 0; min-height: 100vh; background: #f0f4f8; transition: background 0.4s ease; }
 
-/* Success overlay */
 .success-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(10, 20, 40, 0.92); display: flex; align-items: center; justify-content: center; padding: 20px; }
 .success-content { background: white; border-radius: 12px; padding: 40px; max-width: 480px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 16px; animation: success-appear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 @keyframes success-appear { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
@@ -307,13 +288,12 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .ai-value { font-weight: 700; }
 .ai-value.negative { color: #38a169; }
 .ai-value.positive { color: #e53e3e; }
+.ai-value.inconclusive { color: #d69e2e; font-style: italic; }
 .success-btn { padding: 10px 28px; background: #2b6cb0; color: white; border: none; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s ease, transform 0.15s ease; }
 .success-btn:hover { background: #2c5282; transform: translateY(-1px); }
-.overlay-fade-enter-active { transition: opacity 0.3s ease; }
-.overlay-fade-leave-active { transition: opacity 0.3s ease; }
+.overlay-fade-enter-active, .overlay-fade-leave-active { transition: opacity 0.3s ease; }
 .overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
 
-/* Header */
 .hc-header { text-align: center; margin-bottom: 24px; width: 100%; position: relative; }
 .header-controls { position: absolute; top: 0; right: 0; display: flex; align-items: center; gap: 8px; }
 .lang-toggle { display: flex; align-items: center; gap: 4px; }
@@ -330,7 +310,6 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .center-name { font-size: 16px; font-weight: 700; color: #2c5282; margin-top: 4px; transition: color 0.4s ease; }
 .center-subtitle { font-size: 13px; color: #718096; margin: 4px 0 0; transition: color 0.4s ease; }
 
-/* Upload card */
 .upload-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; width: 100%; max-width: 860px; margin-bottom: 24px; box-shadow: 0 2px 16px rgba(0,0,0,0.07); overflow: hidden; transition: background 0.4s ease, border-color 0.4s ease; }
 .upload-card-inner { display: grid; grid-template-columns: 280px 1fr; min-height: 420px; }
 .upload-left { background: #2b6cb0; padding: 36px 28px; display: flex; flex-direction: column; gap: 20px; transition: background 0.4s ease; }
@@ -341,7 +320,6 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .step-num { background: rgba(255,255,255,0.2); color: white; font-weight: 700; font-size: 11px; width: 20px; height: 20px; min-width: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
 .upload-right { padding: 32px 28px; display: flex; flex-direction: column; gap: 16px; }
 
-/* Form fields */
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { font-size: 12px; font-weight: 600; color: #4a5568; text-transform: uppercase; letter-spacing: 0.4px; transition: color 0.4s ease; }
 .field input { padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #2d3748; outline: none; width: 100%; background: white; transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.4s ease, color 0.4s ease; }
@@ -349,7 +327,6 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .field input.invalid { border-color: #fc8181; }
 .field-error { font-size: 11px; color: #c53030; font-weight: 600; }
 
-/* Drop zone */
 .drop-zone { border: 2px dashed #e2e8f0; border-radius: 8px; min-height: 180px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; transition: border-color 0.2s ease, background 0.2s ease; position: relative; }
 .drop-zone:hover, .drop-zone.drop-active { border-color: #2b6cb0; background: #ebf8ff; }
 .drop-zone.has-image { border-style: solid; border-color: #bee3f8; }
@@ -361,7 +338,6 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .preview-fade-enter-active, .preview-fade-leave-active { transition: opacity 0.2s ease; }
 .preview-fade-enter-from, .preview-fade-leave-to { opacity: 0; }
 
-/* Submit */
 .submit-btn { padding: 12px; background: #2b6cb0; color: white; border: none; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease; }
 .submit-btn:hover:not(:disabled) { background: #2c5282; box-shadow: 0 4px 12px rgba(43, 108, 176, 0.3); transform: translateY(-1px); }
 .submit-btn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
@@ -371,19 +347,16 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .uploading-note { font-size: 12px; color: #718096; text-align: center; margin: 0; line-height: 1.5; }
 .error { color: #c53030; font-size: 13px; font-weight: 600; margin: 0; }
 
-/* Footer */
 .hc-footer { width: 100%; max-width: 860px; padding: 16px 0 24px; border-top: 1px solid #e2e8f0; text-align: center; transition: border-color 0.4s ease; }
 .hc-footer p { font-size: 12px; color: #718096; margin: 2px 0; transition: color 0.4s ease; }
 .hc-footer a { color: #2b6cb0; text-decoration: none; }
 .made-by { font-size: 10px; color: #cbd5e0; }
 
-/* Transitions */
 .error-pop-enter-active { transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .error-pop-leave-active { transition: opacity 0.15s ease; }
 .error-pop-enter-from { opacity: 0; transform: translateY(-4px) scale(0.97); }
 .error-pop-leave-to { opacity: 0; }
 
-/* Dark mode */
 .dark.hc-container { background: #1a202c; }
 .dark .center-name { color: #90cdf4; }
 .dark .center-subtitle { color: #7fb3d3; }
@@ -414,7 +387,6 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .dark .ai-results { background: #1a202c; border-color: #4a5568; }
 .dark .ai-label { color: #a0aec0; }
 
-/* Responsive */
 @media (max-width: 768px) {
     .hc-container { padding: 16px 16px 0; }
     .header-controls { position: static; justify-content: flex-end; margin-bottom: 12px; }

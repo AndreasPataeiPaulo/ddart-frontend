@@ -1,8 +1,64 @@
 <template>
     <div class="research-container">
+
+
+        <!-- Fullscreen zoom overlay -->
+        <transition name="zoom-fade">
+            <div v-if="zoomSrc" class="zoom-backdrop" @click.self="closeZoom" @wheel.prevent="onWheel">
+                <div class="zoom-toolbar">
+                    <button class="zoom-btn" @click="zoomLevel = Math.min(zoomLevel + 0.25, 4)">＋</button>
+                    <span class="zoom-pct">{{ Math.round(zoomLevel * 100) }}%</span>
+                    <button class="zoom-btn" @click="zoomLevel = Math.max(zoomLevel - 0.25, 0.5)">－</button>
+                    <button class="zoom-btn zoom-close" @click="closeZoom">✕</button>
+                </div>
+                <div class="zoom-img-wrap" @click.self="closeZoom">
+                    <img :src="zoomSrc" class="zoom-img" :style="{ transform: 'scale(' + zoomLevel + ')' }" />
+                </div>
+                <p class="zoom-hint">Scroll to zoom · Click outside to close</p>
+            </div>
+        </transition>
+
+        <!-- Expertise modal — shown on first login only -->
+        <transition name="modal-fade">
+            <div v-if="showExpertiseModal" class="modal-backdrop">
+                <div class="modal-box">
+                    <div class="modal-logo">DDART<span>AI</span></div>
+                    <h3>Welcome, Dr. {{ doctorName }}</h3>
+                    <p>Before you begin, please select your area of expertise. You will only be asked to diagnose conditions within your specialty.</p>
+                    <div class="expertise-options">
+                        <label class="expertise-option" :class="{ selected: expertise.glaucoma }" @click="expertise.glaucoma = !expertise.glaucoma">
+                            <div class="exp-check"><span v-if="expertise.glaucoma">✓</span></div>
+                            <div class="exp-text">
+                                <span class="exp-title">Glaucoma</span>
+                                <span class="exp-desc">Optic nerve & intraocular pressure</span>
+                            </div>
+                        </label>
+                        <label class="expertise-option" :class="{ selected: expertise.dr }" @click="expertise.dr = !expertise.dr">
+                            <div class="exp-check"><span v-if="expertise.dr">✓</span></div>
+                            <div class="exp-text">
+                                <span class="exp-title">Diabetic Retinopathy</span>
+                                <span class="exp-desc">Retinal vascular changes from diabetes</span>
+                            </div>
+                        </label>
+                        <label class="expertise-option" :class="{ selected: expertise.amd }" @click="expertise.amd = !expertise.amd">
+                            <div class="exp-check"><span v-if="expertise.amd">✓</span></div>
+                            <div class="exp-text">
+                                <span class="exp-title">AMD</span>
+                                <span class="exp-desc">Age-related macular degeneration</span>
+                            </div>
+                        </label>
+                    </div>
+                    <p v-if="expertiseError" class="error">{{ expertiseError }}</p>
+                    <button class="submit-btn" @click="saveExpertise" :disabled="expertiseSaving || !anyExpertise">
+                        {{ expertiseSaving ? 'Saving...' : 'Confirm & Continue' }}
+                    </button>
+                </div>
+            </div>
+        </transition>
+
         <div class="header">
             <div class="user-bar">
-                <span>Dr. {{ doctorName }} — Research Mode</span>
+                <span>🔬 Dr. {{ doctorName }} — Research Mode</span>
                 <button class="logout-btn" @click="logout">Sign Out</button>
             </div>
             <p class="university">Democritus University of Thrace – DDART spin-off company</p>
@@ -11,10 +67,7 @@
         </div>
 
         <div class="panel-tabs">
-            <button :class="['panel-tab', { active: tab === 'pending' }]" @click="tab = 'pending'">
-                Pending Examinations
-                <span v-if="allPending.length" class="badge">{{ allPending.length }}</span>
-            </button>
+
             <button :class="['panel-tab', { active: tab === 'hc' }]" @click="tab = 'hc'; loadHCPending()">
                 Health Center Uploads
                 <span v-if="hcPending.length" class="badge hc-badge">{{ hcPending.length }}</span>
@@ -47,7 +100,7 @@
                         </div>
                         <div class="image-card-body">
                             <div class="image-side">
-                                <img :src="'https://labiris.myiplist.com/research/image/' + currentImage.id" class="fundus-image" />
+                                <img :src="'https://labiris.myiplist.com/research/image/' + currentImage.id" class="fundus-image zoomable" @click="openZoom('https://labiris.myiplist.com/research/image/' + currentImage.id)" />
                                 <p class="image-id">Image #{{ currentImage.id }}</p>
                             </div>
                             <div class="diagnosis-side">
@@ -99,13 +152,12 @@
                     <p>Loading uploads...</p>
                 </div>
                 <div v-else-if="hcPending.length === 0" class="empty-state">
-                    <p>No pending health center uploads requiring review.</p>
+                    <p>No pending health center uploads matching your expertise.</p>
                 </div>
                 <div v-else>
                     <p class="section-hint">
                         Examine each image and provide your diagnosis. AI results are hidden until after you submit.
                     </p>
-
                     <div class="image-card">
                         <div class="image-card-header">
                             <span class="image-counter">Upload {{ hcIndex + 1 }} of {{ hcPending.length }}</span>
@@ -114,10 +166,9 @@
                                 <button class="nav-btn" @click="hcIndex++" :disabled="hcIndex === hcPending.length - 1">→</button>
                             </div>
                         </div>
-
                         <div class="image-card-body">
                             <div class="image-side">
-                                <img :src="'https://labiris.myiplist.com/research/hc-image/' + currentHC.id + '?doctor_id=' + doctorId" class="fundus-image" />
+                                <img :src="'https://labiris.myiplist.com/research/hc-image/' + currentHC.id + '?doctor_id=' + doctorId" class="fundus-image zoomable" @click="openZoom('https://labiris.myiplist.com/research/hc-image/' + currentHC.id + '?doctor_id=' + doctorId)" />
                                 <div class="patient-info-panel">
                                     <div class="patient-info-row">
                                         <span class="pi-label">AMKA</span>
@@ -133,15 +184,12 @@
                                     </div>
                                 </div>
                             </div>
-
                             <div class="diagnosis-side">
                                 <h3>Your Diagnosis</h3>
-                                <p class="diagnosis-hint">
-                                    Diagnose the conditions below. AI results will be revealed in the Concluded tab.
-                                </p>
+                                <p class="diagnosis-hint">Diagnose the conditions below. AI results will be revealed in the Concluded tab.</p>
 
-                                <!-- Only show conditions where AI ≥ 90% — but NO scores shown -->
-                                <div v-if="currentHC.ai_glaucoma_conf >= 90" class="diagnosis-group">
+                                <!-- Only show conditions where AI ≥ 90% AND within doctor's expertise -->
+                                <div v-if="currentHC.ai_glaucoma_conf >= 90 && doctorExpertise.glaucoma" class="diagnosis-group">
                                     <label class="diagnosis-label">Glaucoma</label>
                                     <div class="radio-group">
                                         <label class="radio-option" :class="{ selected: hcDiagnosis.glaucoma === 'Glaucoma' }"><input type="radio" v-model="hcDiagnosis.glaucoma" value="Glaucoma" /> Glaucoma</label>
@@ -149,7 +197,7 @@
                                     </div>
                                 </div>
 
-                                <div v-if="currentHC.ai_dr_conf >= 90" class="diagnosis-group">
+                                <div v-if="currentHC.ai_dr_conf >= 90 && doctorExpertise.dr" class="diagnosis-group">
                                     <label class="diagnosis-label">Diabetic Retinopathy</label>
                                     <div class="radio-group">
                                         <label class="radio-option" :class="{ selected: hcDiagnosis.dr === 'No DR' }"><input type="radio" v-model="hcDiagnosis.dr" value="No DR" /> No DR</label>
@@ -160,7 +208,7 @@
                                     </div>
                                 </div>
 
-                                <div v-if="currentHC.ai_amd_conf >= 90" class="diagnosis-group">
+                                <div v-if="currentHC.ai_amd_conf >= 90 && doctorExpertise.amd" class="diagnosis-group">
                                     <label class="diagnosis-label">AMD</label>
                                     <div class="radio-group">
                                         <label class="radio-option" :class="{ selected: hcDiagnosis.amd === 'AMD' }"><input type="radio" v-model="hcDiagnosis.amd" value="AMD" /> AMD</label>
@@ -168,9 +216,7 @@
                                     </div>
                                 </div>
 
-                                <div class="blind-notice">
-                                    AI confidence scores are hidden during evaluation
-                                </div>
+                                <div class="blind-notice">AI confidence scores are hidden during evaluation</div>
 
                                 <p v-if="hcSubmitError" class="error">{{ hcSubmitError }}</p>
                                 <button class="submit-btn" @click="submitHCDiagnosis" :disabled="hcSubmitting || !hcDiagnosisComplete">
@@ -180,7 +226,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="progress-bar-container">
                         <div class="progress-bar" :style="{ width: ((hcIndex + 1) / hcPending.length * 100) + '%' }"></div>
                     </div>
@@ -193,59 +238,60 @@
                     <div class="spinner"></div>
                     <p>Loading results...</p>
                 </div>
-                <div v-else-if="concludedImages.length === 0" class="empty-state">
+                <div v-else-if="concludedImages.length === 0 && hcConcluded.length === 0" class="empty-state">
                     <p>No concluded examinations yet.</p>
                 </div>
                 <div v-else>
-                    <div class="agreement-banner">
-                        <div class="agreement-score">
-                            <p class="agreement-value">{{ overallAgreement }}%</p>
-                            <p class="agreement-label">Overall Agreement with AI</p>
-                        </div>
-                        <div class="agreement-breakdown">
-                            <div v-if="amdCount > 0" class="agreement-stat">
-                                <span class="stat-label">AMD</span>
-                                <span class="stat-value">{{ amdAgreement }}%</span>
-                                <span class="stat-count">{{ amdCount }} images</span>
+                    <div v-if="concludedImages.length > 0">
+                        <div class="agreement-banner">
+                            <div class="agreement-score">
+                                <p class="agreement-value">{{ overallAgreement }}%</p>
+                                <p class="agreement-label">Overall Agreement with AI</p>
                             </div>
-                            <div v-if="glaucomaCount > 0" class="agreement-stat">
-                                <span class="stat-label">Glaucoma</span>
-                                <span class="stat-value">{{ glaucomaAgreement }}%</span>
-                                <span class="stat-count">{{ glaucomaCount }} images</span>
-                            </div>
-                            <div v-if="drCount > 0" class="agreement-stat">
-                                <span class="stat-label">DR</span>
-                                <span class="stat-value">{{ drAgreement }}%</span>
-                                <span class="stat-count">{{ drCount }} images</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="concluded-list">
-                        <div v-for="item in concludedImages" :key="item.id" class="concluded-item">
-                            <img :src="'https://labiris.myiplist.com/research/image/' + item.image_id" class="concluded-thumb" />
-                            <div class="concluded-info">
-                                <div class="concluded-header">
-                                    <p class="concluded-title">Image #{{ item.image_id }}</p>
-                                    <div class="category-badge" :class="'cat-' + item.category">{{ categoryLabel(item.category) }}</div>
+                            <div class="agreement-breakdown">
+                                <div v-if="amdCount > 0" class="agreement-stat">
+                                    <span class="stat-label">AMD</span>
+                                    <span class="stat-value">{{ amdAgreement }}%</span>
+                                    <span class="stat-count">{{ amdCount }} images</span>
                                 </div>
-                                <div class="comparison-grid">
-                                    <div class="comparison-header"><span>Your Diagnosis</span><span>AI Diagnosis</span><span>Match</span></div>
-                                    <div class="comparison-row">
-                                        <span>{{ doctorAnswer(item) }}</span>
-                                        <span>{{ aiAnswer(item) }}</span>
-                                        <span :class="doctorAnswer(item) === aiAnswer(item) ? 'match-yes' : 'match-no'">{{ doctorAnswer(item) === aiAnswer(item) ? '✓ Match' : '✗ Differ' }}</span>
+                                <div v-if="glaucomaCount > 0" class="agreement-stat">
+                                    <span class="stat-label">Glaucoma</span>
+                                    <span class="stat-value">{{ glaucomaAgreement }}%</span>
+                                    <span class="stat-count">{{ glaucomaCount }} images</span>
+                                </div>
+                                <div v-if="drCount > 0" class="agreement-stat">
+                                    <span class="stat-label">DR</span>
+                                    <span class="stat-value">{{ drAgreement }}%</span>
+                                    <span class="stat-count">{{ drCount }} images</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="concluded-list">
+                            <div v-for="item in concludedImages" :key="item.id" class="concluded-item">
+                                <img :src="'https://labiris.myiplist.com/research/image/' + item.image_id" class="concluded-thumb zoomable" @click="openZoom('https://labiris.myiplist.com/research/image/' + item.image_id)" />
+                                <div class="concluded-info">
+                                    <div class="concluded-header">
+                                        <p class="concluded-title">Image #{{ item.image_id }}</p>
+                                        <div class="category-badge" :class="'cat-' + item.category">{{ categoryLabel(item.category) }}</div>
+                                    </div>
+                                    <div class="comparison-grid">
+                                        <div class="comparison-header"><span>Your Diagnosis</span><span>AI Diagnosis</span><span>Match</span></div>
+                                        <div class="comparison-row">
+                                            <span>{{ doctorAnswer(item) }}</span>
+                                            <span>{{ aiAnswer(item) }}</span>
+                                            <span :class="doctorAnswer(item) === aiAnswer(item) ? 'match-yes' : 'match-no'">{{ doctorAnswer(item) === aiAnswer(item) ? '✓ Match' : '✗ Differ' }}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- HC concluded section -->
-                    <div v-if="hcConcluded.length" class="hc-concluded-section">
+                    <div v-if="hcConcluded.length > 0" class="hc-concluded-section">
                         <h4 class="hc-concluded-title">Health Center Upload Reviews</h4>
                         <div class="concluded-list">
                             <div v-for="item in hcConcluded" :key="'hc-' + item.id" class="concluded-item">
-                                <img :src="'https://labiris.myiplist.com/research/hc-image/' + item.id + '?doctor_id=' + doctorId" class="concluded-thumb" />
+                                <img :src="'https://labiris.myiplist.com/research/hc-image/' + item.id + '?doctor_id=' + doctorId" class="concluded-thumb zoomable" @click="openZoom('https://labiris.myiplist.com/research/hc-image/' + item.id + '?doctor_id=' + doctorId)" />
                                 <div class="concluded-info">
                                     <div class="concluded-header">
                                         <p class="concluded-title">AMKA: {{ item.patient_amka }}</p>
@@ -253,22 +299,22 @@
                                         <span class="date-tag">{{ formatDate(item.uploaded_at) }}</span>
                                     </div>
                                     <div class="comparison-grid">
-                                        <div class="comparison-header"><span>Condition</span><span>Your Answer</span><span>AI Answer</span><span>AI Conf.</span><span>Match</span></div>
-                                        <div v-if="item.ai_glaucoma_conf >= 90" class="comparison-row five-col">
+                                        <div class="comparison-header five-col"><span>Condition</span><span>Your Answer</span><span>AI Answer</span><span>AI Conf.</span><span>Match</span></div>
+                                        <div v-if="item.ai_glaucoma_conf >= 90 && doctorExpertise.glaucoma" class="comparison-row five-col">
                                             <span class="cond-label">Glaucoma</span>
                                             <span>{{ item.doctor_glaucoma }}</span>
                                             <span>{{ item.ai_glaucoma }}</span>
                                             <span class="conf-reveal">{{ item.ai_glaucoma_conf }}%</span>
                                             <span :class="item.doctor_glaucoma === item.ai_glaucoma ? 'match-yes' : 'match-no'">{{ item.doctor_glaucoma === item.ai_glaucoma ? '✓' : '✗' }}</span>
                                         </div>
-                                        <div v-if="item.ai_dr_conf >= 90" class="comparison-row five-col">
+                                        <div v-if="item.ai_dr_conf >= 90 && doctorExpertise.dr" class="comparison-row five-col">
                                             <span class="cond-label">DR</span>
                                             <span>{{ item.doctor_dr }}</span>
                                             <span>{{ item.ai_dr }}</span>
                                             <span class="conf-reveal">{{ item.ai_dr_conf }}%</span>
                                             <span :class="item.doctor_dr === item.ai_dr ? 'match-yes' : 'match-no'">{{ item.doctor_dr === item.ai_dr ? '✓' : '✗' }}</span>
                                         </div>
-                                        <div v-if="item.ai_amd_conf >= 90" class="comparison-row five-col">
+                                        <div v-if="item.ai_amd_conf >= 90 && doctorExpertise.amd" class="comparison-row five-col">
                                             <span class="cond-label">AMD</span>
                                             <span>{{ item.doctor_amd }}</span>
                                             <span>{{ item.ai_amd }}</span>
@@ -301,22 +347,40 @@ export default {
     data() {
         return {
             doctorName: '', doctorId: null,
-            tab: 'pending',
+            tab: 'hc',
+
+            // Expertise
+            showExpertiseModal: false,
+            expertise: { glaucoma: false, dr: false, amd: false },
+            doctorExpertise: { glaucoma: false, dr: false, amd: false },
+            expertiseSaving: false,
+            expertiseError: '',
+
+            // Pending
             allPending: [], pendingLoading: false,
             currentIndex: 0,
             currentDiagnosis: { glaucoma: null, dr: null, amd: null },
             submitting: false, submitError: '',
+
+            // HC
             hcPending: [], hcLoading: false,
             hcIndex: 0,
             hcDiagnosis: { glaucoma: null, dr: null, amd: null },
             hcSubmitting: false, hcSubmitError: '',
-            concludedImages: [], hcConcluded: [], concludedLoading: false
+
+            // Concluded
+            concludedImages: [], hcConcluded: [], concludedLoading: false,
+
+            // Zoom
+            zoomSrc: null,
+            zoomLevel: 1
         }
     },
 
     computed: {
         currentImage() { return this.allPending[this.currentIndex] || {} },
         currentHC() { return this.hcPending[this.hcIndex] || {} },
+        anyExpertise() { return this.expertise.glaucoma || this.expertise.dr || this.expertise.amd },
 
         diagnosisComplete() {
             const cat = this.currentImage.category
@@ -329,16 +393,15 @@ export default {
         hcDiagnosisComplete() {
             const hc = this.currentHC
             if (!hc.id) return false
-            if (hc.ai_glaucoma_conf >= 90 && !this.hcDiagnosis.glaucoma) return false
-            if (hc.ai_dr_conf >= 90 && !this.hcDiagnosis.dr) return false
-            if (hc.ai_amd_conf >= 90 && !this.hcDiagnosis.amd) return false
+            if (hc.ai_glaucoma_conf >= 90 && this.doctorExpertise.glaucoma && !this.hcDiagnosis.glaucoma) return false
+            if (hc.ai_dr_conf >= 90 && this.doctorExpertise.dr && !this.hcDiagnosis.dr) return false
+            if (hc.ai_amd_conf >= 90 && this.doctorExpertise.amd && !this.hcDiagnosis.amd) return false
             return true
         },
 
         overallAgreement() {
             if (!this.concludedImages.length) return 0
-            const matches = this.concludedImages.filter(i => this.doctorAnswer(i) === this.aiAnswer(i)).length
-            return Math.round(matches / this.concludedImages.length * 100)
+            return Math.round(this.concludedImages.filter(i => this.doctorAnswer(i) === this.aiAnswer(i)).length / this.concludedImages.length * 100)
         },
         amdCount() { return this.concludedImages.filter(i => i.category === 'amd').length },
         glaucomaCount() { return this.concludedImages.filter(i => i.category === 'glaucoma').length },
@@ -357,14 +420,34 @@ export default {
         }
     },
 
-    mounted() {
+    async mounted() {
+        window.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.closeZoom() })
         const stored = localStorage.getItem('ddart_doctor')
         if (!stored) { this.$router.push('/login'); return }
         const doctor = JSON.parse(stored)
         this.doctorName = doctor.name
         this.doctorId = doctor.id
-        this.loadPending()
-        this.loadHCPending()
+
+        // Load expertise from backend
+        try {
+            const res = await fetch(`https://labiris.myiplist.com/doctor/expertise/${doctor.id}`)
+            const data = await res.json()
+            if (data.expertise) {
+                const parts = data.expertise.split(',')
+                this.doctorExpertise = {
+                    glaucoma: parts.includes('glaucoma'),
+                    dr: parts.includes('dr'),
+                    amd: parts.includes('amd')
+                }
+                this.loadPending()
+                this.loadHCPending()
+            } else {
+                // First time — show modal
+                this.showExpertiseModal = true
+            }
+        } catch {
+            this.showExpertiseModal = true
+        }
     },
 
     watch: {
@@ -374,6 +457,7 @@ export default {
 
     methods: {
         categoryLabel(cat) { return { amd: 'AMD', glaucoma: 'Glaucoma', dr: 'DR' }[cat] || cat },
+
         doctorAnswer(item) {
             if (item.category === 'amd') return item.doctor_amd
             if (item.category === 'glaucoma') return item.doctor_glaucoma
@@ -391,12 +475,41 @@ export default {
             return new Date(dt).toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
         },
 
+        async saveExpertise() {
+            if (!this.anyExpertise) return
+            this.expertiseSaving = true
+            this.expertiseError = ''
+            const parts = []
+            if (this.expertise.glaucoma) parts.push('glaucoma')
+            if (this.expertise.dr) parts.push('dr')
+            if (this.expertise.amd) parts.push('amd')
+            try {
+                const res = await fetch('https://labiris.myiplist.com/doctor/expertise', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ doctor_id: this.doctorId, expertise: parts.join(',') })
+                })
+                if (!res.ok) { this.expertiseError = 'Failed to save. Please try again.'; return }
+                this.doctorExpertise = { ...this.expertise }
+                this.showExpertiseModal = false
+                this.loadPending()
+                this.loadHCPending()
+            } catch { this.expertiseError = 'Connection failed.' }
+            finally { this.expertiseSaving = false }
+        },
+
         async loadPending() {
             this.pendingLoading = true
             try {
                 const res = await fetch(`https://labiris.myiplist.com/research/pending/${this.doctorId}`)
                 const data = await res.json()
-                this.allPending = data.images || []
+                // Filter by expertise
+                const exp = this.doctorExpertise
+                this.allPending = (data.images || []).filter(img => {
+                    if (img.category === 'glaucoma') return exp.glaucoma
+                    if (img.category === 'dr') return exp.dr
+                    if (img.category === 'amd') return exp.amd
+                    return false
+                })
                 this.currentIndex = 0
             } catch { } finally { this.pendingLoading = false }
         },
@@ -406,10 +519,14 @@ export default {
             try {
                 const res = await fetch(`https://labiris.myiplist.com/research/pending-hc?doctor_id=${this.doctorId}`)
                 const data = await res.json()
-                // Only include images where at least one condition is ≥ 90%
-                this.hcPending = (Array.isArray(data) ? data : []).filter(hc =>
-                    hc.ai_glaucoma_conf >= 90 || hc.ai_dr_conf >= 90 || hc.ai_amd_conf >= 90
-                )
+                const exp = this.doctorExpertise
+                // Only include images where AI ≥ 90% on at least one condition within doctor's expertise
+                this.hcPending = (Array.isArray(data) ? data : []).filter(hc => {
+                    if (exp.glaucoma && hc.ai_glaucoma_conf >= 90) return true
+                    if (exp.dr && hc.ai_dr_conf >= 90) return true
+                    if (exp.amd && hc.ai_amd_conf >= 90) return true
+                    return false
+                })
                 this.hcIndex = 0
             } catch { } finally { this.hcLoading = false }
         },
@@ -441,7 +558,7 @@ export default {
                         doctor_amd: this.currentDiagnosis.amd || 'N/A'
                     })
                 })
-                if (!res.ok) { this.submitError = 'Submission failed. Please try again.'; return }
+                if (!res.ok) { this.submitError = 'Submission failed.'; return }
                 this.allPending.splice(this.currentIndex, 1)
                 if (this.currentIndex >= this.allPending.length && this.currentIndex > 0) this.currentIndex--
                 this.currentDiagnosis = { glaucoma: null, dr: null, amd: null }
@@ -463,13 +580,17 @@ export default {
                         doctor_amd: this.hcDiagnosis.amd || 'N/A'
                     })
                 })
-                if (!res.ok) { this.hcSubmitError = 'Submission failed. Please try again.'; return }
+                if (!res.ok) { this.hcSubmitError = 'Submission failed.'; return }
                 this.hcPending.splice(this.hcIndex, 1)
                 if (this.hcIndex >= this.hcPending.length && this.hcIndex > 0) this.hcIndex--
                 this.hcDiagnosis = { glaucoma: null, dr: null, amd: null }
             } catch { this.hcSubmitError = 'Connection failed.' }
             finally { this.hcSubmitting = false }
         },
+
+        openZoom(src) { this.zoomSrc = src; this.zoomLevel = 1 },
+        closeZoom() { this.zoomSrc = null; this.zoomLevel = 1 },
+        onWheel(e) { this.zoomLevel = Math.min(Math.max(this.zoomLevel - e.deltaY * 0.001, 0.5), 4) },
 
         logout() { localStorage.removeItem('ddart_doctor'); this.$router.push('/login') }
     }
@@ -490,6 +611,25 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .subtitle { font-size: 13px; color: #4a6fa5; margin: 0 0 16px; }
 .logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 18px; font-weight: 700; color: #2c5282; letter-spacing: 3px; display: flex; align-items: baseline; justify-content: center; gap: 2px; }
 .logo span { color: #e53e3e; font-size: 48px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; }
+
+/* Expertise modal */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(10,20,40,0.88); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.modal-box { background: white; border-radius: 12px; padding: 40px; width: 420px; display: flex; flex-direction: column; align-items: center; gap: 20px; animation: appear 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+@keyframes appear { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.modal-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 16px; font-weight: 700; color: #2c5282; letter-spacing: 3px; display: flex; align-items: baseline; gap: 2px; }
+.modal-logo span { color: #e53e3e; font-size: 36px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; }
+.modal-box h3 { font-family: 'Playfair Display', serif; color: #2d3748; font-size: 20px; margin: 0; text-align: center; }
+.modal-box p { font-size: 13px; color: #718096; margin: 0; text-align: center; line-height: 1.6; }
+.expertise-options { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.expertise-option { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1.5px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.2s; background: white; }
+.expertise-option:hover { border-color: #2b6cb0; box-shadow: 0 2px 8px rgba(43,108,176,0.1); }
+.expertise-option.selected { border-color: #2b6cb0; background: #ebf8ff; }
+.exp-check { width: 22px; height: 22px; min-width: 22px; border: 2px solid #e2e8f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; background: white; transition: all 0.2s; margin-top: 1px; }
+.expertise-option.selected .exp-check { background: #2b6cb0; border-color: #2b6cb0; }
+.exp-text { display: flex; flex-direction: column; gap: 2px; }
+.exp-title { font-size: 14px; font-weight: 700; color: #2d3748; }
+.exp-desc { font-size: 12px; color: #718096; }
+.error { color: #c53030; font-size: 13px; font-weight: 600; margin: 0; }
 
 .panel-tabs { display: flex; gap: 8px; width: 100%; max-width: 900px; margin-bottom: 20px; }
 .panel-tab { flex: 1; padding: 10px; border: 1px solid #e2e8f0; border-radius: 4px; background: white; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; transition: all 0.2s; }
@@ -531,7 +671,6 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .diagnosis-side { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
 .diagnosis-side h3 { font-family: 'Playfair Display', serif; color: #2c5282; font-size: 18px; margin: 0; }
 .diagnosis-hint { font-size: 12px; color: #a0aec0; margin: 0; }
-
 .diagnosis-group { display: flex; flex-direction: column; gap: 8px; }
 .diagnosis-label { font-size: 12px; font-weight: 700; color: #4a5568; text-transform: uppercase; letter-spacing: 0.5px; }
 .radio-group { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -539,14 +678,12 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .radio-option input { display: none; }
 .radio-option:hover { border-color: #2b6cb0; color: #2b6cb0; }
 .radio-option.selected { border-color: #2b6cb0; background: #ebf8ff; color: #2b6cb0; }
-
 .blind-notice { font-size: 11px; color: #a0aec0; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px 12px; text-align: center; font-style: italic; }
 
-.submit-btn { padding: 11px; background: #2b6cb0; color: white; border: none; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.submit-btn { padding: 11px; background: #2b6cb0; color: white; border: none; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; width: 100%; }
 .submit-btn:hover:not(:disabled) { background: #2c5282; }
 .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .hint { font-size: 11px; color: #a0aec0; margin: 0; }
-.error { color: #c53030; font-size: 13px; font-weight: 600; margin: 0; }
 
 .progress-bar-container { height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden; }
 .progress-bar { height: 100%; background: #2b6cb0; border-radius: 2px; transition: width 0.4s ease; }
@@ -577,14 +714,32 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .conf-reveal { font-weight: 700; color: #2b6cb0; font-size: 12px; }
 .match-yes { color: #38a169; font-weight: 700; }
 .match-no { color: #e53e3e; font-weight: 700; }
-
 .hc-concluded-section { margin-top: 28px; }
 .hc-concluded-title { font-family: 'Playfair Display', serif; font-size: 16px; color: #2c5282; margin: 0 0 14px; }
 
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.3s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 .fade-slide-enter-active { transition: all 0.3s ease; }
 .fade-slide-leave-active { transition: all 0.2s ease; }
 .fade-slide-enter-from { opacity: 0; transform: translateY(10px); }
 .fade-slide-leave-to { opacity: 0; transform: translateY(-6px); }
+
+
+/* Zoom overlay */
+.zoom-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+.zoom-toolbar { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 6px 12px; }
+.zoom-btn { background: rgba(255,255,255,0.15); border: none; color: white; font-size: 16px; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; }
+.zoom-btn:hover { background: rgba(255,255,255,0.3); }
+.zoom-btn.zoom-close { background: rgba(229,62,62,0.4); margin-left: 8px; }
+.zoom-btn.zoom-close:hover { background: rgba(229,62,62,0.7); }
+.zoom-pct { color: white; font-size: 13px; font-weight: 700; min-width: 48px; text-align: center; }
+.zoom-img-wrap { display: flex; align-items: center; justify-content: center; overflow: hidden; max-width: 90vw; max-height: 75vh; cursor: zoom-in; }
+.zoom-img { max-width: 85vw; max-height: 72vh; object-fit: contain; transform-origin: center; transition: transform 0.15s ease; border-radius: 4px; }
+.zoom-hint { color: rgba(255,255,255,0.4); font-size: 11px; margin: 0; }
+.zoomable { cursor: zoom-in; transition: opacity 0.2s; }
+.zoomable:hover { opacity: 0.85; }
+.zoom-fade-enter-active, .zoom-fade-leave-active { transition: opacity 0.2s ease; }
+.zoom-fade-enter-from, .zoom-fade-leave-to { opacity: 0; }
 
 .footer { width: 100%; max-width: 900px; display: flex; justify-content: space-between; align-items: center; padding: 16px 0 24px; border-top: 1px solid #e2e8f0; margin-top: auto; }
 .dept-logo { height: 55px; width: auto; object-fit: contain; }

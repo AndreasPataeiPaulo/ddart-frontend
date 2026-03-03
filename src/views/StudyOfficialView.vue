@@ -23,6 +23,7 @@
                     <button class="submit-btn" @click="authenticate" :disabled="authLoading">
                         {{ authLoading ? 'Verifying...' : 'Enter' }}
                     </button>
+                    <button class="back-btn" @click="$router.push('/login')">← Back to Login</button>
                 </div>
             </div>
         </transition>
@@ -330,7 +331,9 @@ export default {
                     prevalence_glaucoma: 0, prevalence_dr: 0, prevalence_amd: 0,
                     hc_ai_agree_glaucoma: 0, hc_ai_agree_dr: 0, hc_ai_agree_amd: 0
                 },
-                glaucoma_rows: [], dr_rows: [], amd_rows: [], hc_rows: []
+                glaucoma_rows: [], dr_rows: [], amd_rows: [], hc_rows: [],
+            showLogoutOverlay: false,
+            logoutBarWidth: 0
             }
         }
     },
@@ -396,9 +399,26 @@ export default {
         },
 
         logout() {
-            localStorage.removeItem('ddart_study')
-            this.authenticated = false
-            this.codeInput = ''
+            this.showLogoutOverlay = true
+            this.logoutBarWidth = 0
+            const start = performance.now()
+            const duration = 2500
+            const animate = (now) => {
+                const progress = Math.min((now - start) / duration, 1)
+                this.logoutBarWidth = Math.round((1 - Math.pow(1 - progress, 3)) * 100)
+                if (progress < 1) {
+                    requestAnimationFrame(animate)
+                } else {
+                    setTimeout(() => {
+                        localStorage.removeItem('ddart_study')
+                        localStorage.removeItem('ddart_study_code')
+                        this.authenticated = false
+                        this.codeInput = ''
+                        this.$router.push('/login')
+                    }, 100)
+                }
+            }
+            requestAnimationFrame(animate)
         },
 
         ringStyle(pct) {
@@ -426,6 +446,42 @@ export default {
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-family: 'Source Sans 3', sans-serif; }
 
+
+/* Logout / entry overlay */
+.entry-overlay { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(ellipse at center, #0d1f3c 0%, #060d1a 100%); display: flex; align-items: center; justify-content: center; }
+.entry-content { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.retinal-scanner { position: relative; width: 200px; height: 200px; animation: scanner-appear 0.5s ease both; }
+@keyframes scanner-appear { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+.retina-svg { width: 100%; height: 100%; }
+.ring-draw { animation: ring-draw 1.8s 0.3s cubic-bezier(0.4,0,0.2,1) forwards; }
+@keyframes ring-draw { from { stroke-dashoffset: 565; } to { stroke-dashoffset: 0; } }
+.ring-draw-2 { animation: ring-draw-2 1.4s 0.5s cubic-bezier(0.4,0,0.2,1) forwards; }
+@keyframes ring-draw-2 { from { stroke-dashoffset: 415; } to { stroke-dashoffset: 0; } }
+.crosshair { opacity: 0; animation: lo-fade-in 0.4s 1s ease forwards; }
+@keyframes lo-fade-in { to { opacity: 1; } }
+.vessel { stroke-dasharray: 200; stroke-dashoffset: 200; animation: vessel-draw 1s 0.8s ease forwards; }
+@keyframes vessel-draw { to { stroke-dashoffset: 0; } }
+.bracket { opacity: 0; animation: lo-fade-in 0.5s 0.2s ease forwards; }
+.scanner-beam { transform-origin: 100px 100px; animation: scan-rotate 2s linear infinite; }
+@keyframes scan-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(99,179,237,0.0) 20%, rgba(99,179,237,0.6) 50%, rgba(99,179,237,0.0) 80%, transparent 100%); animation: scan-sweep 2s ease-in-out infinite; border-radius: 1px; }
+@keyframes scan-sweep { 0% { top: 10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
+.glint { position: absolute; width: 4px; height: 4px; background: #63b3ed; border-radius: 50%; animation: glint-pulse 2s ease-in-out infinite; box-shadow: 0 0 6px #63b3ed; }
+.glint-1 { top: 6px; left: 50%; animation-delay: 0s; }
+.glint-2 { top: 50%; right: 6px; animation-delay: 0.66s; }
+.glint-3 { bottom: 6px; left: 50%; animation-delay: 1.33s; }
+@keyframes glint-pulse { 0%,100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); } }
+.entry-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 22px; font-weight: 700; color: white; letter-spacing: 4px; display: flex; align-items: baseline; gap: 2px; animation: lo-logo-appear 0.6s 0.4s cubic-bezier(0.4,0,0.2,1) both; }
+.entry-ddart { color: white; }
+.entry-ai { color: #e53e3e; font-size: 72px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; line-height: 1; }
+.entry-bar { width: 200px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+.entry-bar-fill { height: 100%; background: linear-gradient(90deg, #4299e1, #63b3ed); border-radius: 2px; transition: width 0.05s linear; }
+.entry-msg { color: rgba(255,255,255,0.55); font-size: 13px; font-weight: 400; letter-spacing: 1px; text-transform: uppercase; margin: 0; animation: lo-msg-appear 0.5s 0.6s cubic-bezier(0.4,0,0.2,1) both; }
+@keyframes lo-logo-appear { from { opacity: 0; transform: scale(0.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes lo-msg-appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.overlay-fade-enter-active, .overlay-fade-leave-active { transition: opacity 0.5s ease; }
+.overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
+
 .study-container { display: flex; flex-direction: column; align-items: center; padding: 30px 20px 0; min-height: 100vh; }
 
 /* Modal */
@@ -443,6 +499,8 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .submit-btn { width: 100%; padding: 10px; background: #2b6cb0; color: white; border: none; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
 .submit-btn:hover:not(:disabled) { background: #2c5282; }
 .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.back-btn { width: 100%; padding: 8px; background: none; border: 1px solid #e2e8f0; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; transition: all 0.2s; }
+.back-btn:hover { background: #f8fafc; border-color: #cbd5e0; }
 
 /* Header */
 .header { text-align: center; margin-bottom: 24px; width: 100%; max-width: 1000px; }
