@@ -1,89 +1,150 @@
 <template>
     <div class="login-container" :class="{ dark: isDark }">
 
-        <!-- Study Official modal -->
-        <transition name="modal-fade">
-            <div v-if="showStudyModal" class="study-modal-backdrop">
-                <div class="study-modal-box">
-                    <div class="modal-logo">DDART<span>AI</span></div>
-                    <h3>Study Official Access</h3>
-                    <p>Enter the study access code to continue.</p>
-                    <div class="field" style="width:100%">
-                        <input v-model="studyCode" type="password" placeholder="Access code" @keyup.enter="studyLogin" autofocus />
-                    </div>
-                    <transition name="error-pop">
-                        <p v-if="studyError" class="error">{{ studyError }}</p>
-                    </transition>
-                    <div class="study-modal-btns">
-                        <button class="study-back-btn" @click="showStudyModal = false; studyCode = ''; studyError = ''">← Back</button>
-                        <button class="submit-btn study-submit" @click="studyLogin" :disabled="!studyCode">Enter</button>
-                    </div>
-                </div>
-            </div>
-        </transition>
-
         <transition name="overlay-fade">
             <div v-if="showOverlay" class="entry-overlay">
+                <!-- Particle field -->
+                <div class="particle-field">
+                    <div v-for="i in 24" :key="i" class="particle" :style="particleStyle(i)"></div>
+                </div>
+                <!-- Grid lines -->
+                <div class="grid-lines">
+                    <div v-for="i in 8" :key="'h'+i" class="grid-h" :style="{ top: (i*12)+'%' }"></div>
+                    <div v-for="i in 8" :key="'v'+i" class="grid-v" :style="{ left: (i*12)+'%' }"></div>
+                </div>
+
                 <div class="entry-content">
+                    <!-- Main retinal scanner — larger -->
                     <div class="retinal-scanner">
-                        <svg class="retina-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <!-- Outer ring -->
-                            <circle cx="100" cy="100" r="90" stroke="rgba(99,179,237,0.15)" stroke-width="1"/>
-                            <circle cx="100" cy="100" r="90" stroke="url(#ringGrad)" stroke-width="1.5" stroke-dasharray="565" stroke-dashoffset="565" class="ring-draw"/>
-                            <!-- Mid ring -->
-                            <circle cx="100" cy="100" r="66" stroke="rgba(99,179,237,0.1)" stroke-width="1"/>
-                            <circle cx="100" cy="100" r="66" stroke="rgba(99,179,237,0.4)" stroke-width="1" stroke-dasharray="415" stroke-dashoffset="415" class="ring-draw-2"/>
-                            <!-- Inner ring -->
-                            <circle cx="100" cy="100" r="42" stroke="rgba(99,179,237,0.08)" stroke-width="1"/>
-                            <!-- Crosshairs -->
-                            <line x1="100" y1="4" x2="100" y2="30" stroke="rgba(99,179,237,0.3)" stroke-width="1" class="crosshair"/>
-                            <line x1="100" y1="170" x2="100" y2="196" stroke="rgba(99,179,237,0.3)" stroke-width="1" class="crosshair"/>
-                            <line x1="4" y1="100" x2="30" y2="100" stroke="rgba(99,179,237,0.3)" stroke-width="1" class="crosshair"/>
-                            <line x1="170" y1="100" x2="196" y2="100" stroke="rgba(99,179,237,0.3)" stroke-width="1" class="crosshair"/>
-                            <!-- Optic nerve/disc -->
-                            <circle cx="118" cy="88" r="10" fill="none" stroke="rgba(99,179,237,0.25)" stroke-width="1.5"/>
-                            <circle cx="118" cy="88" r="5" fill="rgba(99,179,237,0.12)"/>
-                            <!-- Vessels radiating from disc -->
-                            <path d="M112 84 Q90 75 70 60" stroke="rgba(99,179,237,0.2)" stroke-width="1.2" fill="none" class="vessel"/>
-                            <path d="M110 90 Q88 92 65 98" stroke="rgba(99,179,237,0.2)" stroke-width="1.2" fill="none" class="vessel"/>
-                            <path d="M112 95 Q100 112 90 130" stroke="rgba(99,179,237,0.2)" stroke-width="1.2" fill="none" class="vessel"/>
-                            <path d="M124 83 Q140 70 155 58" stroke="rgba(99,179,237,0.2)" stroke-width="1.2" fill="none" class="vessel"/>
-                            <path d="M126 90 Q145 90 162 95" stroke="rgba(99,179,237,0.2)" stroke-width="1.2" fill="none" class="vessel"/>
-                            <path d="M122 96 Q130 114 128 135" stroke="rgba(99,179,237,0.2)" stroke-width="1.2" fill="none" class="vessel"/>
-                            <!-- Macula -->
-                            <circle cx="82" cy="100" r="8" fill="none" stroke="rgba(229,62,62,0.3)" stroke-width="1" stroke-dasharray="3 3"/>
-                            <circle cx="82" cy="100" r="3" fill="rgba(229,62,62,0.2)"/>
-                            <!-- Scanner beam -->
+                        <svg class="retina-svg" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <defs>
-                                <radialGradient id="beamGrad" cx="50%" cy="50%" r="50%">
-                                    <stop offset="0%" stop-color="rgba(99,179,237,0.0)"/>
-                                    <stop offset="85%" stop-color="rgba(99,179,237,0.06)"/>
-                                    <stop offset="100%" stop-color="rgba(99,179,237,0.0)"/>
+                                <radialGradient id="eyeGlow" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="rgba(66,153,225,0.25)"/>
+                                    <stop offset="100%" stop-color="rgba(66,153,225,0)"/>
                                 </radialGradient>
-                                <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" stop-color="#4299e1"/>
-                                    <stop offset="100%" stop-color="#63b3ed"/>
+                                <radialGradient id="beamGrad2" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="rgba(99,179,237,0)"/>
+                                    <stop offset="70%" stop-color="rgba(99,179,237,0.08)"/>
+                                    <stop offset="100%" stop-color="rgba(99,179,237,0)"/>
+                                </radialGradient>
+                                <linearGradient id="ringGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#63b3ed"/>
+                                    <stop offset="50%" stop-color="#4299e1"/>
+                                    <stop offset="100%" stop-color="#2b6cb0"/>
                                 </linearGradient>
+                                <linearGradient id="ringGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#e53e3e"/>
+                                    <stop offset="100%" stop-color="#fc8181"/>
+                                </linearGradient>
+                                <filter id="glow">
+                                    <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                                    <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                                </filter>
+                                <filter id="glow-strong">
+                                    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                                    <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                                </filter>
                             </defs>
-                            <path d="M100 100 L190 100 A90 90 0 0 1 100 190 Z" fill="url(#beamGrad)" class="scanner-beam"/>
-                            <!-- Corner brackets -->
-                            <path d="M14 40 L14 14 L40 14" stroke="rgba(99,179,237,0.5)" stroke-width="1.5" fill="none" class="bracket"/>
-                            <path d="M160 14 L186 14 L186 40" stroke="rgba(99,179,237,0.5)" stroke-width="1.5" fill="none" class="bracket"/>
-                            <path d="M14 160 L14 186 L40 186" stroke="rgba(99,179,237,0.5)" stroke-width="1.5" fill="none" class="bracket"/>
-                            <path d="M160 186 L186 186 L186 160" stroke="rgba(99,179,237,0.5)" stroke-width="1.5" fill="none" class="bracket"/>
+
+                            <!-- Background glow -->
+                            <circle cx="150" cy="150" r="130" fill="url(#eyeGlow)"/>
+
+                            <!-- Outer orbit rings -->
+                            <circle cx="150" cy="150" r="138" stroke="rgba(99,179,237,0.06)" stroke-width="1"/>
+                            <circle cx="150" cy="150" r="138" stroke="url(#ringGrad1)" stroke-width="1.5" stroke-dasharray="867" stroke-dashoffset="867" class="ring-draw"/>
+                            <circle cx="150" cy="150" r="120" stroke="rgba(99,179,237,0.04)" stroke-width="1"/>
+                            <circle cx="150" cy="150" r="120" stroke="rgba(99,179,237,0.35)" stroke-width="1" stroke-dasharray="754" stroke-dashoffset="754" class="ring-draw-2"/>
+                            <circle cx="150" cy="150" r="98" stroke="rgba(99,179,237,0.08)" stroke-width="0.5" stroke-dasharray="4 6"/>
+                            <circle cx="150" cy="150" r="75" stroke="rgba(99,179,237,0.06)" stroke-width="0.5" stroke-dasharray="3 5" class="ring-spin"/>
+                            <circle cx="150" cy="150" r="55" stroke="rgba(99,179,237,0.08)" stroke-width="0.5"/>
+
+                            <!-- Crosshairs -->
+                            <line x1="150" y1="6" x2="150" y2="44" stroke="rgba(99,179,237,0.5)" stroke-width="1" class="crosshair" filter="url(#glow)"/>
+                            <line x1="150" y1="256" x2="150" y2="294" stroke="rgba(99,179,237,0.5)" stroke-width="1" class="crosshair" filter="url(#glow)"/>
+                            <line x1="6" y1="150" x2="44" y2="150" stroke="rgba(99,179,237,0.5)" stroke-width="1" class="crosshair" filter="url(#glow)"/>
+                            <line x1="256" y1="150" x2="294" y2="150" stroke="rgba(99,179,237,0.5)" stroke-width="1" class="crosshair" filter="url(#glow)"/>
+                            <!-- Diagonal crosshairs -->
+                            <line x1="118" y1="18" x2="128" y2="32" stroke="rgba(99,179,237,0.25)" stroke-width="0.8" class="crosshair"/>
+                            <line x1="182" y1="18" x2="172" y2="32" stroke="rgba(99,179,237,0.25)" stroke-width="0.8" class="crosshair"/>
+                            <line x1="118" y1="282" x2="128" y2="268" stroke="rgba(99,179,237,0.25)" stroke-width="0.8" class="crosshair"/>
+                            <line x1="182" y1="282" x2="172" y2="268" stroke="rgba(99,179,237,0.25)" stroke-width="0.8" class="crosshair"/>
+
+                            <!-- Optic disc -->
+                            <circle cx="178" cy="132" r="16" fill="rgba(66,153,225,0.08)" stroke="rgba(99,179,237,0.4)" stroke-width="1.5" filter="url(#glow)" class="disc-appear"/>
+                            <circle cx="178" cy="132" r="8" fill="rgba(99,179,237,0.18)" stroke="rgba(99,179,237,0.6)" stroke-width="1" class="disc-appear"/>
+                            <circle cx="178" cy="132" r="3" fill="rgba(99,179,237,0.8)" class="disc-appear" filter="url(#glow-strong)"/>
+
+                            <!-- Blood vessels -->
+                            <path d="M168 126 Q135 112 105 90" stroke="rgba(99,179,237,0.35)" stroke-width="1.8" fill="none" class="vessel" filter="url(#glow)"/>
+                            <path d="M165 135 Q132 138 98 148" stroke="rgba(99,179,237,0.3)" stroke-width="1.5" fill="none" class="vessel"/>
+                            <path d="M168 142 Q150 168 136 196" stroke="rgba(99,179,237,0.3)" stroke-width="1.5" fill="none" class="vessel"/>
+                            <path d="M186 125 Q210 106 232 88" stroke="rgba(99,179,237,0.3)" stroke-width="1.5" fill="none" class="vessel"/>
+                            <path d="M190 135 Q218 136 244 143" stroke="rgba(99,179,237,0.3)" stroke-width="1.5" fill="none" class="vessel"/>
+                            <path d="M184 145 Q196 172 192 204" stroke="rgba(99,179,237,0.25)" stroke-width="1.2" fill="none" class="vessel"/>
+                            <!-- Sub-vessels -->
+                            <path d="M140 100 Q125 95 110 104" stroke="rgba(99,179,237,0.2)" stroke-width="1" fill="none" class="vessel-2"/>
+                            <path d="M120 148 Q108 160 100 175" stroke="rgba(99,179,237,0.2)" stroke-width="1" fill="none" class="vessel-2"/>
+                            <path d="M215 100 Q225 110 220 125" stroke="rgba(99,179,237,0.2)" stroke-width="1" fill="none" class="vessel-2"/>
+
+                            <!-- Macula with fovea -->
+                            <circle cx="124" cy="150" r="18" fill="none" stroke="url(#ringGrad2)" stroke-width="1.2" stroke-dasharray="5 4" class="macula-appear"/>
+                            <circle cx="124" cy="150" r="10" fill="rgba(229,62,62,0.08)" stroke="rgba(229,62,62,0.4)" stroke-width="1" class="macula-appear"/>
+                            <circle cx="124" cy="150" r="4" fill="rgba(229,62,62,0.6)" class="macula-appear" filter="url(#glow)"/>
+
+                            <!-- Scanner beam -->
+                            <path d="M150 150 L288 150 A138 138 0 0 1 150 288 Z" fill="url(#beamGrad2)" class="scanner-beam"/>
+
+                            <!-- Corner brackets — larger -->
+                            <path d="M20 58 L20 20 L58 20" stroke="rgba(99,179,237,0.7)" stroke-width="2" fill="none" class="bracket" filter="url(#glow)"/>
+                            <path d="M242 20 L280 20 L280 58" stroke="rgba(99,179,237,0.7)" stroke-width="2" fill="none" class="bracket" filter="url(#glow)"/>
+                            <path d="M20 242 L20 280 L58 280" stroke="rgba(99,179,237,0.7)" stroke-width="2" fill="none" class="bracket" filter="url(#glow)"/>
+                            <path d="M242 280 L280 280 L280 242" stroke="rgba(99,179,237,0.7)" stroke-width="2" fill="none" class="bracket" filter="url(#glow)"/>
+
+                            <!-- Tick marks around outer ring -->
+                            <line x1="150" y1="12" x2="150" y2="20" stroke="rgba(99,179,237,0.4)" stroke-width="1" class="tick"/>
+                            <line x1="150" y1="280" x2="150" y2="288" stroke="rgba(99,179,237,0.4)" stroke-width="1" class="tick"/>
+                            <line x1="12" y1="150" x2="20" y2="150" stroke="rgba(99,179,237,0.4)" stroke-width="1" class="tick"/>
+                            <line x1="280" y1="150" x2="288" y2="150" stroke="rgba(99,179,237,0.4)" stroke-width="1" class="tick"/>
+                            <line x1="52" y1="35" x2="57" y2="43" stroke="rgba(99,179,237,0.3)" stroke-width="0.8" class="tick"/>
+                            <line x1="248" y1="35" x2="243" y2="43" stroke="rgba(99,179,237,0.3)" stroke-width="0.8" class="tick"/>
+                            <line x1="35" y1="248" x2="43" y2="243" stroke="rgba(99,179,237,0.3)" stroke-width="0.8" class="tick"/>
+                            <line x1="265" y1="248" x2="257" y2="243" stroke="rgba(99,179,237,0.3)" stroke-width="0.8" class="tick"/>
+
+                            <!-- Data readout lines -->
+                            <line x1="196" y1="116" x2="226" y2="96" stroke="rgba(99,179,237,0.4)" stroke-width="0.8" class="readout-line"/>
+                            <line x1="226" y1="96" x2="256" y2="96" stroke="rgba(99,179,237,0.4)" stroke-width="0.8" class="readout-line"/>
+                            <line x1="106" y1="132" x2="76" y2="112" stroke="rgba(229,62,62,0.4)" stroke-width="0.8" class="readout-line"/>
+                            <line x1="76" y1="112" x2="46" y2="112" stroke="rgba(229,62,62,0.4)" stroke-width="0.8" class="readout-line"/>
                         </svg>
+
                         <!-- Scan line -->
                         <div class="scan-line"></div>
-                        <!-- Glint dots around the ring -->
+                        <!-- Glints -->
                         <div class="glint glint-1"></div>
                         <div class="glint glint-2"></div>
                         <div class="glint glint-3"></div>
+                        <div class="glint glint-4"></div>
+                        <!-- Data readout labels -->
+                        <div class="readout readout-1">OD: 0.42</div>
+                        <div class="readout readout-2">MAC: 0.18</div>
+                        <div class="readout readout-3">AI ✓</div>
                     </div>
+
+                    <!-- DDART title -->
                     <div class="entry-logo">
-                        <span class="entry-ddart">DDART</span><span class="entry-ai">AI</span>
+                        <span class="entry-d entry-letter">D</span>
+                        <span class="entry-d2 entry-letter">D</span>
+                        <span class="entry-a entry-letter">A</span>
+                        <span class="entry-r entry-letter">R</span>
+                        <span class="entry-t entry-letter">T</span>
+                        <span class="entry-ai">AI</span>
                     </div>
+                    <div class="entry-tagline">Ophthalmology · Artificial Intelligence · Screening</div>
+
+                    <!-- Progress bar -->
                     <div class="entry-bar">
                         <div class="entry-bar-fill" :style="{ width: barWidth + '%' }"></div>
+                        <div class="entry-bar-glow" :style="{ left: barWidth + '%' }"></div>
                     </div>
                     <p class="entry-msg">{{ entryMessage }}</p>
                 </div>
@@ -91,7 +152,7 @@
         </transition>
 
         <div class="header">
-            <button class="study-official-btn" @click="showStudyModal = true">Study Official</button>
+            <button class="study-official-btn" @click="goToStudy">Study Official</button>
             <div class="header-controls">
                 <div class="lang-toggle">
                     <button :class="['lang-btn', { active: lang === 'en' }]" @click="setLang('en')">EN</button>
@@ -156,8 +217,8 @@
                         <!-- HEALTH CENTER LOGIN -->
                         <div v-if="role === 'health-center' && mode === 'login'" key="hc-login" class="form">
                             <div class="field">
-                                <label>{{ t('Health Center Name', 'Όνομα Κέντρου Υγείας') }}</label>
-                                <input v-model="centerName" type="text" :placeholder="t('Full name of your health center', 'Πλήρες όνομα κέντρου υγείας')" />
+                                <label>{{ t('Health Center ID', 'Κωδικός Κέντρου Υγείας') }}</label>
+                                <input v-model="centerId" type="text" maxlength="5" :placeholder="t('5-digit center ID', '5-ψήφιος κωδικός κέντρου')" />
                             </div>
                             <div class="field">
                                 <label>{{ t('Password', 'Κωδικός') }}</label>
@@ -170,7 +231,7 @@
                                 <span class="btn-text">{{ loading ? t('Signing in...', 'Σύνδεση...') : t('Sign In', 'Σύνδεση') }}</span>
                                 <span v-if="loading" class="btn-spinner"></span>
                             </button>
-                            <p class="access-note">{{ t('Access is granted by the DDART administrator. Contact ddart@med.duth.gr to register your center.', 'Η πρόσβαση χορηγείται από τον διαχειριστή DDART. Επικοινωνήστε με ddart@med.duth.gr για εγγραφή του κέντρου σας.') }}</p>
+                            <p class="access-note">{{ t('Sign in with your 5-digit center ID provided by the DDART administrator. Contact ddart@med.duth.gr to register.', 'Συνδεθείτε με τον 5-ψήφιο κωδικό κέντρου που σας έχει δοθεί από τον διαχειριστή DDART.') }}</p>
                         </div>
 
                         <!-- DOCTOR LOGIN -->
@@ -251,7 +312,7 @@ export default {
         return {
             role: 'health-center',
             mode: 'login',
-            centerName: '',
+            centerId: '',
             fullName: '',
             email: '',
             password: '',
@@ -260,9 +321,6 @@ export default {
             loading: false,
             isDark: localStorage.getItem('ddart_dark') === 'true',
             showOverlay: false,
-            showStudyModal: false,
-            studyCode: '',
-            studyError: '',
             barWidth: 0,
             entryMessage: ''
         }
@@ -276,15 +334,26 @@ export default {
     },
 
     methods: {
-        async studyLogin() {
-            this.studyError = ''
-            try {
-                const res = await fetch(`https://labiris.myiplist.com/study/stats?code=${encodeURIComponent(this.studyCode)}`)
-                if (!res.ok) { this.studyError = 'Invalid access code.'; return }
-                localStorage.setItem('ddart_study_code', this.studyCode)
-                this.showStudyModal = false
-                this.$router.push('/study')
-            } catch { this.studyError = 'Connection failed.' }
+        particleStyle(i) {
+            const seed = i * 137.508
+            const x = (Math.sin(seed) * 0.5 + 0.5) * 100
+            const y = (Math.cos(seed * 1.3) * 0.5 + 0.5) * 100
+            const size = 1.5 + (i % 4) * 0.8
+            const delay = (i * 0.4) % 6
+            const duration = 4 + (i % 5) * 1.2
+            return {
+                left: x + '%',
+                top: y + '%',
+                width: size + 'px',
+                height: size + 'px',
+                animationDelay: delay + 's',
+                animationDuration: duration + 's',
+                opacity: 0.15 + (i % 3) * 0.1
+            }
+        },
+
+        goToStudy() {
+            this.showEntryAnimation('STUDY OFFICIAL', '/study')
         },
 
         toggleDark() {
@@ -296,60 +365,85 @@ export default {
             this.entryMessage = message
             this.showOverlay = true
             this.barWidth = 0
+            const duration = 4000
             const start = performance.now()
-            const duration = 2500
             const animate = (now) => {
                 const progress = Math.min((now - start) / duration, 1)
                 this.barWidth = Math.round((1 - Math.pow(1 - progress, 3)) * 100)
-                if (progress < 1) {
-                    requestAnimationFrame(animate)
-                } else {
-                    setTimeout(() => this.$router.push(destination), 200)
-                }
+                if (progress < 1) requestAnimationFrame(animate)
+                else setTimeout(() => this.$router.push(destination), 200)
+            }
+            requestAnimationFrame(animate)
+        },
+
+        runAnimThenNavigate(destination) {
+            const duration = 4000
+            const start = performance.now()
+            const animate = (now) => {
+                const progress = Math.min((now - start) / duration, 1)
+                this.barWidth = Math.round((1 - Math.pow(1 - progress, 3)) * 100)
+                if (progress < 1) requestAnimationFrame(animate)
+                else setTimeout(() => this.$router.push(destination), 200)
             }
             requestAnimationFrame(animate)
         },
 
         async healthCenterLogin() {
             this.error = ''
-            if (!this.centerName || !this.password) { this.error = this.t('Please fill in all fields', 'Παρακαλώ συμπληρώστε όλα τα πεδία'); return }
+            if (!this.centerId || !this.password) { this.error = this.t('Please fill in all fields', 'Παρακαλώ συμπληρώστε όλα τα πεδία'); return }
             this.loading = true
+            this.showOverlay = true
+            this.barWidth = 0
+            this.entryMessage = this.t('Authenticating...', 'Επαλήθευση...')
+            await this.$nextTick()
+            await new Promise(r => setTimeout(r, 60))
             try {
                 const res = await fetch('https://labiris.myiplist.com/health-center/login', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: this.centerName, password: this.password })
+                    body: JSON.stringify({ center_id: this.centerId, password: this.password })
                 })
                 const data = await res.json()
-                if (!res.ok) { this.error = data.detail || this.t('Login failed', 'Αποτυχία σύνδεσης'); return }
-                localStorage.setItem('ddart_health_center', JSON.stringify({ id: data.health_center_id, name: data.name }))
+                if (!res.ok) {
+                    this.showOverlay = false; this.loading = false
+                    this.error = data.detail || this.t('Login failed', 'Αποτυχία σύνδεσης'); return
+                }
+                localStorage.setItem('ddart_health_center', JSON.stringify({ id: data.health_center_id, name: data.name, specialty: data.specialty || '', center_id: data.center_id || '' }))
+                this.entryMessage = this.t('Welcome, ' + data.name, 'Καλώς ορίσατε, ' + data.name)
                 this.loading = false
-                this.showEntryAnimation(
-                    this.t('Welcome, ' + data.name, 'Καλώς ορίσατε, ' + data.name),
-                    '/health-center'
-                )
-            } catch { this.error = this.t('Connection failed. Please try again.', 'Αποτυχία σύνδεσης. Δοκιμάστε ξανά.') }
-            finally { this.loading = false }
+                this.runAnimThenNavigate('/health-center')
+            } catch {
+                this.showOverlay = false; this.loading = false
+                this.error = this.t('Connection failed. Please try again.', 'Αποτυχία σύνδεσης. Δοκιμάστε ξανά.')
+            }
         },
 
         async doctorLogin() {
             this.error = ''
             if (!this.email || !this.password) { this.error = this.t('Please fill in all fields', 'Παρακαλώ συμπληρώστε όλα τα πεδία'); return }
             this.loading = true
+            this.showOverlay = true
+            this.barWidth = 0
+            this.entryMessage = this.t('Authenticating...', 'Επαλήθευση...')
+            await this.$nextTick()
+            await new Promise(r => setTimeout(r, 60))
             try {
                 const res = await fetch('https://labiris.myiplist.com/doctor/login', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: this.email, password: this.password })
                 })
                 const data = await res.json()
-                if (!res.ok) { this.error = data.detail || this.t('Login failed', 'Αποτυχία σύνδεσης'); return }
+                if (!res.ok) {
+                    this.showOverlay = false; this.loading = false
+                    this.error = data.detail || this.t('Login failed', 'Αποτυχία σύνδεσης'); return
+                }
                 localStorage.setItem('ddart_doctor', JSON.stringify({ id: data.doctor_id, name: data.full_name, is_research: true }))
+                this.entryMessage = this.t('Welcome, Dr. ' + data.full_name, 'Καλώς ορίσατε, Δρ. ' + data.full_name)
                 this.loading = false
-                this.showEntryAnimation(
-                    this.t('Welcome, Dr. ' + data.full_name, 'Καλώς ορίσατε, Δρ. ' + data.full_name),
-                    '/research'
-                )
-            } catch { this.error = this.t('Connection failed. Please try again.', 'Αποτυχία σύνδεσης. Δοκιμάστε ξανά.') }
-            finally { this.loading = false }
+                this.runAnimThenNavigate('/research')
+            } catch {
+                this.showOverlay = false; this.loading = false
+                this.error = this.t('Connection failed. Please try again.', 'Αποτυχία σύνδεσης. Δοκιμάστε ξανά.')
+            }
         },
 
         async doctorSignup() {
@@ -382,57 +476,105 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 
 .login-container { display: flex; flex-direction: column; align-items: center; padding: 30px 20px 0; min-height: 100vh; width: 100%; background: #f0f4f8; transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 
-.entry-overlay { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(ellipse at center, #0d1f3c 0%, #060d1a 100%); display: flex; align-items: center; justify-content: center; }
-.entry-content { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+/* ══════════════════════════════════════════
+   ENTRY OVERLAY — CINEMATIC VERSION
+   ══════════════════════════════════════════ */
+.entry-overlay { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(ellipse at 50% 40%, #0a1628 0%, #04080f 100%); display: flex; align-items: center; justify-content: center; overflow: hidden; }
 
-/* Retinal scanner */
-.retinal-scanner { position: relative; width: 200px; height: 200px; animation: scanner-appear 0.5s ease both; }
-@keyframes scanner-appear { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+/* Background grid */
+.grid-lines { position: absolute; inset: 0; pointer-events: none; }
+.grid-h { position: absolute; left: 0; right: 0; height: 1px; background: rgba(99,179,237,0.04); animation: grid-fade-in 1s ease both; }
+.grid-v { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(99,179,237,0.04); animation: grid-fade-in 1s ease both; }
+@keyframes grid-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Floating particles */
+.particle-field { position: absolute; inset: 0; pointer-events: none; }
+.particle { position: absolute; background: #63b3ed; border-radius: 50%; animation: particle-float linear infinite; transform: translate(-50%, -50%); box-shadow: 0 0 4px rgba(99,179,237,0.6); }
+@keyframes particle-float { 0% { transform: translate(-50%, -50%) scale(1); opacity: 0.15; } 50% { transform: translate(-50%, -60%) scale(1.4); opacity: 0.5; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.15; } }
+
+.entry-content { display: flex; flex-direction: column; align-items: center; gap: 24px; position: relative; z-index: 2; }
+
+/* Retinal scanner — larger */
+.retinal-scanner { position: relative; width: 300px; height: 300px; animation: scanner-appear 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes scanner-appear { from { opacity: 0; transform: scale(0.7) rotate(-8deg); } to { opacity: 1; transform: scale(1) rotate(0deg); } }
 .retina-svg { width: 100%; height: 100%; }
 
-/* Outer ring draw animation */
-.ring-draw { animation: ring-draw 1.8s 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-@keyframes ring-draw { from { stroke-dashoffset: 565; } to { stroke-dashoffset: 0; } }
-.ring-draw-2 { animation: ring-draw-2 1.4s 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-@keyframes ring-draw-2 { from { stroke-dashoffset: 415; } to { stroke-dashoffset: 0; } }
+/* Ring draw animations */
+.ring-draw { animation: ring-draw 2s 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+@keyframes ring-draw { from { stroke-dashoffset: 867; } to { stroke-dashoffset: 0; } }
+.ring-draw-2 { animation: ring-draw-2 1.6s 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+@keyframes ring-draw-2 { from { stroke-dashoffset: 754; } to { stroke-dashoffset: 0; } }
+.ring-spin { animation: ring-spin 12s linear infinite; transform-origin: 150px 150px; }
+@keyframes ring-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-/* Crosshairs fade in */
-.crosshair { opacity: 0; animation: fade-in 0.4s 1s ease forwards; }
-@keyframes fade-in { to { opacity: 1; } }
+/* Crosshairs */
+.crosshair { opacity: 0; animation: elem-appear 0.5s 1.2s ease forwards; }
+.tick { opacity: 0; animation: elem-appear 0.4s 1.4s ease forwards; }
+@keyframes elem-appear { to { opacity: 1; } }
 
-/* Vessels draw in */
-.vessel { stroke-dasharray: 200; stroke-dashoffset: 200; animation: vessel-draw 1s 0.8s ease forwards; }
+/* Vessels */
+.vessel { stroke-dasharray: 300; stroke-dashoffset: 300; animation: vessel-draw 1.2s 0.9s ease forwards; }
+.vessel-2 { stroke-dasharray: 200; stroke-dashoffset: 200; animation: vessel-draw 1s 1.3s ease forwards; }
 @keyframes vessel-draw { to { stroke-dashoffset: 0; } }
 
-/* Corner brackets */
-.bracket { opacity: 0; animation: fade-in 0.5s 0.2s ease forwards; }
+/* Optic disc & macula */
+.disc-appear { opacity: 0; animation: disc-pop 0.6s 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.macula-appear { opacity: 0; animation: disc-pop 0.6s 1.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+@keyframes disc-pop { from { opacity: 0; transform: scale(0); transform-box: fill-box; transform-origin: center; } to { opacity: 1; transform: scale(1); } }
 
-/* Scanner beam rotating */
-.scanner-beam { transform-origin: 100px 100px; animation: scan-rotate 2s linear infinite; }
+/* Readout lines */
+.readout-line { stroke-dasharray: 60; stroke-dashoffset: 60; animation: vessel-draw 0.6s 1.9s ease forwards; }
+
+/* Scanner beam */
+.scanner-beam { transform-origin: 150px 150px; animation: scan-rotate 3s linear infinite; }
 @keyframes scan-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-/* Horizontal scan line sweeping */
-.scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(99,179,237,0.0) 20%, rgba(99,179,237,0.6) 50%, rgba(99,179,237,0.0) 80%, transparent 100%); animation: scan-sweep 2s ease-in-out infinite; border-radius: 1px; }
-@keyframes scan-sweep { 0% { top: 10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
+/* Corner brackets */
+.bracket { opacity: 0; animation: bracket-slide 0.5s 0.1s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+@keyframes bracket-slide { from { opacity: 0; stroke-dashoffset: 80; } to { opacity: 1; stroke-dashoffset: 0; } }
 
-/* Glint dots */
-.glint { position: absolute; width: 4px; height: 4px; background: #63b3ed; border-radius: 50%; animation: glint-pulse 2s ease-in-out infinite; box-shadow: 0 0 6px #63b3ed; }
-.glint-1 { top: 6px; left: 50%; animation-delay: 0s; }
-.glint-2 { top: 50%; right: 6px; animation-delay: 0.66s; }
-.glint-3 { bottom: 6px; left: 50%; animation-delay: 1.33s; }
-@keyframes glint-pulse { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); } }
+/* Scan line */
+.scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, rgba(99,179,237,0.0) 15%, rgba(99,179,237,0.8) 50%, rgba(99,179,237,0.0) 85%, transparent); animation: scan-sweep 2.5s ease-in-out infinite; filter: blur(0.5px); }
+@keyframes scan-sweep { 0% { top: 8%; opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } 100% { top: 92%; opacity: 0; } }
 
-/* Logo & bar */
-.entry-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 22px; font-weight: 700; color: white; letter-spacing: 4px; display: flex; align-items: baseline; gap: 2px; animation: logo-appear 0.6s 0.4s cubic-bezier(0.4, 0, 0.2, 1) both; }
-.entry-ddart { color: white; }
-.entry-ai { color: #e53e3e; font-size: 72px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; line-height: 1; }
-.entry-bar { width: 200px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
-.entry-bar-fill { height: 100%; background: linear-gradient(90deg, #4299e1, #63b3ed); border-radius: 2px; transition: width 0.05s linear; }
-.entry-msg { color: rgba(255,255,255,0.55); font-size: 13px; font-weight: 400; letter-spacing: 1px; text-transform: uppercase; margin: 0; animation: msg-appear 0.5s 0.6s cubic-bezier(0.4, 0, 0.2, 1) both; }
-@keyframes logo-appear { from { opacity: 0; transform: scale(0.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-@keyframes msg-appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-.overlay-fade-leave-active { transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-.overlay-fade-leave-to { opacity: 0; transform: scale(1.04); }
+/* Glints */
+.glint { position: absolute; border-radius: 50%; background: #63b3ed; animation: glint-pulse 2.2s ease-in-out infinite; box-shadow: 0 0 8px 2px rgba(99,179,237,0.8); }
+.glint-1 { width: 5px; height: 5px; top: 4px; left: calc(50% - 2px); animation-delay: 0s; }
+.glint-2 { width: 4px; height: 4px; top: calc(50% - 2px); right: 4px; animation-delay: 0.75s; }
+.glint-3 { width: 5px; height: 5px; bottom: 4px; left: calc(50% - 2px); animation-delay: 1.5s; }
+.glint-4 { width: 4px; height: 4px; top: calc(50% - 2px); left: 4px; animation-delay: 0.37s; }
+@keyframes glint-pulse { 0%, 100% { opacity: 0.2; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.8); } }
+
+/* Data readouts */
+.readout { position: absolute; font-family: 'Courier New', monospace; font-size: 10px; font-weight: 700; letter-spacing: 1px; opacity: 0; animation: elem-appear 0.4s ease forwards; }
+.readout-1 { top: 26%; right: 2%; color: rgba(99,179,237,0.8); animation-delay: 2s; }
+.readout-2 { top: 36%; left: 1%; color: rgba(229,62,62,0.8); animation-delay: 2.1s; }
+.readout-3 { bottom: 28%; right: 4%; color: rgba(72,187,120,0.9); animation-delay: 2.2s; font-size: 11px; }
+
+/* DDART logo — letter by letter */
+.entry-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 28px; font-weight: 900; letter-spacing: 6px; display: flex; align-items: baseline; gap: 0; }
+.entry-letter { color: white; opacity: 0; display: inline-block; animation: letter-drop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; text-shadow: 0 0 20px rgba(99,179,237,0.4); }
+.entry-d  { animation-delay: 1.6s; }
+.entry-d2 { animation-delay: 1.75s; }
+.entry-a  { animation-delay: 1.9s; }
+.entry-r  { animation-delay: 2.05s; }
+.entry-t  { animation-delay: 2.2s; }
+.entry-ai { color: #e53e3e; font-size: 56px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; line-height: 1; opacity: 0; margin-left: 6px; animation: ai-slam 0.6s 2.4s cubic-bezier(0.22, 1, 0.36, 1) forwards; text-shadow: 0 0 30px rgba(229,62,62,0.5); }
+@keyframes letter-drop { from { opacity: 0; transform: translateY(-20px) scale(0.8); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes ai-slam { from { opacity: 0; transform: scale(2.5); filter: blur(8px); } to { opacity: 1; transform: scale(1); filter: blur(0); } }
+
+/* Tagline */
+.entry-tagline { font-size: 10px; font-weight: 600; letter-spacing: 3px; color: rgba(99,179,237,0.5); text-transform: uppercase; opacity: 0; animation: elem-appear 0.6s 2.8s ease forwards; margin-top: -10px; }
+
+/* Progress bar */
+.entry-bar { width: 260px; height: 2px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: visible; position: relative; opacity: 0; animation: elem-appear 0.4s 1s ease forwards; }
+.entry-bar-fill { height: 100%; background: linear-gradient(90deg, #2b6cb0, #63b3ed, #90cdf4); border-radius: 2px; transition: width 0.05s linear; position: relative; }
+.entry-bar-glow { position: absolute; top: -3px; width: 12px; height: 8px; background: rgba(99,179,237,0.9); border-radius: 50%; filter: blur(3px); transform: translateX(-50%); transition: left 0.05s linear; }
+.entry-msg { color: rgba(255,255,255,0.45); font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin: 0; opacity: 0; animation: elem-appear 0.5s 1.1s ease forwards; }
+
+/* Overlay transition */
+.overlay-fade-leave-active { transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), filter 0.6s ease; }
+.overlay-fade-leave-to { opacity: 0; transform: scale(1.06); filter: blur(4px); }
 
 .header-controls { position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 12px; }
 .lang-toggle { display: flex; align-items: center; gap: 4px; }
@@ -552,47 +694,11 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .dark .footer-right p { color: #718096; }
 .dark .footer-right a { color: #63b3ed; }
 
-.study-modal-backdrop { position: fixed; inset: 0; background: rgba(10,20,40,0.85); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-.study-modal-box { background: white; border-radius: 12px; padding: 36px; width: 300px; display: flex; flex-direction: column; align-items: center; gap: 14px; animation: modal-appear 0.3s cubic-bezier(0.34,1.56,0.64,1) both; }
-@keyframes modal-appear { from { opacity: 0; transform: scale(0.92) translateY(16px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-.modal-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 14px; font-weight: 700; color: #2c5282; letter-spacing: 3px; display: flex; align-items: baseline; gap: 2px; }
-.modal-logo span { color: #e53e3e; font-size: 30px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; }
-.study-modal-box h3 { font-family: 'Playfair Display', serif; color: #2d3748; font-size: 17px; margin: 0; }
-.study-modal-box p { font-size: 13px; color: #718096; margin: 0; text-align: center; }
-.study-modal-btns { display: flex; gap: 8px; width: 100%; }
-.study-back-btn { flex: 1; padding: 10px; background: none; border: 1px solid #e2e8f0; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; transition: all 0.2s; }
-.study-back-btn:hover { background: #f8fafc; border-color: #cbd5e0; }
-.submit-btn.study-submit { flex: 1; margin-top: 0; }
-.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s ease; }
-.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
-.dark .study-modal-box { background: #2d3748; }
-.dark .study-modal-box h3 { color: #e2e8f0; }
-.dark .study-modal-box p { color: #a0aec0; }
-.dark .study-back-btn { border-color: #4a5568; color: #a0aec0; }
-.dark .study-back-btn:hover { background: #3d4a5c; }
+
 
 .study-official-btn { position: absolute; top: 0; left: 0; background: none; border: 1px solid #e2e8f0; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 11px; font-weight: 700; color: #718096; cursor: pointer; padding: 4px 10px; letter-spacing: 0.3px; transition: all 0.2s ease; }
 .study-official-btn:hover { color: #2b6cb0; border-color: #2b6cb0; background: #ebf8ff; }
-.dark .study-modal-backdrop { position: fixed; inset: 0; background: rgba(10,20,40,0.85); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-.study-modal-box { background: white; border-radius: 12px; padding: 36px; width: 300px; display: flex; flex-direction: column; align-items: center; gap: 14px; animation: modal-appear 0.3s cubic-bezier(0.34,1.56,0.64,1) both; }
-@keyframes modal-appear { from { opacity: 0; transform: scale(0.92) translateY(16px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-.modal-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 14px; font-weight: 700; color: #2c5282; letter-spacing: 3px; display: flex; align-items: baseline; gap: 2px; }
-.modal-logo span { color: #e53e3e; font-size: 30px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; }
-.study-modal-box h3 { font-family: 'Playfair Display', serif; color: #2d3748; font-size: 17px; margin: 0; }
-.study-modal-box p { font-size: 13px; color: #718096; margin: 0; text-align: center; }
-.study-modal-btns { display: flex; gap: 8px; width: 100%; }
-.study-back-btn { flex: 1; padding: 10px; background: none; border: 1px solid #e2e8f0; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; transition: all 0.2s; }
-.study-back-btn:hover { background: #f8fafc; border-color: #cbd5e0; }
-.submit-btn.study-submit { flex: 1; margin-top: 0; }
-.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s ease; }
-.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
-.dark .study-modal-box { background: #2d3748; }
-.dark .study-modal-box h3 { color: #e2e8f0; }
-.dark .study-modal-box p { color: #a0aec0; }
-.dark .study-back-btn { border-color: #4a5568; color: #a0aec0; }
-.dark .study-back-btn:hover { background: #3d4a5c; }
-
-.study-official-btn { color: #718096; border-color: #4a5568; }
+.dark .study-official-btn { color: #718096; border-color: #4a5568; }
 .dark .study-official-btn:hover { color: #63b3ed; border-color: #63b3ed; background: #1a365d; }
 
 @media (max-width: 768px) {

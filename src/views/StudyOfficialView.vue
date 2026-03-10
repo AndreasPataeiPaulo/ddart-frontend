@@ -45,6 +45,7 @@
                 <button :class="['panel-tab', { active: tab === 'glaucoma' }]" @click="tab = 'glaucoma'">Glaucoma</button>
                 <button :class="['panel-tab', { active: tab === 'dr' }]" @click="tab = 'dr'">Diabetic Retinopathy</button>
                 <button :class="['panel-tab', { active: tab === 'amd' }]" @click="tab = 'amd'">AMD</button>
+                <button :class="['panel-tab', { active: tab === 'biomarkers' }]" @click="tab = 'biomarkers'; loadBiomarkers()">Biomarkers</button>
             </div>
 
             <div v-if="loading" class="loading-state">
@@ -214,6 +215,44 @@
                 </div>
 
                 <!-- CONDITION TABS -->
+                <div v-else-if="!loading && tab === 'biomarkers'" key="biomarkers" class="panel-section">
+                    <h2 class="section-title">Biomarker Reviews</h2>
+                    <div v-if="bioLoading" class="loading-state">Loading...</div>
+                    <div v-else-if="bioRows.length === 0" class="empty-state">No biomarker data yet.</div>
+                    <div v-else>
+                        <div class="bio-filter-bar">
+                            <select v-model="bioFilter" class="bio-filter-select">
+                                <option value="all">All conditions</option>
+                                <option value="glaucoma">Glaucoma</option>
+                                <option value="dr">Diabetic Retinopathy</option>
+                                <option value="amd">AMD</option>
+                            </select>
+                            <span class="bio-count">{{ filteredBioRows.length }} reviews</span>
+                        </div>
+                        <div class="bio-review-list">
+                            <div v-for="row in filteredBioRows" :key="row.id" class="bio-review-card">
+                                <div class="bio-review-header">
+                                    <span class="bio-review-amka">AMKA: {{ row.patient_amka }}</span>
+                                    <span class="bio-review-doctor">Dr. {{ row.doctor_name }}</span>
+                                    <span class="bio-review-date">{{ row.reviewed_at ? row.reviewed_at.slice(0,10) : '' }}</span>
+                                </div>
+                                <div class="bio-review-diagnoses">
+                                    <span v-if="row.doctor_glaucoma && row.doctor_glaucoma !== 'N/A'" class="bio-diag-chip">Glaucoma: {{ row.doctor_glaucoma }}</span>
+                                    <span v-if="row.doctor_dr && row.doctor_dr !== 'N/A'" class="bio-diag-chip">DR: {{ row.doctor_dr }}</span>
+                                    <span v-if="row.doctor_amd && row.doctor_amd !== 'N/A'" class="bio-diag-chip">AMD: {{ row.doctor_amd }}</span>
+                                </div>
+                                <div v-if="row.biomarkers" class="bio-markers-grid">
+                                    <div v-for="(val, key) in row.biomarkers" :key="key" class="bio-marker-item" :class="'bm-' + val">
+                                        <span class="bm-key">{{ key.replace(/_/g, ' ') }}</span>
+                                        <span class="bm-val">{{ val }}</span>
+                                    </div>
+                                </div>
+                                <div v-else class="bio-no-markers">No biomarkers recorded.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div v-else-if="!loading && (tab === 'glaucoma' || tab === 'dr' || tab === 'amd')" :key="tab" class="panel-section">
                     <div class="section-card">
                         <h4 class="section-title">
@@ -331,10 +370,13 @@ export default {
                     prevalence_glaucoma: 0, prevalence_dr: 0, prevalence_amd: 0,
                     hc_ai_agree_glaucoma: 0, hc_ai_agree_dr: 0, hc_ai_agree_amd: 0
                 },
-                glaucoma_rows: [], dr_rows: [], amd_rows: [], hc_rows: [],
+                glaucoma_rows: [], dr_rows: [], amd_rows: [], hc_rows: []
+            },
             showLogoutOverlay: false,
-            logoutBarWidth: 0
-            }
+            logoutBarWidth: 0,
+            bioRows: [],
+            bioLoading: false,
+            bioFilter: 'all'
         }
     },
 
@@ -360,6 +402,15 @@ export default {
         },
         maxReviewed() {
             return Math.max(...this.stats.doctors.map(d => d.reviewed), 1)
+        },
+        filteredBioRows() {
+            if (this.bioFilter === 'all') return this.bioRows
+            return this.bioRows.filter(r => {
+                if (this.bioFilter === 'glaucoma') return r.doctor_glaucoma && r.doctor_glaucoma !== 'N/A'
+                if (this.bioFilter === 'dr') return r.doctor_dr && r.doctor_dr !== 'N/A'
+                if (this.bioFilter === 'amd') return r.doctor_amd && r.doctor_amd !== 'N/A'
+                return true
+            })
         },
         hcRowsForCondition() {
             if (!this.stats.hc_rows) return []
@@ -396,6 +447,20 @@ export default {
                 const data = await res.json()
                 this.stats = data
             } catch { } finally { this.loading = false }
+        },
+
+        async loadBiomarkers() {
+            if (this.bioRows.length) return
+            this.bioLoading = true
+            try {
+                const code = this.codeInput || 'ddart'
+                const res = await fetch(`https://labiris.myiplist.com/study/biomarkers?code=${code}`)
+                const data = await res.json()
+                this.bioRows = (data.rows || []).map(r => ({
+                    ...r,
+                    biomarkers: r.biomarkers ? JSON.parse(r.biomarkers) : null
+                }))
+            } catch { } finally { this.bioLoading = false }
         },
 
         logout() {
@@ -618,4 +683,28 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
     .agreement-row-grid { gap: 20px; }
     .panel-tabs { flex-wrap: wrap; }
 }
+.bio-filter-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.bio-filter-select { padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; background: white; }
+.bio-count { font-size: 12px; color: #718096; }
+.bio-review-list { display: flex; flex-direction: column; gap: 12px; }
+.bio-review-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; background: white; }
+.bio-review-header { display: flex; gap: 16px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.bio-review-amka { font-weight: 700; font-size: 13px; color: #2d3748; }
+.bio-review-doctor { font-size: 12px; color: #2b6cb0; font-weight: 600; }
+.bio-review-date { font-size: 11px; color: #a0aec0; margin-left: auto; }
+.bio-review-diagnoses { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.bio-diag-chip { background: #ebf8ff; color: #2b6cb0; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; border: 1px solid #bee3f8; }
+.bio-markers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 4px; }
+.bio-marker-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; border-radius: 4px; font-size: 11px; background: #f7fafc; border: 1px solid #e2e8f0; }
+.bm-key { color: #4a5568; text-transform: capitalize; }
+.bm-val { font-weight: 700; font-size: 10px; padding: 1px 5px; border-radius: 3px; }
+.bio-marker-item.bm-yes .bm-val { background: #c6f6d5; color: #276749; }
+.bio-marker-item.bm-no .bm-val { background: #fed7d7; color: #9b2c2c; }
+.bio-marker-item.bm-inconclusive .bm-val { background: #fefcbf; color: #744210; }
+.bio-no-markers { font-size: 12px; color: #a0aec0; font-style: italic; }
+.dark .bio-filter-select { background: #2d3748; border-color: #4a5568; color: #e2e8f0; }
+.dark .bio-review-card { background: #2d3748; border-color: #4a5568; }
+.dark .bio-review-amka { color: #e2e8f0; }
+.dark .bio-marker-item { background: #1a202c; border-color: #4a5568; }
+.dark .bm-key { color: #a0aec0; }
 </style>

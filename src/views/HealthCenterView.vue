@@ -14,21 +14,24 @@
                     <h3>{{ t('Image Uploaded', 'Η εικόνα ανέβηκε') }}</h3>
                     <p>{{ t('AI analysis complete. The research team will review the results.', 'Η ανάλυση ΤΝ ολοκληρώθηκε. Η ερευνητική ομάδα θα αξιολογήσει τα αποτελέσματα.') }}</p>
                     <div class="ai-results">
-                        <div class="ai-result-row">
+                        <!-- Glaucoma result -->
+                        <div v-if="centerSpecialty === 'glaucoma'" class="ai-result-row">
                             <span class="ai-label">{{ t('Glaucoma', 'Γλαύκωμα') }}</span>
                             <span v-if="lastResult.ai_glaucoma_conf >= 90" :class="['ai-value', lastResult.ai_glaucoma !== 'Healthy' ? 'positive' : 'negative']">
                                 {{ lastResult.ai_glaucoma }} ({{ lastResult.ai_glaucoma_conf }}%)
                             </span>
                             <span v-else class="ai-value inconclusive">{{ t('Inconclusive', 'Αναποφάσιστο') }} ({{ lastResult.ai_glaucoma_conf }}%)</span>
                         </div>
-                        <div class="ai-result-row">
+                        <!-- DR result -->
+                        <div v-else-if="centerSpecialty === 'dr'" class="ai-result-row">
                             <span class="ai-label">{{ t('Diabetic Retinopathy', 'Διαβητική Αμφιβληστροειδοπάθεια') }}</span>
                             <span v-if="lastResult.ai_dr_conf >= 90" :class="['ai-value', lastResult.ai_dr !== 'No_DR' ? 'positive' : 'negative']">
                                 {{ lastResult.ai_dr }} ({{ lastResult.ai_dr_conf }}%)
                             </span>
                             <span v-else class="ai-value inconclusive">{{ t('Inconclusive', 'Αναποφάσιστο') }} ({{ lastResult.ai_dr_conf }}%)</span>
                         </div>
-                        <div class="ai-result-row">
+                        <!-- AMD result -->
+                        <div v-else-if="centerSpecialty === 'amd'" class="ai-result-row">
                             <span class="ai-label">{{ t('AMD', 'ΗΩΕ') }}</span>
                             <span v-if="lastResult.ai_amd_conf >= 90" :class="['ai-value', lastResult.ai_amd !== 'Normal' ? 'positive' : 'negative']">
                                 {{ lastResult.ai_amd }} ({{ lastResult.ai_amd_conf }}%)
@@ -54,6 +57,10 @@
             </div>
             <div class="logo">DDART<span>AI</span></div>
             <div class="center-name">{{ centerName }}</div>
+            <div class="center-meta">
+                <span :class="['specialty-badge-hc', centerSpecialty]">{{ specialtyLabelFull(centerSpecialty) }}</span>
+                <span class="ai-model-tag">AI: DDART AI 1.0</span>
+            </div>
             <p class="center-subtitle">{{ t('Retinal Image Upload Portal', 'Πύλη Ανεβάσματος Εικόνων Αμφιβληστροειδούς') }}</p>
         </div>
 
@@ -63,7 +70,7 @@
 
                 <div class="upload-left">
                     <h2>{{ t('Upload Patient Image', 'Ανέβασμα Εικόνας Ασθενούς') }}</h2>
-                    <p>{{ t('Upload a retinal fundus photograph for immediate AI analysis. The image will be screened for Glaucoma, Diabetic Retinopathy, and AMD simultaneously.', 'Ανεβάστε φωτογραφία βυθού αμφιβληστροειδούς για ακαριαία ανάλυση ΤΝ. Η εικόνα θα ελεγχθεί ταυτόχρονα για Γλαύκωμα, Διαβητική Αμφιβληστροειδοπάθεια και ΗΩΕ.') }}</p>
+                    <p>{{ t('Upload a retinal fundus photograph for immediate AI analysis. As a ' + specialtyLabelFull(centerSpecialty) + ' center, the image will be screened specifically for this condition using ResNet-50.', 'Ανεβάστε φωτογραφία βυθού αμφιβληστροειδούς για ακαριαία ανάλυση ΤΝ με το μοντέλο ResNet-50.') }}</p>
                     <div class="instructions">
                         <div class="instruction-step">
                             <span class="step-num">1</span>
@@ -124,17 +131,28 @@
                         </transition>
                     </div>
 
+                    <!-- Consent checkbox -->
+                    <label class="consent-check" :class="{ checked: consentGiven }" @click="consentGiven = !consentGiven">
+                        <span class="consent-box">{{ consentGiven ? '✓' : '' }}</span>
+                        <span class="consent-text">{{ t('The patient has consented to the use of this image for AI analysis and research.', 'Ο ασθενής έχει συναινέσει στη χρήση αυτής της εικόνας για ανάλυση ΤΝ και έρευνα.') }}</span>
+                    </label>
+
                     <transition name="error-pop">
                         <p v-if="uploadError" class="error">{{ uploadError }}</p>
                     </transition>
 
-                    <button class="submit-btn" @click="uploadImage" :disabled="uploading || !selectedFile || !patientAmka">
+                    <div class="consent-check" :class="{ checked: consentChecked }" @click="consentChecked = !consentChecked">
+                        <div class="consent-box">{{ consentChecked ? '✓' : '' }}</div>
+                        <span class="consent-text">{{ t('The patient has consented to the use of this image for AI screening and research.', 'Ο ασθενής έχει δώσει συγκατάθεση για τη χρήση αυτής της εικόνας για ανάλυση ΤΝ και έρευνα.') }}</span>
+                    </div>
+
+                    <button class="submit-btn" @click="uploadImage" :disabled="uploading || !selectedFile || !patientAmka || !consentGiven">
                         <span class="btn-text">{{ uploading ? t('Analysing...', 'Ανάλυση...') : t('Upload and Analyse', 'Ανέβασμα και Ανάλυση') }}</span>
                         <span v-if="uploading" class="btn-spinner"></span>
                     </button>
 
                     <p v-if="uploading" class="uploading-note">
-                        {{ t('AI is screening for all three conditions. This may take a moment.', 'Η ΤΝ ελέγχει και τις τρεις παθήσεις. Αυτό μπορεί να διαρκέσει λίγο.') }}
+                        {{ t('AI is analysing the image. This may take a moment.', 'Η ΤΝ αναλύει την εικόνα. Αυτό μπορεί να διαρκέσει λίγο.') }}
                     </p>
                 </div>
             </div>
@@ -160,6 +178,8 @@ export default {
         return {
             centerName: '',
             healthCenterId: null,
+            centerSpecialty: '',
+            consentChecked: false,
             patientAmka: '',
             amkaError: '',
             selectedFile: null,
@@ -168,8 +188,13 @@ export default {
             uploading: false,
             uploadError: '',
             showSuccess: false,
+            centerSpecialty: '',
+            centerId: '',
+            consentGiven: false,
             lastResult: {},
-            isDark: localStorage.getItem('ddart_dark') === 'true'
+            isDark: localStorage.getItem('ddart_dark') === 'true',
+            showLogoutOverlay: false,
+            logoutBarWidth: 0
         }
     },
 
@@ -179,6 +204,9 @@ export default {
         const parsed = JSON.parse(hc)
         this.centerName = parsed.name
         this.healthCenterId = parsed.id
+        this.centerSpecialty = parsed.specialty || ''
+        this.centerSpecialty = parsed.specialty || ''
+        this.centerId = parsed.center_id || ''
     },
 
     watch: {
@@ -198,8 +226,23 @@ export default {
         },
 
         logout() {
-            localStorage.removeItem('ddart_health_center')
-            this.$router.push('/login')
+            this.showLogoutOverlay = true
+            this.logoutBarWidth = 0
+            const start = performance.now()
+            const duration = 2500
+            const animate = (now) => {
+                const progress = Math.min((now - start) / duration, 1)
+                this.logoutBarWidth = Math.round((1 - Math.pow(1 - progress, 3)) * 100)
+                if (progress < 1) {
+                    requestAnimationFrame(animate)
+                } else {
+                    setTimeout(() => {
+                        localStorage.removeItem('ddart_health_center')
+                        this.$router.push('/login')
+                    }, 100)
+                }
+            }
+            requestAnimationFrame(animate)
         },
 
         handleFileChange(e) {
@@ -217,6 +260,7 @@ export default {
         setFile(file) {
             this.selectedFile = file
             this.uploadError = ''
+            this.consentGiven = false
             const reader = new FileReader()
             reader.onload = (e) => { this.previewUrl = e.target.result }
             reader.readAsDataURL(file)
@@ -242,7 +286,7 @@ export default {
                 const res = await fetch('https://labiris.myiplist.com/health-center/upload', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ health_center_id: this.healthCenterId, patient_amka: this.patientAmka, image_b64: b64 })
+                    body: JSON.stringify({ health_center_id: this.healthCenterId, patient_amka: this.patientAmka, image_b64: b64, specialty: this.centerSpecialty })
                 })
                 const data = await res.json()
                 if (!res.ok) { this.uploadError = data.detail || this.t('Upload failed', 'Αποτυχία ανεβάσματος'); return }
@@ -255,6 +299,10 @@ export default {
             }
         },
 
+        specialtyLabelFull(s) {
+            return { glaucoma: 'Glaucoma', dr: 'Diabetic Retinopathy', amd: 'AMD' }[s] || s
+        },
+
         resetForm() {
             this.showSuccess = false
             this.patientAmka = ''
@@ -262,6 +310,7 @@ export default {
             this.previewUrl = null
             this.uploadError = ''
             this.lastResult = {}
+            this.consentChecked = false
             if (this.$refs.fileInput) this.$refs.fileInput.value = ''
         }
     }
@@ -273,6 +322,42 @@ export default {
 
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-family: 'Source Sans 3', sans-serif; overflow-x: hidden; }
+
+
+/* Logout / entry overlay */
+.entry-overlay { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(ellipse at center, #0d1f3c 0%, #060d1a 100%); display: flex; align-items: center; justify-content: center; }
+.entry-content { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.retinal-scanner { position: relative; width: 200px; height: 200px; animation: scanner-appear 0.5s ease both; }
+@keyframes scanner-appear { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+.retina-svg { width: 100%; height: 100%; }
+.ring-draw { animation: ring-draw 1.8s 0.3s cubic-bezier(0.4,0,0.2,1) forwards; }
+@keyframes ring-draw { from { stroke-dashoffset: 565; } to { stroke-dashoffset: 0; } }
+.ring-draw-2 { animation: ring-draw-2 1.4s 0.5s cubic-bezier(0.4,0,0.2,1) forwards; }
+@keyframes ring-draw-2 { from { stroke-dashoffset: 415; } to { stroke-dashoffset: 0; } }
+.crosshair { opacity: 0; animation: lo-fade-in 0.4s 1s ease forwards; }
+@keyframes lo-fade-in { to { opacity: 1; } }
+.vessel { stroke-dasharray: 200; stroke-dashoffset: 200; animation: vessel-draw 1s 0.8s ease forwards; }
+@keyframes vessel-draw { to { stroke-dashoffset: 0; } }
+.bracket { opacity: 0; animation: lo-fade-in 0.5s 0.2s ease forwards; }
+.scanner-beam { transform-origin: 100px 100px; animation: scan-rotate 2s linear infinite; }
+@keyframes scan-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(99,179,237,0.0) 20%, rgba(99,179,237,0.6) 50%, rgba(99,179,237,0.0) 80%, transparent 100%); animation: scan-sweep 2s ease-in-out infinite; border-radius: 1px; }
+@keyframes scan-sweep { 0% { top: 10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
+.glint { position: absolute; width: 4px; height: 4px; background: #63b3ed; border-radius: 50%; animation: glint-pulse 2s ease-in-out infinite; box-shadow: 0 0 6px #63b3ed; }
+.glint-1 { top: 6px; left: 50%; animation-delay: 0s; }
+.glint-2 { top: 50%; right: 6px; animation-delay: 0.66s; }
+.glint-3 { bottom: 6px; left: 50%; animation-delay: 1.33s; }
+@keyframes glint-pulse { 0%,100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); } }
+.entry-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 22px; font-weight: 700; color: white; letter-spacing: 4px; display: flex; align-items: baseline; gap: 2px; animation: lo-logo-appear 0.6s 0.4s cubic-bezier(0.4,0,0.2,1) both; }
+.entry-ddart { color: white; }
+.entry-ai { color: #e53e3e; font-size: 72px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; line-height: 1; }
+.entry-bar { width: 200px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+.entry-bar-fill { height: 100%; background: linear-gradient(90deg, #4299e1, #63b3ed); border-radius: 2px; transition: width 0.05s linear; }
+.entry-msg { color: rgba(255,255,255,0.55); font-size: 13px; font-weight: 400; letter-spacing: 1px; text-transform: uppercase; margin: 0; animation: lo-msg-appear 0.5s 0.6s cubic-bezier(0.4,0,0.2,1) both; }
+@keyframes lo-logo-appear { from { opacity: 0; transform: scale(0.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes lo-msg-appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.overlay-fade-enter-active, .overlay-fade-leave-active { transition: opacity 0.5s ease; }
+.overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
 
 .hc-container { display: flex; flex-direction: column; align-items: center; padding: 30px 20px 0; min-height: 100vh; background: #f0f4f8; transition: background 0.4s ease; }
 
@@ -357,6 +442,42 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .error-pop-enter-from { opacity: 0; transform: translateY(-4px) scale(0.97); }
 .error-pop-leave-to { opacity: 0; }
 
+.dark
+/* Logout / entry overlay */
+.entry-overlay { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(ellipse at center, #0d1f3c 0%, #060d1a 100%); display: flex; align-items: center; justify-content: center; }
+.entry-content { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.retinal-scanner { position: relative; width: 200px; height: 200px; animation: scanner-appear 0.5s ease both; }
+@keyframes scanner-appear { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+.retina-svg { width: 100%; height: 100%; }
+.ring-draw { animation: ring-draw 1.8s 0.3s cubic-bezier(0.4,0,0.2,1) forwards; }
+@keyframes ring-draw { from { stroke-dashoffset: 565; } to { stroke-dashoffset: 0; } }
+.ring-draw-2 { animation: ring-draw-2 1.4s 0.5s cubic-bezier(0.4,0,0.2,1) forwards; }
+@keyframes ring-draw-2 { from { stroke-dashoffset: 415; } to { stroke-dashoffset: 0; } }
+.crosshair { opacity: 0; animation: lo-fade-in 0.4s 1s ease forwards; }
+@keyframes lo-fade-in { to { opacity: 1; } }
+.vessel { stroke-dasharray: 200; stroke-dashoffset: 200; animation: vessel-draw 1s 0.8s ease forwards; }
+@keyframes vessel-draw { to { stroke-dashoffset: 0; } }
+.bracket { opacity: 0; animation: lo-fade-in 0.5s 0.2s ease forwards; }
+.scanner-beam { transform-origin: 100px 100px; animation: scan-rotate 2s linear infinite; }
+@keyframes scan-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(99,179,237,0.0) 20%, rgba(99,179,237,0.6) 50%, rgba(99,179,237,0.0) 80%, transparent 100%); animation: scan-sweep 2s ease-in-out infinite; border-radius: 1px; }
+@keyframes scan-sweep { 0% { top: 10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
+.glint { position: absolute; width: 4px; height: 4px; background: #63b3ed; border-radius: 50%; animation: glint-pulse 2s ease-in-out infinite; box-shadow: 0 0 6px #63b3ed; }
+.glint-1 { top: 6px; left: 50%; animation-delay: 0s; }
+.glint-2 { top: 50%; right: 6px; animation-delay: 0.66s; }
+.glint-3 { bottom: 6px; left: 50%; animation-delay: 1.33s; }
+@keyframes glint-pulse { 0%,100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); } }
+.entry-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 22px; font-weight: 700; color: white; letter-spacing: 4px; display: flex; align-items: baseline; gap: 2px; animation: lo-logo-appear 0.6s 0.4s cubic-bezier(0.4,0,0.2,1) both; }
+.entry-ddart { color: white; }
+.entry-ai { color: #e53e3e; font-size: 72px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; line-height: 1; }
+.entry-bar { width: 200px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+.entry-bar-fill { height: 100%; background: linear-gradient(90deg, #4299e1, #63b3ed); border-radius: 2px; transition: width 0.05s linear; }
+.entry-msg { color: rgba(255,255,255,0.55); font-size: 13px; font-weight: 400; letter-spacing: 1px; text-transform: uppercase; margin: 0; animation: lo-msg-appear 0.5s 0.6s cubic-bezier(0.4,0,0.2,1) both; }
+@keyframes lo-logo-appear { from { opacity: 0; transform: scale(0.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes lo-msg-appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.overlay-fade-enter-active, .overlay-fade-leave-active { transition: opacity 0.5s ease; }
+.overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
+
 .dark.hc-container { background: #1a202c; }
 .dark .center-name { color: #90cdf4; }
 .dark .center-subtitle { color: #7fb3d3; }
@@ -387,8 +508,89 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .dark .ai-results { background: #1a202c; border-color: #4a5568; }
 .dark .ai-label { color: #a0aec0; }
 
+
+/* Center identity badge */
+.center-badge { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.center-badge-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.badge-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.5px; }
+.badge-value { font-size: 13px; font-weight: 600; color: white; }
+.badge-value.mono { font-family: 'Courier New', monospace; letter-spacing: 2px; font-size: 14px; }
+.badge-specialty { font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 20px; letter-spacing: 0.3px; }
+.badge-specialty.glaucoma { background: rgba(72,187,120,0.2); color: #9ae6b4; border: 1px solid rgba(72,187,120,0.3); }
+.badge-specialty.dr { background: rgba(237,137,54,0.2); color: #fbd38d; border: 1px solid rgba(237,137,54,0.3); }
+.badge-specialty.amd { background: rgba(159,122,234,0.2); color: #d6bcfa; border: 1px solid rgba(159,122,234,0.3); }
+
+/* Consent checkbox */
+.consent-check { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 6px; cursor: pointer; background: white; transition: border-color 0.2s ease, background 0.2s ease; margin-bottom: 2px; }
+.consent-check:hover { border-color: #cbd5e0; }
+.consent-check.checked { border-color: #2b6cb0; background: #ebf8ff; }
+.consent-box { width: 18px; height: 18px; min-width: 18px; border: 2px solid #e2e8f0; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: white; background: white; margin-top: 1px; transition: background 0.2s ease, border-color 0.2s ease; }
+.consent-check.checked .consent-box { background: #2b6cb0; border-color: #2b6cb0; }
+.consent-text { font-size: 12px; color: #4a5568; line-height: 1.5; }
+.dark .consent-check { background: #1a202c; border-color: #4a5568; }
+.dark .consent-check.checked { background: #1a365d; border-color: #63b3ed; }
+.dark .consent-box { background: #1a202c; border-color: #4a5568; }
+.dark .consent-check.checked .consent-box { background: #2b6cb0; border-color: #63b3ed; }
+.dark .consent-text { color: #a0aec0; }
+
+.center-meta { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 6px 0 2px; }
+.specialty-badge-hc { display: inline-flex; align-items: center; padding: 3px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.3px; }
+.specialty-badge-hc.glaucoma { background: #ebf8ff; color: #2b6cb0; }
+.specialty-badge-hc.dr { background: #fff5f5; color: #c53030; }
+.specialty-badge-hc.amd { background: #faf5ff; color: #6b46c1; }
+.ai-model-tag { font-size: 11px; color: #a0aec0; font-weight: 600; letter-spacing: 0.3px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 2px 10px; }
+.ai-result-specialty-label { font-size: 11px; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; }
+.consent-check { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 6px; cursor: pointer; background: white; transition: border-color 0.2s, background 0.2s; }
+.consent-check:hover { border-color: #bee3f8; }
+.consent-check.checked { border-color: #2b6cb0; background: #ebf8ff; }
+.consent-box { width: 18px; height: 18px; min-width: 18px; border: 2px solid #e2e8f0; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: white; background: white; margin-top: 1px; transition: background 0.2s, border-color 0.2s; }
+.consent-check.checked .consent-box { background: #2b6cb0; border-color: #2b6cb0; }
+.consent-text { font-size: 12px; color: #4a5568; line-height: 1.5; }
+.dark .consent-check { background: #1a202c; border-color: #4a5568; }
+.dark .consent-check.checked { background: #1a365d; border-color: #63b3ed; }
+.dark .consent-check.checked .consent-box { background: #2b6cb0; border-color: #63b3ed; }
+.dark .consent-text { color: #a0aec0; }
+.dark .ai-model-tag { background: #2d3748; border-color: #4a5568; color: #718096; }
+.dark .ai-result-specialty-label { color: #718096; border-bottom-color: #4a5568; }
+
 @media (max-width: 768px) {
-    .hc-container { padding: 16px 16px 0; }
+    
+/* Logout / entry overlay */
+.entry-overlay { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(ellipse at center, #0d1f3c 0%, #060d1a 100%); display: flex; align-items: center; justify-content: center; }
+.entry-content { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.retinal-scanner { position: relative; width: 200px; height: 200px; animation: scanner-appear 0.5s ease both; }
+@keyframes scanner-appear { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+.retina-svg { width: 100%; height: 100%; }
+.ring-draw { animation: ring-draw 1.8s 0.3s cubic-bezier(0.4,0,0.2,1) forwards; }
+@keyframes ring-draw { from { stroke-dashoffset: 565; } to { stroke-dashoffset: 0; } }
+.ring-draw-2 { animation: ring-draw-2 1.4s 0.5s cubic-bezier(0.4,0,0.2,1) forwards; }
+@keyframes ring-draw-2 { from { stroke-dashoffset: 415; } to { stroke-dashoffset: 0; } }
+.crosshair { opacity: 0; animation: lo-fade-in 0.4s 1s ease forwards; }
+@keyframes lo-fade-in { to { opacity: 1; } }
+.vessel { stroke-dasharray: 200; stroke-dashoffset: 200; animation: vessel-draw 1s 0.8s ease forwards; }
+@keyframes vessel-draw { to { stroke-dashoffset: 0; } }
+.bracket { opacity: 0; animation: lo-fade-in 0.5s 0.2s ease forwards; }
+.scanner-beam { transform-origin: 100px 100px; animation: scan-rotate 2s linear infinite; }
+@keyframes scan-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(99,179,237,0.0) 20%, rgba(99,179,237,0.6) 50%, rgba(99,179,237,0.0) 80%, transparent 100%); animation: scan-sweep 2s ease-in-out infinite; border-radius: 1px; }
+@keyframes scan-sweep { 0% { top: 10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
+.glint { position: absolute; width: 4px; height: 4px; background: #63b3ed; border-radius: 50%; animation: glint-pulse 2s ease-in-out infinite; box-shadow: 0 0 6px #63b3ed; }
+.glint-1 { top: 6px; left: 50%; animation-delay: 0s; }
+.glint-2 { top: 50%; right: 6px; animation-delay: 0.66s; }
+.glint-3 { bottom: 6px; left: 50%; animation-delay: 1.33s; }
+@keyframes glint-pulse { 0%,100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); } }
+.entry-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 22px; font-weight: 700; color: white; letter-spacing: 4px; display: flex; align-items: baseline; gap: 2px; animation: lo-logo-appear 0.6s 0.4s cubic-bezier(0.4,0,0.2,1) both; }
+.entry-ddart { color: white; }
+.entry-ai { color: #e53e3e; font-size: 72px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; line-height: 1; }
+.entry-bar { width: 200px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+.entry-bar-fill { height: 100%; background: linear-gradient(90deg, #4299e1, #63b3ed); border-radius: 2px; transition: width 0.05s linear; }
+.entry-msg { color: rgba(255,255,255,0.55); font-size: 13px; font-weight: 400; letter-spacing: 1px; text-transform: uppercase; margin: 0; animation: lo-msg-appear 0.5s 0.6s cubic-bezier(0.4,0,0.2,1) both; }
+@keyframes lo-logo-appear { from { opacity: 0; transform: scale(0.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes lo-msg-appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.overlay-fade-enter-active, .overlay-fade-leave-active { transition: opacity 0.5s ease; }
+.overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
+
+.hc-container { padding: 16px 16px 0; }
     .header-controls { position: static; justify-content: flex-end; margin-bottom: 12px; }
     .upload-card-inner { grid-template-columns: 1fr; }
     .upload-left { padding: 20px; }
