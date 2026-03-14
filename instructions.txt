@@ -26,3 +26,13 @@ UPDATE doctors SET approved = 1 WHERE email = 'doctor@email.com';
 Add health centers:
 
 python3 ~/register_hc.py
+
+91127 
+andreas
+
+full reser code 
+ddart_reset_2025
+
+
+
+screen -r -d training

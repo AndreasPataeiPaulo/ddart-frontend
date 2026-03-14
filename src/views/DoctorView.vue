@@ -8,7 +8,7 @@
             </div>
             <p class="university">Democritus University of Thrace – DDART spin-off company</p>
             <p class="subtitle">Ophthalmology A.I. Screening Program</p>
-            <div class="logo">DDART<span>AI</span></div>
+            <img src="/DDART.png" style="height:30px;width:auto;object-fit:contain;" />
         </div>
 
         <!-- Tabs -->
@@ -113,7 +113,7 @@
         <!-- Footer -->
         <div class="footer">
             <div class="footer-left">
-                <img src="/democritus.png" class="dept-logo" />
+                <img src="/DDARTECH_Research-removebg-preview.png" class="dept-logo" />
             </div>
             <div class="footer-right">
                 <p>For technical support please call +3025510 30990 (office hours)</p>

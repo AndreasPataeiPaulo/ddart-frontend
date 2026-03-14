@@ -5,17 +5,12 @@
         <transition name="modal-fade">
             <div v-if="!authenticated" class="modal-backdrop">
                 <div class="modal-box">
-                    <div class="modal-logo">DDART<span>AI</span></div>
+                    <img src="/DDART.png" style="height:30px;width:auto;object-fit:contain;" />
                     <h3>Study Official Access</h3>
                     <p>Enter the study access code to continue.</p>
                     <div class="field">
-                        <input
-                            v-model="codeInput"
-                            type="password"
-                            placeholder="Access code"
-                            @keyup.enter="authenticate"
-                            autofocus
-                        />
+                        <input v-model="codeInput" type="password" placeholder="Access code"
+                            @keyup.enter="authenticate" autofocus />
                     </div>
                     <transition name="error-pop">
                         <p v-if="authError" class="error">{{ authError }}</p>
@@ -29,323 +24,514 @@
         </transition>
 
         <!-- Main dashboard -->
-        <div v-if="authenticated">
+        <div v-if="authenticated" class="dashboard">
             <div class="header">
                 <div class="user-bar">
-                    <span>Study Official Dashboard</span>
-                    <button class="logout-btn" @click="logout">Sign Out</button>
+                    <span class="user-bar-title">Study Official Dashboard</span>
+                    <div class="user-bar-actions">
+                        <button class="tab-pill" :class="{ active: mainTab === 'study' }" @click="mainTab = 'study'">📊 Study</button>
+                        <button class="tab-pill" :class="{ active: mainTab === 'admin' }" @click="mainTab = 'admin'; loadAdmin()">🛠 Admin</button>
+                        <button class="logout-btn" @click="logout">Sign Out</button>
+                    </div>
                 </div>
                 <p class="university">Democritus University of Thrace – DDART spin-off company</p>
                 <p class="subtitle">Ophthalmology A.I. Screening Program — Study Overview</p>
-                <div class="logo">DDART<span>AI</span></div>
+                <img src="/DDART.png" style="height:30px;width:auto;object-fit:contain;" />
             </div>
 
-            <div class="panel-tabs">
-                <button :class="['panel-tab', { active: tab === 'general' }]" @click="tab = 'general'">General</button>
-                <button :class="['panel-tab', { active: tab === 'glaucoma' }]" @click="tab = 'glaucoma'">Glaucoma</button>
-                <button :class="['panel-tab', { active: tab === 'dr' }]" @click="tab = 'dr'">Diabetic Retinopathy</button>
-                <button :class="['panel-tab', { active: tab === 'amd' }]" @click="tab = 'amd'">AMD</button>
-                <button :class="['panel-tab', { active: tab === 'biomarkers' }]" @click="tab = 'biomarkers'; loadBiomarkers()">Biomarkers</button>
-            </div>
+            <!-- ═══════════════════════════════════════ STUDY TAB ═══════════════════════════════════════ -->
+            <div v-if="mainTab === 'study'">
+                <div class="panel-tabs">
+                    <button :class="['panel-tab', { active: tab === 'general' }]" @click="switchTab('general')">General</button>
+                    <button :class="['panel-tab', { active: tab === 'glaucoma' }]" @click="switchTab('glaucoma')">Glaucoma</button>
+                    <button :class="['panel-tab', { active: tab === 'dr' }]" @click="switchTab('dr')">Diabetic Retinopathy</button>
+                    <button :class="['panel-tab', { active: tab === 'amd' }]" @click="switchTab('amd')">AMD</button>
+                    <button :class="['panel-tab', { active: tab === 'biomarkers' }]" @click="switchTab('biomarkers')">Biomarkers</button>
+                </div>
 
-            <div v-if="loading" class="loading-state">
-                <div class="spinner"></div>
-                <p>Loading study data...</p>
-            </div>
+                <div v-if="loading" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Loading study data...</p>
+                </div>
 
-            <transition name="fade-slide" mode="out-in">
+                <transition name="fade-slide" mode="out-in">
 
-                <!-- GENERAL TAB -->
-                <div v-if="!loading && tab === 'general'" key="general" class="panel-section">
-
-                    <!-- Top stat cards -->
-                    <div class="stat-grid">
-                        <div class="stat-card">
-                            <p class="stat-value">{{ stats.general.total_images }}</p>
-                            <p class="stat-label">Total Images</p>
+                    <!-- GENERAL TAB -->
+                    <div v-if="!loading && tab === 'general'" key="general" class="panel-section">
+                        <div class="stat-grid">
+                            <div class="stat-card">
+                                <p class="stat-value">{{ stats.general.total_images }}</p>
+                                <p class="stat-label">Total Images</p>
+                            </div>
+                            <div class="stat-card">
+                                <p class="stat-value">{{ stats.general.total_reviews }}</p>
+                                <p class="stat-label">Total Reviews</p>
+                            </div>
+                            <div class="stat-card">
+                                <p class="stat-value">{{ stats.general.hc_total_reviewed }}</p>
+                                <p class="stat-label">HC Uploads Reviewed</p>
+                            </div>
+                            <div class="stat-card">
+                                <p class="stat-value">{{ stats.doctors.length }}</p>
+                                <p class="stat-label">Active Researchers</p>
+                            </div>
                         </div>
-                        <div class="stat-card">
-                            <p class="stat-value">{{ stats.general.total_reviews }}</p>
-                            <p class="stat-label">Total Reviews</p>
+
+                        <div class="section-card">
+                            <h4 class="section-title">Inter-Rater Agreement <span class="section-sub">(researchers vs each other)</span></h4>
+                            <div class="agreement-row-grid">
+                                <div class="agree-block">
+                                    <div class="agree-ring" :style="ringStyle(stats.general.inter_rater_glaucoma)">
+                                        <span class="agree-pct">{{ stats.general.inter_rater_glaucoma }}%</span>
+                                    </div>
+                                    <p class="agree-label">Glaucoma</p>
+                                </div>
+                                <div class="agree-block">
+                                    <div class="agree-ring" :style="ringStyle(stats.general.inter_rater_dr)">
+                                        <span class="agree-pct">{{ stats.general.inter_rater_dr }}%</span>
+                                    </div>
+                                    <p class="agree-label">DR</p>
+                                </div>
+                                <div class="agree-block">
+                                    <div class="agree-ring" :style="ringStyle(stats.general.inter_rater_amd)">
+                                        <span class="agree-pct">{{ stats.general.inter_rater_amd }}%</span>
+                                    </div>
+                                    <p class="agree-label">AMD</p>
+                                </div>
+                                <div class="agree-block">
+                                    <div class="agree-ring overall" :style="ringStyle(overallInterRater)">
+                                        <span class="agree-pct">{{ overallInterRater }}%</span>
+                                    </div>
+                                    <p class="agree-label">Overall</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="stat-card">
-                            <p class="stat-value">{{ stats.general.hc_total_reviewed }}</p>
-                            <p class="stat-label">HC Uploads Reviewed</p>
+
+                        <div class="section-card">
+                            <h4 class="section-title">Expert vs AI Agreement on HC Uploads <span class="section-sub">(AI confidence ≥90% only)</span></h4>
+                            <p style="font-size:12px;color:#718096;margin:-12px 0 16px;">For HC uploads where the AI was highly confident (≥90%), this shows how often the reviewing expert agreed with the AI diagnosis.</p>
+                            <div class="agreement-row-grid">
+                                <div class="agree-block">
+                                    <div class="agree-ring" :style="ringStyle(stats.general.hc_ai_agree_glaucoma)">
+                                        <span class="agree-pct">{{ stats.general.hc_ai_agree_glaucoma }}%</span>
+                                    </div>
+                                    <p class="agree-label">Glaucoma</p>
+                                </div>
+                                <div class="agree-block">
+                                    <div class="agree-ring" :style="ringStyle(stats.general.hc_ai_agree_dr)">
+                                        <span class="agree-pct">{{ stats.general.hc_ai_agree_dr }}%</span>
+                                    </div>
+                                    <p class="agree-label">DR</p>
+                                </div>
+                                <div class="agree-block">
+                                    <div class="agree-ring" :style="ringStyle(stats.general.hc_ai_agree_amd)">
+                                        <span class="agree-pct">{{ stats.general.hc_ai_agree_amd }}%</span>
+                                    </div>
+                                    <p class="agree-label">AMD</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="stat-card">
-                            <p class="stat-value">{{ stats.doctors.length }}</p>
-                            <p class="stat-label">Active Researchers</p>
+
+                        <div class="section-card">
+                            <h4 class="section-title">Health Center Uploads</h4>
+                            <div v-if="!stats.hc_upload_counts || stats.hc_upload_counts.length === 0" class="empty-state">No uploads yet.</div>
+                            <table v-else class="data-table">
+                                <thead>
+                                    <tr><th>Health Center</th><th>Specialty</th><th>Images Uploaded</th><th>Reviewed</th><th>Share</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="hc in stats.hc_upload_counts" :key="hc.name">
+                                        <td>{{ hc.name }}</td>
+                                        <td><span :class="['specialty-chip', hc.specialty]">{{ hc.specialty || '—' }}</span></td>
+                                        <td>{{ hc.total }}</td>
+                                        <td>{{ hc.reviewed }}</td>
+                                        <td>
+                                            <div class="mini-bar-wrap">
+                                                <div class="mini-bar" :style="{ width: maxHCUploads > 0 ? (hc.total / maxHCUploads * 100) + '%' : '0%' }"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="section-card">
+                            <h4 class="section-title">Condition Prevalence <span class="section-sub">(AI findings in research images)</span></h4>
+                            <div class="prevalence-grid">
+                                <div class="prev-bar-row">
+                                    <span class="prev-label">Glaucoma</span>
+                                    <div class="prev-bar-wrap"><div class="prev-bar glaucoma-bar" :style="{ width: prevPct(stats.general.prevalence_glaucoma) + '%' }"></div></div>
+                                    <span class="prev-count">{{ stats.general.prevalence_glaucoma }} / {{ stats.general.total_images }}</span>
+                                </div>
+                                <div class="prev-bar-row">
+                                    <span class="prev-label">DR</span>
+                                    <div class="prev-bar-wrap"><div class="prev-bar dr-bar" :style="{ width: prevPct(stats.general.prevalence_dr) + '%' }"></div></div>
+                                    <span class="prev-count">{{ stats.general.prevalence_dr }} / {{ stats.general.total_images }}</span>
+                                </div>
+                                <div class="prev-bar-row">
+                                    <span class="prev-label">AMD</span>
+                                    <div class="prev-bar-wrap"><div class="prev-bar amd-bar" :style="{ width: prevPct(stats.general.prevalence_amd) + '%' }"></div></div>
+                                    <span class="prev-count">{{ stats.general.prevalence_amd }} / {{ stats.general.total_images }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section-card">
+                            <h4 class="section-title">Researcher Activity</h4>
+                            <table class="data-table">
+                                <thead><tr><th>Researcher</th><th>Images Reviewed</th><th>Share</th></tr></thead>
+                                <tbody>
+                                    <tr v-for="doc in stats.doctors" :key="doc.id">
+                                        <td>{{ doc.name }}</td>
+                                        <td>{{ doc.reviewed }}</td>
+                                        <td>
+                                            <div class="mini-bar-wrap">
+                                                <div class="mini-bar" :style="{ width: maxReviewed > 0 ? (doc.reviewed / maxReviewed * 100) + '%' : '0%' }"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    <!-- Agreement section -->
-                    <div class="section-card">
-                        <h4 class="section-title">Inter-Rater Agreement <span class="section-sub">(researchers vs each other)</span></h4>
-                        <div class="agreement-row-grid">
-                            <div class="agree-block">
-                                <div class="agree-ring" :style="ringStyle(stats.general.inter_rater_glaucoma)">
-                                    <span class="agree-pct">{{ stats.general.inter_rater_glaucoma }}%</span>
+                    <!-- BIOMARKERS TAB -->
+                    <div v-else-if="!loading && tab === 'biomarkers'" key="biomarkers" class="panel-section">
+                        <div class="section-card">
+                            <div class="bio-header-row">
+                                <h4 class="section-title" style="margin-bottom:0">Biomarker Reviews</h4>
+                                <div class="bio-header-actions">
+                                    <button class="refresh-btn" @click="loadBiomarkers" :disabled="bioLoading">⟳ Refresh</button>
+                                    <button class="export-btn" @click="exportBiomarkersCSV" :disabled="filteredBioRows.length === 0">⬇ Export CSV</button>
+                                    <button class="export-btn excel" @click="exportBiomarkersExcel" :disabled="filteredBioRows.length === 0">⬇ Export Excel</button>
                                 </div>
-                                <p class="agree-label">Glaucoma</p>
                             </div>
-                            <div class="agree-block">
-                                <div class="agree-ring" :style="ringStyle(stats.general.inter_rater_dr)">
-                                    <span class="agree-pct">{{ stats.general.inter_rater_dr }}%</span>
-                                </div>
-                                <p class="agree-label">DR</p>
+                            <div class="bio-filter-bar">
+                                <select v-model="bioFilter" class="bio-filter-select">
+                                    <option value="all">All conditions</option>
+                                    <option value="glaucoma">Glaucoma</option>
+                                    <option value="dr">Diabetic Retinopathy</option>
+                                    <option value="amd">AMD</option>
+                                </select>
+                                <span class="bio-count">{{ filteredBioRows.length }} reviews</span>
                             </div>
-                            <div class="agree-block">
-                                <div class="agree-ring" :style="ringStyle(stats.general.inter_rater_amd)">
-                                    <span class="agree-pct">{{ stats.general.inter_rater_amd }}%</span>
-                                </div>
-                                <p class="agree-label">AMD</p>
-                            </div>
-                            <div class="agree-block">
-                                <div class="agree-ring overall" :style="ringStyle(overallInterRater)">
-                                    <span class="agree-pct">{{ overallInterRater }}%</span>
-                                </div>
-                                <p class="agree-label">Overall</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="section-card">
-                        <h4 class="section-title">AI Agreement <span class="section-sub">(researchers vs AI)</span></h4>
-                        <div class="agreement-row-grid">
-                            <div class="agree-block">
-                                <div class="agree-ring" :style="ringStyle(stats.general.ai_agree_glaucoma)">
-                                    <span class="agree-pct">{{ stats.general.ai_agree_glaucoma }}%</span>
-                                </div>
-                                <p class="agree-label">Glaucoma</p>
-                            </div>
-                            <div class="agree-block">
-                                <div class="agree-ring" :style="ringStyle(stats.general.ai_agree_dr)">
-                                    <span class="agree-pct">{{ stats.general.ai_agree_dr }}%</span>
-                                </div>
-                                <p class="agree-label">DR</p>
-                            </div>
-                            <div class="agree-block">
-                                <div class="agree-ring" :style="ringStyle(stats.general.ai_agree_amd)">
-                                    <span class="agree-pct">{{ stats.general.ai_agree_amd }}%</span>
-                                </div>
-                                <p class="agree-label">AMD</p>
-                            </div>
-                            <div class="agree-block">
-                                <div class="agree-ring overall" :style="ringStyle(overallAIAgree)">
-                                    <span class="agree-pct">{{ overallAIAgree }}%</span>
-                                </div>
-                                <p class="agree-label">Overall</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- HC AI Agreement -->
-                    <div class="section-card">
-                        <h4 class="section-title">Health Center Upload AI Agreement <span class="section-sub">(high-confidence only ≥90%)</span></h4>
-                        <div class="agreement-row-grid">
-                            <div class="agree-block">
-                                <div class="agree-ring" :style="ringStyle(stats.general.hc_ai_agree_glaucoma)">
-                                    <span class="agree-pct">{{ stats.general.hc_ai_agree_glaucoma }}%</span>
-                                </div>
-                                <p class="agree-label">Glaucoma</p>
-                            </div>
-                            <div class="agree-block">
-                                <div class="agree-ring" :style="ringStyle(stats.general.hc_ai_agree_dr)">
-                                    <span class="agree-pct">{{ stats.general.hc_ai_agree_dr }}%</span>
-                                </div>
-                                <p class="agree-label">DR</p>
-                            </div>
-                            <div class="agree-block">
-                                <div class="agree-ring" :style="ringStyle(stats.general.hc_ai_agree_amd)">
-                                    <span class="agree-pct">{{ stats.general.hc_ai_agree_amd }}%</span>
-                                </div>
-                                <p class="agree-label">AMD</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Condition prevalence -->
-                    <div class="section-card">
-                        <h4 class="section-title">Condition Prevalence <span class="section-sub">(AI findings in research images)</span></h4>
-                        <div class="prevalence-grid">
-                            <div class="prev-bar-row">
-                                <span class="prev-label">Glaucoma</span>
-                                <div class="prev-bar-wrap">
-                                    <div class="prev-bar glaucoma-bar" :style="{ width: prevPct(stats.general.prevalence_glaucoma) + '%' }"></div>
-                                </div>
-                                <span class="prev-count">{{ stats.general.prevalence_glaucoma }} / {{ stats.general.total_images }}</span>
-                            </div>
-                            <div class="prev-bar-row">
-                                <span class="prev-label">DR</span>
-                                <div class="prev-bar-wrap">
-                                    <div class="prev-bar dr-bar" :style="{ width: prevPct(stats.general.prevalence_dr) + '%' }"></div>
-                                </div>
-                                <span class="prev-count">{{ stats.general.prevalence_dr }} / {{ stats.general.total_images }}</span>
-                            </div>
-                            <div class="prev-bar-row">
-                                <span class="prev-label">AMD</span>
-                                <div class="prev-bar-wrap">
-                                    <div class="prev-bar amd-bar" :style="{ width: prevPct(stats.general.prevalence_amd) + '%' }"></div>
-                                </div>
-                                <span class="prev-count">{{ stats.general.prevalence_amd }} / {{ stats.general.total_images }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Per-doctor breakdown -->
-                    <div class="section-card">
-                        <h4 class="section-title">Researcher Activity</h4>
-                        <table class="data-table">
-                            <thead>
-                                <tr><th>Researcher</th><th>Images Reviewed</th><th>Share</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="doc in stats.doctors" :key="doc.id">
-                                    <td>{{ doc.name }}</td>
-                                    <td>{{ doc.reviewed }}</td>
-                                    <td>
-                                        <div class="mini-bar-wrap">
-                                            <div class="mini-bar" :style="{ width: maxReviewed > 0 ? (doc.reviewed / maxReviewed * 100) + '%' : '0%' }"></div>
+                            <div v-if="bioLoading" class="loading-state"><div class="spinner"></div><p>Loading...</p></div>
+                            <div v-else-if="filteredBioRows.length === 0" class="empty-state">No biomarker data yet.</div>
+                            <div v-else class="bio-review-list">
+                                <div v-for="row in filteredBioRows" :key="row.id" class="bio-review-card">
+                                    <div class="bio-review-header">
+                                        <span class="bio-review-img">Image #{{ row.image_id }}</span>
+                                        <span class="bio-review-doctor">Dr. {{ row.doctor_name }}</span>
+                                        <span class="bio-review-date">{{ row.reviewed_at ? row.reviewed_at.slice(0,10) : '' }}</span>
+                                    </div>
+                                    <div class="bio-review-diagnoses">
+                                        <span v-if="row.doctor_glaucoma && row.doctor_glaucoma !== 'N/A'" class="bio-diag-chip">Glaucoma: {{ row.doctor_glaucoma }}</span>
+                                        <span v-if="row.doctor_dr && row.doctor_dr !== 'N/A'" class="bio-diag-chip">DR: {{ row.doctor_dr }}</span>
+                                        <span v-if="row.doctor_amd && row.doctor_amd !== 'N/A'" class="bio-diag-chip">AMD: {{ row.doctor_amd }}</span>
+                                    </div>
+                                    <div v-if="row.biomarkers" class="bio-markers-grid">
+                                        <div v-for="(val, key) in row.biomarkers" :key="key" class="bio-marker-item" :class="'bm-' + val">
+                                            <span class="bm-key">{{ key.replace(/_/g, ' ') }}</span>
+                                            <span class="bm-val">{{ val }}</span>
                                         </div>
+                                    </div>
+                                    <div v-else class="bio-no-markers">No biomarkers recorded.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CONDITION TABS (Glaucoma / DR / AMD) — ENHANCED -->
+                    <div v-else-if="!loading && (tab === 'glaucoma' || tab === 'dr' || tab === 'amd')" :key="tab" class="panel-section">
+
+                        <!-- Summary bar -->
+                        <div class="condition-summary-bar">
+                            <div class="csb-item">
+                                <span class="csb-val">{{ currentRows.length }}</span>
+                                <span class="csb-label">Images</span>
+                            </div>
+                            <div class="csb-item">
+                                <span class="csb-val">{{ totalReviewsForCondition }}</span>
+                                <span class="csb-label">Total Reviews</span>
+                            </div>
+                            <div class="csb-item">
+                                <span class="csb-val">{{ conditionAIAgree }}%</span>
+                                <span class="csb-label">AI Agreement</span>
+                            </div>
+                            <div class="csb-item">
+                                <span class="csb-val">{{ conditionInterRater }}%</span>
+                                <span class="csb-label">Inter-Rater</span>
+                            </div>
+                        </div>
+
+                        <!-- HC per-image breakdown -->
+                        <div class="section-card">
+                            <div class="condition-header-row">
+                                <h4 class="section-title" style="margin-bottom:0">
+                                    Health Center Uploads — {{ conditionLabel }}
+                                    <span class="section-sub">({{ groupedHCRows.length }} images)</span>
+                                </h4>
+                                <select v-model="conditionFilter" class="bio-filter-select">
+                                    <option value="all">All</option>
+                                    <option value="reviewed">Reviewed only</option>
+                                    <option value="unreviewed">Unreviewed only</option>
+                                    <option value="agree">All experts match AI</option>
+                                    <option value="disagree">Any expert differs</option>
+                                    <option value="highconf">High confidence ≥90%</option>
+                                </select>
+                            </div>
+
+                            <div v-if="filteredHCRows.length === 0" class="empty-state">No health center cases for this condition yet.</div>
+
+                            <table v-else class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Image</th>
+                                        <th>AMKA</th>
+                                        <th>Health Center</th>
+                                        <th>AI Result</th>
+                                        <th>Confidence</th>
+                                        <th>Reviews</th>
+                                        <th>Agreement</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="g in filteredHCRows" :key="g.upload_id">
+                                        <td>
+                                            <button class="img-link-btn" @click="openHCDetail(g)">
+                                                Image #{{ g.upload_id }}
+                                            </button>
+                                        </td>
+                                        <td class="amka-cell">{{ g.patient_amka }}</td>
+                                        <td>{{ g.center_name }}</td>
+                                        <td><span class="ai-chip" :class="aiChipClass(g.ai_result)">{{ g.ai_result }}</span></td>
+                                        <td><span :class="['conf-badge', g.ai_conf >= 90 ? 'conf-high' : 'conf-low']">{{ g.ai_conf }}%</span></td>
+                                        <td><span class="review-count-badge">{{ g.reviews.length }}</span></td>
+                                        <td>
+                                            <span v-if="g.reviews.length === 0" class="no-review">—</span>
+                                            <span v-else :class="['pct-badge', g.allAgree ? 'pct-good' : g.anyAgree ? 'pct-mid' : 'pct-low']">
+                                                {{ g.agreeCount }}/{{ g.reviews.length }} match AI
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </transition>
+            </div>
+
+            <!-- ═══════════════════════════════════════ ADMIN TAB ═══════════════════════════════════════ -->
+            <div v-if="mainTab === 'admin'" class="panel-section">
+
+                <div v-if="adminLoading" class="loading-state"><div class="spinner"></div><p>Loading...</p></div>
+
+                <div v-else class="admin-grid">
+
+                    <!-- Doctor management -->
+                    <div class="section-card">
+                        <div class="admin-section-header">
+                            <h4 class="section-title" style="margin-bottom:0">Doctor Accounts</h4>
+                            <span class="admin-count-badge">{{ adminDoctors.length }} total</span>
+                        </div>
+                        <div v-if="adminDoctors.length === 0" class="empty-state">No doctors registered yet.</div>
+                        <div v-else class="doctor-list">
+                            <div v-for="doc in adminDoctors" :key="doc.id" class="doctor-row">
+                                <div class="doctor-info">
+                                    <span class="doctor-name">{{ doc.full_name }}</span>
+                                    <span class="doctor-email">{{ doc.email }}</span>
+                                    <div class="doctor-badges">
+                                        <span :class="['status-badge', doc.approved ? 'badge-approved' : 'badge-pending']">
+                                            {{ doc.approved ? '✓ Approved' : '⏳ Pending' }}
+                                        </span>
+                                        <span v-if="doc.is_research" class="status-badge badge-research">Research</span>
+                                    </div>
+                                </div>
+                                <div class="doctor-actions">
+                                    <button v-if="!doc.approved" class="action-btn approve-btn"
+                                        @click="approveDoctor(doc.id)" :disabled="actionLoading === doc.id">
+                                        {{ actionLoading === doc.id ? '...' : '✓ Approve' }}
+                                    </button>
+                                    <button v-else class="action-btn unapprove-btn"
+                                        @click="unapproveDoctor(doc.id)" :disabled="actionLoading === doc.id">
+                                        {{ actionLoading === doc.id ? '...' : '✗ Revoke' }}
+                                    </button>
+                                    <button class="action-btn delete-btn"
+                                        @click="deleteDoctor(doc.id, doc.full_name)" :disabled="actionLoading === doc.id">
+                                        🗑
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Health center management -->
+                    <div class="section-card">
+                        <div class="admin-section-header">
+                            <h4 class="section-title" style="margin-bottom:0">Health Centers</h4>
+                            <button class="refresh-btn" @click="loadAdmin">⟳ Refresh</button>
+                        </div>
+                        <div v-if="adminHCs.length === 0" class="empty-state">No health centers registered.</div>
+                        <table v-else class="data-table">
+                            <thead><tr><th>Name</th><th>Specialty</th><th>Center ID</th><th>Created</th><th></th></tr></thead>
+                            <tbody>
+                                <tr v-for="hc in adminHCs" :key="hc.id">
+                                    <td>{{ hc.name }}</td>
+                                    <td><span :class="['specialty-chip', hc.specialty]">{{ hc.specialty || '—' }}</span></td>
+                                    <td><code class="center-id-code">{{ hc.center_id || '—' }}</code></td>
+                                    <td>{{ hc.created_at ? hc.created_at.slice(0,10) : '' }}</td>
+                                    <td>
+                                        <button class="action-btn delete-btn" @click="deleteHC(hc.id, hc.name)">🗑</button>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
+                        <p class="admin-note">To register a new health center, run <code>python3 ~/register_hc.py</code> on the Pi.</p>
                     </div>
-                </div>
 
-                <!-- CONDITION TABS -->
-                <div v-else-if="!loading && tab === 'biomarkers'" key="biomarkers" class="panel-section">
-                    <h2 class="section-title">Biomarker Reviews</h2>
-                    <div v-if="bioLoading" class="loading-state">Loading...</div>
-                    <div v-else-if="bioRows.length === 0" class="empty-state">No biomarker data yet.</div>
-                    <div v-else>
-                        <div class="bio-filter-bar">
-                            <select v-model="bioFilter" class="bio-filter-select">
-                                <option value="all">All conditions</option>
-                                <option value="glaucoma">Glaucoma</option>
-                                <option value="dr">Diabetic Retinopathy</option>
-                                <option value="amd">AMD</option>
-                            </select>
-                            <span class="bio-count">{{ filteredBioRows.length }} reviews</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════ IMAGE DETAIL MODAL ═══════════ -->
+        <transition name="zoom-fade">
+            <div v-if="detailImage" class="zoom-backdrop" @click.self="detailImage = null">
+                <div class="detail-box">
+                    <div class="detail-toolbar">
+                        <span class="zoom-title">Image #{{ detailImage.image_id }} — {{ conditionLabel }}</span>
+                        <button class="zoom-close-btn" @click="detailImage = null">✕ Close</button>
+                    </div>
+                    <div class="detail-body">
+                        <!-- Left: image -->
+                        <div class="detail-img-col">
+                            <div class="detail-img-wrap" v-if="!zoomError">
+                                <img :src="thumbSrc(detailImage.image_id)" class="detail-img-full"
+                                    draggable="false" @error="zoomError = true" />
+                            </div>
+                            <div v-else class="zoom-error">Image could not be loaded.</div>
+                            <div class="detail-ai-row">
+                                <span class="detail-ai-label">AI Result:</span>
+                                <span class="ai-chip" :class="aiChipClass(detailImage.ai_result)">{{ detailImage.ai_result }}</span>
+                            </div>
                         </div>
-                        <div class="bio-review-list">
-                            <div v-for="row in filteredBioRows" :key="row.id" class="bio-review-card">
-                                <div class="bio-review-header">
-                                    <span class="bio-review-amka">AMKA: {{ row.patient_amka }}</span>
-                                    <span class="bio-review-doctor">Dr. {{ row.doctor_name }}</span>
-                                    <span class="bio-review-date">{{ row.reviewed_at ? row.reviewed_at.slice(0,10) : '' }}</span>
-                                </div>
-                                <div class="bio-review-diagnoses">
-                                    <span v-if="row.doctor_glaucoma && row.doctor_glaucoma !== 'N/A'" class="bio-diag-chip">Glaucoma: {{ row.doctor_glaucoma }}</span>
-                                    <span v-if="row.doctor_dr && row.doctor_dr !== 'N/A'" class="bio-diag-chip">DR: {{ row.doctor_dr }}</span>
-                                    <span v-if="row.doctor_amd && row.doctor_amd !== 'N/A'" class="bio-diag-chip">AMD: {{ row.doctor_amd }}</span>
-                                </div>
-                                <div v-if="row.biomarkers" class="bio-markers-grid">
-                                    <div v-for="(val, key) in row.biomarkers" :key="key" class="bio-marker-item" :class="'bm-' + val">
-                                        <span class="bm-key">{{ key.replace(/_/g, ' ') }}</span>
-                                        <span class="bm-val">{{ val }}</span>
+
+                        <!-- Right: reviews -->
+                        <div class="detail-reviews-col">
+                            <h5 class="detail-reviews-title">Doctor Reviews ({{ detailImage.total_reviews }})</h5>
+
+                            <div v-if="detailImage.total_reviews === 0" class="empty-state" style="padding:20px">
+                                No reviews yet for this image.
+                            </div>
+
+                            <div v-else class="detail-reviews-list">
+                                <div v-for="(answer, docName) in detailImage.doctor_answers" :key="docName" class="detail-review-row">
+                                    <div class="detail-review-header">
+                                        <span class="detail-doc-name">Dr. {{ docName }}</span>
+                                        <span :class="['answer-chip', answer === detailImage.ai_result ? 'chip-match' : 'chip-differ']">
+                                            {{ answer }}
+                                        </span>
+                                        <span :class="answer === detailImage.ai_result ? 'match-yes' : 'match-no'" style="font-size:11px">
+                                            {{ answer === detailImage.ai_result ? '✓ Matches AI' : '✗ Differs from AI' }}
+                                        </span>
                                     </div>
+                                    <!-- Biomarkers for this doctor + image -->
+                                    <div v-if="getBiomarkersFor(detailImage.image_id, docName)" class="detail-biomarkers">
+                                        <span class="detail-bio-title">Biomarkers:</span>
+                                        <div class="bio-markers-grid" style="margin-top:4px">
+                                            <div v-for="(val, key) in getBiomarkersFor(detailImage.image_id, docName)"
+                                                :key="key" class="bio-marker-item" :class="'bm-' + val">
+                                                <span class="bm-key">{{ key.replace(/_/g, ' ') }}</span>
+                                                <span class="bm-val">{{ val }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-else class="bio-no-markers">No biomarkers recorded.</div>
                                 </div>
-                                <div v-else class="bio-no-markers">No biomarkers recorded.</div>
+                            </div>
+
+                            <div v-if="detailImage.inter_rater_pct !== null" class="detail-stats-row">
+                                <span class="detail-stat-label">Inter-Rater Agreement:</span>
+                                <span :class="['pct-badge', detailImage.inter_rater_pct >= 80 ? 'pct-good' : detailImage.inter_rater_pct >= 50 ? 'pct-mid' : 'pct-low']">
+                                    {{ detailImage.inter_rater_pct }}%
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </transition>
 
-                <div v-else-if="!loading && (tab === 'glaucoma' || tab === 'dr' || tab === 'amd')" :key="tab" class="panel-section">
-                    <div class="section-card">
-                        <h4 class="section-title">
-                            {{ conditionLabel }} — Per-Image Expert Breakdown
-                            <span class="section-sub">({{ currentRows.length }} images reviewed)</span>
-                        </h4>
-
-                        <div v-if="currentRows.length === 0" class="empty-state">No data yet for this condition.</div>
-
-                        <div v-else class="condition-table-wrap">
-                            <table class="data-table condition-table">
-                                <thead>
-                                    <tr>
-                                        <th>Image</th>
-                                        <th>AI Result</th>
-                                        <th v-for="doc in stats.doctors" :key="doc.id">{{ doc.name }}</th>
-                                        <th>Inter-Rater</th>
-                                        <th>AI Agree</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="row in currentRows" :key="row.image_id">
-                                        <td class="img-cell">#{{ row.image_id }}</td>
-                                        <td>
-                                            <span class="ai-chip" :class="aiChipClass(row.ai_result)">{{ row.ai_result }}</span>
-                                        </td>
-                                        <td v-for="doc in stats.doctors" :key="doc.id">
-                                            <span v-if="row.doctor_answers[doc.name]"
-                                                :class="['answer-chip', row.doctor_answers[doc.name] === row.ai_result ? 'chip-match' : 'chip-differ']">
-                                                {{ row.doctor_answers[doc.name] }}
-                                            </span>
-                                            <span v-else class="no-review">—</span>
-                                        </td>
-                                        <td>
-                                            <span v-if="row.inter_rater_pct !== null" :class="['pct-badge', row.inter_rater_pct >= 80 ? 'pct-good' : row.inter_rater_pct >= 50 ? 'pct-mid' : 'pct-low']">
-                                                {{ row.inter_rater_pct }}%
-                                            </span>
-                                            <span v-else class="no-review">1 reviewer</span>
-                                        </td>
-                                        <td>
-                                            <span class="pct-badge" :class="row.ai_agree_count === row.total_reviews ? 'pct-good' : row.ai_agree_count > 0 ? 'pct-mid' : 'pct-low'">
-                                                {{ row.ai_agree_count }}/{{ row.total_reviews }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+        <!-- HC Image Detail Modal -->
+        <transition name="zoom-fade">
+            <div v-if="hcDetail" class="zoom-backdrop" @click.self="hcDetail = null">
+                <div class="detail-box">
+                    <div class="detail-toolbar">
+                        <span class="zoom-title">Image #{{ hcDetail.upload_id }} — AMKA: {{ hcDetail.patient_amka }} | {{ hcDetail.center_name }}</span>
+                        <button class="zoom-close-btn" @click="hcDetail = null">✕ Close</button>
+                    </div>
+                    <div class="detail-body">
+                        <!-- Left: image + AI result for this specialty only -->
+                        <div class="detail-img-col">
+                            <div class="detail-img-wrap">
+                                <img :src="hcThumbSrc(hcDetail.upload_id)" class="detail-img-full"
+                                    draggable="false" @error="e => e.target.style.display='none'" />
+                            </div>
+                            <div style="margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                                <span style="font-size:12px;color:#718096;font-weight:600;text-transform:capitalize">{{ hcDetail.specialty }} AI:</span>
+                                <span class="ai-chip" :class="aiChipClass(hcDetail.ai_result)">{{ hcDetail.ai_result }}</span>
+                                <span :class="['conf-badge', hcDetail.ai_conf >= 90 ? 'conf-high' : 'conf-low']">{{ hcDetail.ai_conf }}%</span>
+                            </div>
                         </div>
-
-                        <!-- HC rows for this condition -->
-                        <div v-if="hcRowsForCondition.length > 0" class="hc-subsection">
-                            <h5 class="hc-sub-title">Health Center Uploads — {{ conditionLabel }}</h5>
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>AMKA</th>
-                                        <th>Health Center</th>
-                                        <th>AI Result</th>
-                                        <th>AI Conf.</th>
-                                        <th>Reviewer</th>
-                                        <th>Reviewer Answer</th>
-                                        <th>Match</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="h in hcRowsForCondition" :key="h.id">
-                                        <td class="amka-cell">{{ h.patient_amka }}</td>
-                                        <td>{{ h.center_name }}</td>
-                                        <td><span class="ai-chip" :class="aiChipClass(h['ai_' + tab])">{{ h['ai_' + tab] }}</span></td>
-                                        <td><span :class="['conf-badge', h['ai_' + tab + '_conf'] >= 90 ? 'conf-high' : 'conf-low']">{{ h['ai_' + tab + '_conf'] }}%</span></td>
-                                        <td>{{ h.reviewer }}</td>
-                                        <td>{{ h['doctor_' + tab] }}</td>
-                                        <td>
-                                            <span :class="h['doctor_' + tab] === h['ai_' + tab] ? 'match-yes' : 'match-no'">
-                                                {{ h['doctor_' + tab] === h['ai_' + tab] ? '✓ Match' : '✗ Differ' }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <!-- Right: all expert reviews for this specialty -->
+                        <div class="detail-reviews-col">
+                            <h5 class="detail-reviews-title">Expert Reviews ({{ hcDetail.reviews.length }})</h5>
+                            <div v-if="hcDetail.reviews.length === 0" class="empty-state" style="padding:20px">Not yet reviewed by any expert.</div>
+                            <div v-else class="detail-reviews-list">
+                                <div v-for="r in hcDetail.reviews" :key="r.reviewer" class="detail-review-row">
+                                    <div class="detail-review-header">
+                                        <span class="detail-doc-name">Dr. {{ r.reviewer }}</span>
+                                        <span style="font-size:11px;color:#a0aec0;margin-left:auto">{{ r.reviewed_at ? r.reviewed_at.slice(0,10) : '' }}</span>
+                                    </div>
+                                    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
+                                        <span style="font-size:12px;color:#718096;font-weight:600;text-transform:capitalize">{{ hcDetail.specialty }}:</span>
+                                        <span :class="['answer-chip', r.answer === hcDetail.ai_result ? 'chip-match' : 'chip-differ']">{{ r.answer || '—' }}</span>
+                                        <span :class="r.answer === hcDetail.ai_result ? 'match-yes' : 'match-no'">{{ r.answer === hcDetail.ai_result ? '✓ matches AI' : '✗ differs from AI' }}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </transition>
 
-            </transition>
-
-            <div class="footer">
-                <div class="footer-left"><img src="/democritus.png" class="dept-logo" /></div>
-                <div class="footer-right">
-                    <p>For technical support please call +3025510 30990 (office hours)</p>
-                    <p>email: <a href="mailto:ddart@med.duth.gr">ddart@med.duth.gr</a></p>
-                    <p class="made-by">Made by Andreas</p>
+        <!-- Reset study modal -->
+        <transition name="modal-fade">
+            <div v-if="showResetModal" class="modal-backdrop">
+                <div class="modal-box">
+                    <h3 style="color:#c53030;margin:0;">⚠ Reset Study Data</h3>
+                    <p style="text-align:center;color:#718096;font-size:13px;">This will permanently delete all reviews, diagnoses and biomarker records. This <strong>cannot</strong> be undone.</p>
+                    <div class="field">
+                        <input v-model="resetCode" type="password" placeholder="Enter admin reset code" @keyup.enter="resetStudy" />
+                    </div>
+                    <p v-if="resetError" class="error">{{ resetError }}</p>
+                    <button class="submit-btn" style="background:#c53030" @click="resetStudy" :disabled="resetLoading">
+                        {{ resetLoading ? 'Resetting...' : 'Confirm Reset' }}
+                    </button>
+                    <button class="back-btn" @click="showResetModal = false; resetCode = ''; resetError = ''">Cancel</button>
                 </div>
+            </div>
+        </transition>
+
+        <button class="reset-study-btn" @click="showResetModal = true" title="Reset study data">⟳ Reset Study</button>
+
+        <div v-if="authenticated" class="footer">
+            <div class="footer-left"><img src="/DDARTECH_Research-removebg-preview.png" class="dept-logo" /></div>
+            <div class="footer-right">
+                <p>For technical support please call +3025510 30990 (office hours)</p>
+                <p>email: <a href="mailto:ddart@med.duth.gr">ddart@med.duth.gr</a></p>
+                <p class="made-by">Made by Andreas</p>
             </div>
         </div>
     </div>
@@ -359,6 +545,7 @@ export default {
             codeInput: '',
             authError: '',
             authLoading: false,
+            mainTab: 'study',
             tab: 'general',
             loading: false,
             stats: {
@@ -370,13 +557,27 @@ export default {
                     prevalence_glaucoma: 0, prevalence_dr: 0, prevalence_amd: 0,
                     hc_ai_agree_glaucoma: 0, hc_ai_agree_dr: 0, hc_ai_agree_amd: 0
                 },
-                glaucoma_rows: [], dr_rows: [], amd_rows: [], hc_rows: []
+                glaucoma_rows: [], dr_rows: [], amd_rows: [], hc_rows: [],
+                hc_upload_counts: []
             },
-            showLogoutOverlay: false,
-            logoutBarWidth: 0,
             bioRows: [],
             bioLoading: false,
-            bioFilter: 'all'
+            bioFilter: 'all',
+            conditionFilter: 'all',
+            // image detail modal
+            detailImage: null,
+            hcDetail: null,
+            zoomError: false,
+            // admin
+            adminLoading: false,
+            adminDoctors: [],
+            adminHCs: [],
+            actionLoading: null,
+            // reset
+            showResetModal: false,
+            resetCode: '',
+            resetError: '',
+            resetLoading: false
         }
     },
 
@@ -386,16 +587,19 @@ export default {
             const vals = [g.inter_rater_glaucoma, g.inter_rater_dr, g.inter_rater_amd].filter(v => v > 0)
             return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0
         },
-        overallAIAgree() {
-            const g = this.stats.general
-            const vals = [g.ai_agree_glaucoma, g.ai_agree_dr, g.ai_agree_amd].filter(v => v > 0)
-            return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0
-        },
         currentRows() {
             if (this.tab === 'glaucoma') return this.stats.glaucoma_rows
             if (this.tab === 'dr') return this.stats.dr_rows
             if (this.tab === 'amd') return this.stats.amd_rows
             return []
+        },
+        filteredConditionRows() {
+            const rows = this.currentRows
+            if (this.conditionFilter === 'reviewed') return rows.filter(r => r.total_reviews > 0)
+            if (this.conditionFilter === 'unreviewed') return rows.filter(r => r.total_reviews === 0)
+            if (this.conditionFilter === 'agree') return rows.filter(r => r.ai_agree_count === r.total_reviews && r.total_reviews > 0)
+            if (this.conditionFilter === 'disagree') return rows.filter(r => r.ai_agree_count < r.total_reviews && r.total_reviews > 0)
+            return rows
         },
         conditionLabel() {
             return { glaucoma: 'Glaucoma', dr: 'Diabetic Retinopathy', amd: 'AMD' }[this.tab] || ''
@@ -403,9 +607,15 @@ export default {
         maxReviewed() {
             return Math.max(...this.stats.doctors.map(d => d.reviewed), 1)
         },
+        maxHCUploads() {
+            if (!this.stats.hc_upload_counts || !this.stats.hc_upload_counts.length) return 1
+            return Math.max(...this.stats.hc_upload_counts.map(h => h.total), 1)
+        },
         filteredBioRows() {
-            if (this.bioFilter === 'all') return this.bioRows
-            return this.bioRows.filter(r => {
+            // Only show rows that actually have biomarkers in the biomarkers tab
+            const withBio = this.bioRows.filter(r => r.biomarkers && Object.keys(r.biomarkers).length > 0)
+            if (this.bioFilter === 'all') return withBio
+            return withBio.filter(r => {
                 if (this.bioFilter === 'glaucoma') return r.doctor_glaucoma && r.doctor_glaucoma !== 'N/A'
                 if (this.bioFilter === 'dr') return r.doctor_dr && r.doctor_dr !== 'N/A'
                 if (this.bioFilter === 'amd') return r.doctor_amd && r.doctor_amd !== 'N/A'
@@ -414,12 +624,66 @@ export default {
         },
         hcRowsForCondition() {
             if (!this.stats.hc_rows) return []
-            return this.stats.hc_rows.filter(h => {
-                if (this.tab === 'glaucoma') return h.ai_glaucoma_conf >= 90
-                if (this.tab === 'dr') return h.ai_dr_conf >= 90
-                if (this.tab === 'amd') return h.ai_amd_conf >= 90
-                return false
-            })
+            return this.stats.hc_rows
+        },
+        // Group HC rows by upload_id, filtered to only the specialty matching the current tab
+        groupedHCRows() {
+            const tab = this.tab
+            const aiCol = 'ai_' + tab
+            const confCol = 'ai_' + tab + '_conf'
+            const docCol = 'doctor_' + tab
+            const map = {}
+            for (const h of this.hcRowsForCondition) {
+                // Only show uploads from health centers whose specialty matches this tab
+                if ((h.specialty || '').toLowerCase() !== tab) continue
+                if (!map[h.id]) {
+                    map[h.id] = {
+                        upload_id: h.id,
+                        patient_amka: h.patient_amka,
+                        center_name: h.center_name,
+                        specialty: h.specialty,
+                        ai_result: h[aiCol],
+                        ai_conf: h[confCol],
+                        reviews: []
+                    }
+                }
+                if (h.reviewer) {
+                    map[h.id].reviews.push({
+                        reviewer: h.reviewer,
+                        answer: h[docCol],
+                        reviewed_at: h.reviewed_at
+                    })
+                }
+            }
+            return Object.values(map).map(g => ({
+                ...g,
+                agreeCount: g.reviews.filter(r => r.answer === g.ai_result).length,
+                allAgree: g.reviews.length > 0 && g.reviews.every(r => r.answer === g.ai_result),
+                anyAgree: g.reviews.some(r => r.answer === g.ai_result)
+            }))
+        },
+        filteredHCRows() {
+            const rows = this.groupedHCRows
+            if (this.conditionFilter === 'reviewed') return rows.filter(g => g.reviews.length > 0)
+            if (this.conditionFilter === 'unreviewed') return rows.filter(g => g.reviews.length === 0)
+            if (this.conditionFilter === 'agree') return rows.filter(g => g.allAgree)
+            if (this.conditionFilter === 'disagree') return rows.filter(g => g.reviews.length > 0 && !g.allAgree)
+            if (this.conditionFilter === 'highconf') return rows.filter(g => g.ai_conf >= 90)
+            return rows
+        },
+        totalReviewsForCondition() {
+            return this.currentRows.reduce((s, r) => s + r.total_reviews, 0)
+        },
+        conditionAIAgree() {
+            const rows = this.currentRows.filter(r => r.total_reviews > 0)
+            if (!rows.length) return 0
+            const total = rows.reduce((s, r) => s + r.total_reviews, 0)
+            const agree = rows.reduce((s, r) => s + r.ai_agree_count, 0)
+            return Math.round(agree / total * 100)
+        },
+        conditionInterRater() {
+            const key = { glaucoma: 'inter_rater_glaucoma', dr: 'inter_rater_dr', amd: 'inter_rater_amd' }[this.tab]
+            return this.stats.general[key] || 0
         }
     },
 
@@ -434,7 +698,8 @@ export default {
                 const data = await res.json()
                 this.stats = data
                 this.authenticated = true
-                localStorage.setItem('ddart_study', 'true')
+                // preload biomarkers
+                this.loadBiomarkers()
             } catch { this.authError = 'Connection failed.' }
             finally { this.authLoading = false }
         },
@@ -442,48 +707,188 @@ export default {
         async loadStats() {
             this.loading = true
             try {
-                const code = this.codeInput || 'ddart'
-                const res = await fetch(`https://labiris.myiplist.com/study/stats?code=${code}`)
+                const res = await fetch(`https://labiris.myiplist.com/study/stats?code=${encodeURIComponent(this.codeInput)}`)
                 const data = await res.json()
                 this.stats = data
             } catch { } finally { this.loading = false }
         },
 
+        async switchTab(t) {
+            this.tab = t
+            if (t === 'biomarkers') {
+                await this.loadBiomarkers()
+            } else {
+                await this.loadStats()
+            }
+        },
+
         async loadBiomarkers() {
-            if (this.bioRows.length) return
             this.bioLoading = true
             try {
-                const code = this.codeInput || 'ddart'
-                const res = await fetch(`https://labiris.myiplist.com/study/biomarkers?code=${code}`)
+                const res = await fetch(`https://labiris.myiplist.com/study/biomarkers?code=${encodeURIComponent(this.codeInput)}`)
                 const data = await res.json()
-                this.bioRows = (data.rows || []).map(r => ({
-                    ...r,
-                    biomarkers: r.biomarkers ? JSON.parse(r.biomarkers) : null
-                }))
+                this.bioRows = (data.rows || []).map(r => {
+                    let bm = null
+                    try {
+                        if (r.biomarkers) {
+                            bm = typeof r.biomarkers === 'string' ? JSON.parse(r.biomarkers) : r.biomarkers
+                        }
+                    } catch(e) { bm = null }
+                    return { ...r, biomarkers: bm }
+                })
             } catch { } finally { this.bioLoading = false }
         },
 
+        async loadAdmin() {
+            this.adminLoading = true
+            try {
+                const [docRes, hcRes] = await Promise.all([
+                    fetch('https://labiris.myiplist.com/admin/doctors'),
+                    fetch('https://labiris.myiplist.com/admin/health-centers')
+                ])
+                const docData = await docRes.json()
+                const hcData = await hcRes.json()
+                this.adminDoctors = docData.doctors || []
+                this.adminHCs = hcData.health_centers || []
+            } catch { } finally { this.adminLoading = false }
+        },
+
+        async approveDoctor(id) {
+            this.actionLoading = id
+            try {
+                await fetch(`https://labiris.myiplist.com/admin/approve/${id}`, { method: 'POST' })
+                await this.loadAdmin()
+            } finally { this.actionLoading = null }
+        },
+
+        async unapproveDoctor(id) {
+            this.actionLoading = id
+            try {
+                await fetch(`https://labiris.myiplist.com/admin/unapprove/${id}`, { method: 'POST' })
+                await this.loadAdmin()
+            } finally { this.actionLoading = null }
+        },
+
+        async deleteDoctor(id, name) {
+            if (!confirm(`Delete Dr. ${name}? This cannot be undone.`)) return
+            this.actionLoading = id
+            try {
+                await fetch(`https://labiris.myiplist.com/admin/doctor/${id}`, { method: 'DELETE' })
+                await this.loadAdmin()
+            } finally { this.actionLoading = null }
+        },
+
+        async deleteHC(id, name) {
+            if (!confirm(`Delete health center "${name}"? This cannot be undone.`)) return
+            try {
+                await fetch(`https://labiris.myiplist.com/admin/health-center/${id}`, { method: 'DELETE' })
+                await this.loadAdmin()
+            } catch { }
+        },
+
+        openImageDetail(row) {
+            this.zoomError = false
+            this.detailImage = row
+        },
+
+        openHCDetail(g) {
+            this.zoomError = false
+            this.hcDetail = g
+        },
+
+        thumbSrc(imageId) {
+            return `https://labiris.myiplist.com/research/image/${imageId}`
+        },
+
+        hcThumbSrc(uploadId) {
+            // HC images need doctor_id — use a known approved doctor or just try
+            return `https://labiris.myiplist.com/study/hc-image/${uploadId}?code=${encodeURIComponent(this.codeInput)}`
+        },
+
+        getBiomarkersFor(imageId, docName) {
+            const row = this.bioRows.find(r => r.image_id === imageId && r.doctor_name === docName)
+            if (!row || !row.biomarkers) return null
+            const bm = typeof row.biomarkers === 'string' ? JSON.parse(row.biomarkers) : row.biomarkers
+            return Object.keys(bm).length > 0 ? bm : null
+        },
+
+        exportBiomarkersCSV() {
+            const rows = this.filteredBioRows
+            if (!rows.length) return
+            // Collect all biomarker keys
+            const bmKeys = new Set()
+            rows.forEach(r => { if (r.biomarkers) Object.keys(r.biomarkers).forEach(k => bmKeys.add(k)) })
+            const keys = [...bmKeys]
+            const headers = ['Image ID', 'Doctor', 'Date', 'Glaucoma', 'DR', 'AMD', ...keys.map(k => k.replace(/_/g, ' '))]
+            const lines = [headers.join(',')]
+            rows.forEach(r => {
+                const bm = r.biomarkers || {}
+                const row = [
+                    r.image_id, `"${r.doctor_name}"`,
+                    r.reviewed_at ? r.reviewed_at.slice(0, 10) : '',
+                    r.doctor_glaucoma || '', r.doctor_dr || '', r.doctor_amd || '',
+                    ...keys.map(k => bm[k] || '')
+                ]
+                lines.push(row.join(','))
+            })
+            const blob = new Blob([lines.join('\n')], { type: 'text/csv' })
+            const a = document.createElement('a')
+            a.href = URL.createObjectURL(blob)
+            a.download = `ddart_biomarkers_${new Date().toISOString().slice(0, 10)}.csv`
+            a.click()
+        },
+
+        exportBiomarkersExcel() {
+            // Build HTML table then use data URI (works without SheetJS)
+            const rows = this.filteredBioRows
+            if (!rows.length) return
+            const bmKeys = new Set()
+            rows.forEach(r => { if (r.biomarkers) Object.keys(r.biomarkers).forEach(k => bmKeys.add(k)) })
+            const keys = [...bmKeys]
+            const headers = ['Image ID', 'Doctor', 'Date', 'Glaucoma', 'DR', 'AMD', ...keys.map(k => k.replace(/_/g, ' '))]
+
+            let html = '<table><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>'
+            rows.forEach(r => {
+                const bm = r.biomarkers || {}
+                const cells = [
+                    r.image_id, r.doctor_name,
+                    r.reviewed_at ? r.reviewed_at.slice(0, 10) : '',
+                    r.doctor_glaucoma || '', r.doctor_dr || '', r.doctor_amd || '',
+                    ...keys.map(k => bm[k] || '')
+                ]
+                html += '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>'
+            })
+            html += '</table>'
+
+            const blob = new Blob([`<html><head><meta charset="UTF-8"></head><body>${html}</body></html>`],
+                { type: 'application/vnd.ms-excel' })
+            const a = document.createElement('a')
+            a.href = URL.createObjectURL(blob)
+            a.download = `ddart_biomarkers_${new Date().toISOString().slice(0, 10)}.xls`
+            a.click()
+        },
+
+        async resetStudy() {
+            if (!this.resetCode) { this.resetError = 'Please enter the reset code.'; return }
+            this.resetLoading = true
+            this.resetError = ''
+            try {
+                const res = await fetch(`https://labiris.myiplist.com/study/reset?code=${encodeURIComponent(this.resetCode)}`, { method: 'POST' })
+                if (!res.ok) { this.resetError = 'Invalid code or reset failed.'; return }
+                this.showResetModal = false
+                this.resetCode = ''
+                await this.loadStats()
+                this.bioRows = []
+                alert('Study data has been reset successfully.')
+            } catch { this.resetError = 'Connection failed.' }
+            finally { this.resetLoading = false }
+        },
+
         logout() {
-            this.showLogoutOverlay = true
-            this.logoutBarWidth = 0
-            const start = performance.now()
-            const duration = 2500
-            const animate = (now) => {
-                const progress = Math.min((now - start) / duration, 1)
-                this.logoutBarWidth = Math.round((1 - Math.pow(1 - progress, 3)) * 100)
-                if (progress < 1) {
-                    requestAnimationFrame(animate)
-                } else {
-                    setTimeout(() => {
-                        localStorage.removeItem('ddart_study')
-                        localStorage.removeItem('ddart_study_code')
-                        this.authenticated = false
-                        this.codeInput = ''
-                        this.$router.push('/login')
-                    }, 100)
-                }
-            }
-            requestAnimationFrame(animate)
+            localStorage.removeItem('ddart_study')
+            this.authenticated = false
+            this.codeInput = ''
+            this.$router.push('/login')
         },
 
         ringStyle(pct) {
@@ -511,50 +916,13 @@ export default {
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-family: 'Source Sans 3', sans-serif; }
 
-
-/* Logout / entry overlay */
-.entry-overlay { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(ellipse at center, #0d1f3c 0%, #060d1a 100%); display: flex; align-items: center; justify-content: center; }
-.entry-content { display: flex; flex-direction: column; align-items: center; gap: 20px; }
-.retinal-scanner { position: relative; width: 200px; height: 200px; animation: scanner-appear 0.5s ease both; }
-@keyframes scanner-appear { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
-.retina-svg { width: 100%; height: 100%; }
-.ring-draw { animation: ring-draw 1.8s 0.3s cubic-bezier(0.4,0,0.2,1) forwards; }
-@keyframes ring-draw { from { stroke-dashoffset: 565; } to { stroke-dashoffset: 0; } }
-.ring-draw-2 { animation: ring-draw-2 1.4s 0.5s cubic-bezier(0.4,0,0.2,1) forwards; }
-@keyframes ring-draw-2 { from { stroke-dashoffset: 415; } to { stroke-dashoffset: 0; } }
-.crosshair { opacity: 0; animation: lo-fade-in 0.4s 1s ease forwards; }
-@keyframes lo-fade-in { to { opacity: 1; } }
-.vessel { stroke-dasharray: 200; stroke-dashoffset: 200; animation: vessel-draw 1s 0.8s ease forwards; }
-@keyframes vessel-draw { to { stroke-dashoffset: 0; } }
-.bracket { opacity: 0; animation: lo-fade-in 0.5s 0.2s ease forwards; }
-.scanner-beam { transform-origin: 100px 100px; animation: scan-rotate 2s linear infinite; }
-@keyframes scan-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-.scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(99,179,237,0.0) 20%, rgba(99,179,237,0.6) 50%, rgba(99,179,237,0.0) 80%, transparent 100%); animation: scan-sweep 2s ease-in-out infinite; border-radius: 1px; }
-@keyframes scan-sweep { 0% { top: 10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
-.glint { position: absolute; width: 4px; height: 4px; background: #63b3ed; border-radius: 50%; animation: glint-pulse 2s ease-in-out infinite; box-shadow: 0 0 6px #63b3ed; }
-.glint-1 { top: 6px; left: 50%; animation-delay: 0s; }
-.glint-2 { top: 50%; right: 6px; animation-delay: 0.66s; }
-.glint-3 { bottom: 6px; left: 50%; animation-delay: 1.33s; }
-@keyframes glint-pulse { 0%,100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); } }
-.entry-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 22px; font-weight: 700; color: white; letter-spacing: 4px; display: flex; align-items: baseline; gap: 2px; animation: lo-logo-appear 0.6s 0.4s cubic-bezier(0.4,0,0.2,1) both; }
-.entry-ddart { color: white; }
-.entry-ai { color: #e53e3e; font-size: 72px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; line-height: 1; }
-.entry-bar { width: 200px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
-.entry-bar-fill { height: 100%; background: linear-gradient(90deg, #4299e1, #63b3ed); border-radius: 2px; transition: width 0.05s linear; }
-.entry-msg { color: rgba(255,255,255,0.55); font-size: 13px; font-weight: 400; letter-spacing: 1px; text-transform: uppercase; margin: 0; animation: lo-msg-appear 0.5s 0.6s cubic-bezier(0.4,0,0.2,1) both; }
-@keyframes lo-logo-appear { from { opacity: 0; transform: scale(0.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-@keyframes lo-msg-appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-.overlay-fade-enter-active, .overlay-fade-leave-active { transition: opacity 0.5s ease; }
-.overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
-
 .study-container { display: flex; flex-direction: column; align-items: center; padding: 30px 20px 0; min-height: 100vh; }
+.dashboard { width: 100%; max-width: 1100px; display: flex; flex-direction: column; align-items: center; }
 
 /* Modal */
 .modal-backdrop { position: fixed; inset: 0; background: rgba(10,20,40,0.85); display: flex; align-items: center; justify-content: center; z-index: 9999; }
 .modal-box { background: white; border-radius: 12px; padding: 40px; width: 320px; display: flex; flex-direction: column; align-items: center; gap: 16px; animation: appear 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
 @keyframes appear { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-.modal-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 16px; font-weight: 700; color: #2c5282; letter-spacing: 3px; display: flex; align-items: baseline; gap: 2px; }
-.modal-logo span { color: #e53e3e; font-size: 36px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; }
 .modal-box h3 { font-family: 'Playfair Display', serif; color: #2d3748; font-size: 18px; margin: 0; }
 .modal-box p { font-size: 13px; color: #718096; margin: 0; text-align: center; }
 .field { width: 100%; }
@@ -564,26 +932,28 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .submit-btn { width: 100%; padding: 10px; background: #2b6cb0; color: white; border: none; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
 .submit-btn:hover:not(:disabled) { background: #2c5282; }
 .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.back-btn { width: 100%; padding: 8px; background: none; border: 1px solid #e2e8f0; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; transition: all 0.2s; }
-.back-btn:hover { background: #f8fafc; border-color: #cbd5e0; }
+.back-btn { width: 100%; padding: 8px; background: none; border: 1px solid #e2e8f0; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; }
+.back-btn:hover { background: #f8fafc; }
 
 /* Header */
-.header { text-align: center; margin-bottom: 24px; width: 100%; max-width: 1000px; }
-.user-bar { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-bottom: 10px; font-size: 13px; color: #4a5568; }
-.logout-btn { padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-family: 'Source Sans 3', sans-serif; background: none; border: 1px solid #e2e8f0; color: #718096; transition: background 0.2s; }
+.header { text-align: center; margin-bottom: 24px; width: 100%; }
+.user-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.user-bar-title { font-size: 13px; font-weight: 700; color: #4a5568; }
+.user-bar-actions { display: flex; align-items: center; gap: 8px; }
+.tab-pill { padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid #e2e8f0; background: white; color: #718096; font-family: 'Source Sans 3', sans-serif; transition: all 0.2s; }
+.tab-pill.active { background: #2b6cb0; color: white; border-color: #2b6cb0; }
+.logout-btn { padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-family: 'Source Sans 3', sans-serif; background: none; border: 1px solid #e2e8f0; color: #718096; }
 .logout-btn:hover { background: #f8fafc; }
 .university { font-size: 14px; color: #2c5282; font-weight: 600; margin: 0 0 4px; }
 .subtitle { font-size: 13px; color: #4a6fa5; margin: 0 0 16px; }
-.logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 18px; font-weight: 700; color: #2c5282; letter-spacing: 3px; display: flex; align-items: baseline; justify-content: center; gap: 2px; }
-.logo span { color: #e53e3e; font-size: 48px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; }
 
 /* Tabs */
-.panel-tabs { display: flex; gap: 8px; width: 100%; max-width: 1000px; margin-bottom: 20px; }
+.panel-tabs { display: flex; gap: 8px; width: 100%; margin-bottom: 20px; }
 .panel-tab { flex: 1; padding: 10px; border: 1px solid #e2e8f0; border-radius: 4px; background: white; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; transition: all 0.2s; }
 .panel-tab:hover { background: #f8fafc; }
 .panel-tab.active { background: #2b6cb0; color: white; border-color: #2b6cb0; }
 
-.panel-section { width: 100%; max-width: 1000px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 16px; }
+.panel-section { width: 100%; display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
 
 /* Stat cards */
 .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
@@ -606,7 +976,7 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .agree-ring.overall .agree-pct { font-size: 20px; }
 .agree-label { font-size: 12px; color: #718096; font-weight: 600; }
 
-/* Prevalence bars */
+/* Prevalence */
 .prevalence-grid { display: flex; flex-direction: column; gap: 12px; }
 .prev-bar-row { display: grid; grid-template-columns: 80px 1fr 80px; align-items: center; gap: 12px; }
 .prev-label { font-size: 13px; font-weight: 600; color: #4a5568; }
@@ -625,18 +995,18 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .data-table tr:hover td { background: #f8fafc; }
 .mini-bar-wrap { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; width: 120px; }
 .mini-bar { height: 100%; background: #2b6cb0; border-radius: 4px; }
-
-/* Condition table */
 .condition-table-wrap { overflow-x: auto; }
-.condition-table { min-width: 600px; }
-.img-cell { font-weight: 700; color: #4a5568; }
+.amka-cell { font-family: monospace; letter-spacing: 1px; color: #2b6cb0; font-weight: 700; }
+.match-yes { color: #38a169; font-weight: 700; }
+.match-no { color: #e53e3e; font-weight: 700; }
+
+/* Chips & badges */
 .ai-chip { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
 .chip-positive { background: #fff5f5; color: #c53030; }
 .chip-negative { background: #f0fff4; color: #276749; }
 .answer-chip { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .chip-match { background: #f0fff4; color: #276749; }
 .chip-differ { background: #fff5f5; color: #c53030; }
-.no-review { color: #cbd5e0; font-size: 12px; }
 .pct-badge { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
 .pct-good { background: #f0fff4; color: #276749; }
 .pct-mid { background: #fffaf0; color: #c05621; }
@@ -644,13 +1014,122 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .conf-badge { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
 .conf-high { background: #fffaf0; color: #c05621; }
 .conf-low { background: #f0fff4; color: #276749; }
-.amka-cell { font-family: monospace; letter-spacing: 1px; color: #2b6cb0; font-weight: 700; }
-.match-yes { color: #38a169; font-weight: 700; }
-.match-no { color: #e53e3e; font-weight: 700; }
+.specialty-chip { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+.specialty-chip.glaucoma { background: #f0fff4; color: #276749; }
+.specialty-chip.dr { background: #fff5f5; color: #c53030; }
+.specialty-chip.amd { background: #ebf8ff; color: #2b6cb0; }
+.review-count-badge { background: #e2e8f0; color: #4a5568; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+
+/* Condition summary bar */
+.condition-summary-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.csb-item { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; text-align: center; }
+.csb-val { display: block; font-size: 28px; font-weight: 700; color: #2b6cb0; font-family: 'Playfair Display', serif; }
+.csb-label { font-size: 11px; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Condition header */
+.condition-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.condition-filter-row { display: flex; gap: 8px; }
+
+/* Image grid */
+.img-link-btn { background: none; border: none; color: #2b6cb0; font-weight: 600; font-size: 13px; cursor: pointer; padding: 2px 0; text-decoration: underline; }
+.img-link-btn:hover { color: #1a4a8a; }
+.thumb-id { color: white; font-weight: 700; font-size: 13px; opacity: 0; transition: opacity 0.2s; }
+.thumb-view { color: white; font-size: 11px; font-weight: 600; opacity: 0; transition: opacity 0.2s; }
+.image-card:hover .thumb-id, .image-card:hover .thumb-view { opacity: 1; }
+.image-card-body { padding: 10px; display: flex; flex-direction: column; gap: 5px; }
+.image-card-row { display: flex; align-items: center; justify-content: space-between; }
+.image-card-label { font-size: 10px; color: #a0aec0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+
+/* Detail modal */
+.detail-box { background: white; border-radius: 12px; width: 90vw; max-width: 860px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; }
+.detail-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid #e2e8f0; }
+.detail-body { display: grid; grid-template-columns: 300px 1fr; overflow: hidden; flex: 1; }
+.detail-img-col { padding: 20px; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 12px; background: #f8fafc; }
+.detail-img-wrap { border-radius: 8px; overflow: hidden; background: #e2e8f0; }
+.detail-img-full { width: 100%; display: block; object-fit: contain; max-height: 260px; }
+.detail-ai-row { display: flex; align-items: center; gap: 8px; }
+.detail-ai-label { font-size: 12px; font-weight: 700; color: #4a5568; }
+.detail-reviews-col { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.detail-reviews-title { font-family: 'Playfair Display', serif; font-size: 15px; color: #2c5282; margin: 0; }
+.detail-reviews-list { display: flex; flex-direction: column; gap: 12px; }
+.detail-review-row { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #f8fafc; }
+.detail-review-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.detail-doc-name { font-weight: 700; font-size: 13px; color: #2d3748; }
+.detail-biomarkers { margin-top: 8px; }
+.detail-bio-title { font-size: 11px; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 0.3px; }
+.detail-stats-row { display: flex; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+.detail-stat-label { font-size: 12px; font-weight: 600; color: #4a5568; }
+.zoom-close-btn { background: rgba(229,62,62,0.15); border: none; color: #c53030; font-size: 13px; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-weight: 700; transition: background 0.2s; }
+.zoom-close-btn:hover { background: rgba(229,62,62,0.3); }
+.zoom-title { font-size: 14px; font-weight: 700; color: #2d3748; }
+.zoom-error { color: #fc8181; font-size: 14px; padding: 40px; text-align: center; }
 
 /* HC subsection */
 .hc-subsection { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
 .hc-sub-title { font-size: 14px; font-weight: 700; color: #553c9a; margin: 0 0 12px; }
+
+/* Biomarkers */
+.bio-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.bio-header-actions { display: flex; gap: 8px; }
+.bio-filter-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.bio-filter-select { padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; background: white; font-family: 'Source Sans 3', sans-serif; }
+.bio-count { font-size: 12px; color: #718096; }
+.bio-review-list { display: flex; flex-direction: column; gap: 12px; }
+.bio-review-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; background: #f8fafc; }
+.bio-review-header { display: flex; gap: 16px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.bio-review-img { font-weight: 700; font-size: 13px; color: #2b6cb0; }
+.bio-review-doctor { font-size: 12px; color: #553c9a; font-weight: 600; }
+.bio-review-date { font-size: 11px; color: #a0aec0; margin-left: auto; }
+.bio-review-diagnoses { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.bio-diag-chip { background: #ebf8ff; color: #2b6cb0; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; border: 1px solid #bee3f8; }
+.bio-markers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 4px; }
+.bio-marker-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; border-radius: 4px; font-size: 11px; background: #f7fafc; border: 1px solid #e2e8f0; }
+.bm-key { color: #4a5568; text-transform: capitalize; }
+.bm-val { font-weight: 700; font-size: 10px; padding: 1px 5px; border-radius: 3px; }
+.bio-marker-item.bm-yes .bm-val { background: #c6f6d5; color: #276749; }
+.bio-marker-item.bm-no .bm-val { background: #fed7d7; color: #9b2c2c; }
+.bio-marker-item.bm-inconclusive .bm-val { background: #fefcbf; color: #744210; }
+.bio-no-markers { font-size: 12px; color: #a0aec0; font-style: italic; }
+
+/* Export/refresh buttons */
+.refresh-btn { padding: 5px 12px; border: 1px solid #e2e8f0; border-radius: 4px; background: white; font-size: 12px; font-weight: 600; color: #4a5568; cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: background 0.2s; }
+.refresh-btn:hover:not(:disabled) { background: #f0f4f8; }
+.export-btn { padding: 5px 12px; border: 1px solid #bee3f8; border-radius: 4px; background: #ebf8ff; font-size: 12px; font-weight: 600; color: #2b6cb0; cursor: pointer; font-family: 'Source Sans 3', sans-serif; transition: background 0.2s; }
+.export-btn:hover:not(:disabled) { background: #bee3f8; }
+.export-btn.excel { background: #f0fff4; border-color: #c6f6d5; color: #276749; }
+.export-btn.excel:hover:not(:disabled) { background: #c6f6d5; }
+.export-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Admin */
+.admin-grid { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+.admin-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.admin-count-badge { background: #e2e8f0; color: #4a5568; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px; }
+.doctor-list { display: flex; flex-direction: column; gap: 0; }
+.doctor-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f4f8; gap: 12px; }
+.doctor-row:last-child { border-bottom: none; }
+.doctor-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.doctor-name { font-size: 14px; font-weight: 700; color: #2d3748; }
+.doctor-email { font-size: 12px; color: #718096; }
+.doctor-badges { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+.status-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+.badge-approved { background: #f0fff4; color: #276749; }
+.badge-pending { background: #fffaf0; color: #c05621; }
+.badge-research { background: #ebf8ff; color: #2b6cb0; }
+.doctor-actions { display: flex; gap: 6px; }
+.action-btn { padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 700; cursor: pointer; border: none; font-family: 'Source Sans 3', sans-serif; transition: opacity 0.2s; }
+.action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.approve-btn { background: #f0fff4; color: #276749; border: 1px solid #c6f6d5; }
+.approve-btn:hover:not(:disabled) { background: #c6f6d5; }
+.unapprove-btn { background: #fffaf0; color: #c05621; border: 1px solid #feebc8; }
+.unapprove-btn:hover:not(:disabled) { background: #feebc8; }
+.delete-btn { background: #fff5f5; color: #c53030; border: 1px solid #fed7d7; }
+.delete-btn:hover:not(:disabled) { background: #fed7d7; }
+.admin-note { font-size: 12px; color: #a0aec0; margin: 12px 0 0; font-style: italic; }
+.center-id-code { background: #f0f4f8; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #2b6cb0; font-weight: 700; }
+
+/* Reset button */
+.reset-study-btn { position: fixed; bottom: 20px; right: 20px; background: #fff5f5; border: 1px solid #fed7d7; color: #c53030; font-family: 'Source Sans 3', sans-serif; font-size: 11px; font-weight: 700; padding: 7px 14px; border-radius: 6px; cursor: pointer; transition: all 0.2s; z-index: 100; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.reset-study-btn:hover { background: #fed7d7; }
 
 /* Loading */
 .loading-state { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 60px; color: #718096; }
@@ -665,13 +1144,15 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .fade-slide-leave-active { transition: all 0.2s ease; }
 .fade-slide-enter-from { opacity: 0; transform: translateY(10px); }
 .fade-slide-leave-to { opacity: 0; transform: translateY(-6px); }
+.zoom-fade-enter-active, .zoom-fade-leave-active { transition: opacity 0.2s ease; }
+.zoom-fade-enter-from, .zoom-fade-leave-to { opacity: 0; }
 .error-pop-enter-active { transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
 .error-pop-leave-active { transition: opacity 0.15s ease; }
 .error-pop-enter-from { opacity: 0; transform: translateY(-4px) scale(0.97); }
 .error-pop-leave-to { opacity: 0; }
 
 /* Footer */
-.footer { width: 100%; max-width: 1000px; display: flex; justify-content: space-between; align-items: center; padding: 16px 0 24px; border-top: 1px solid #e2e8f0; margin-top: auto; }
+.footer { width: 100%; max-width: 1100px; display: flex; justify-content: space-between; align-items: center; padding: 16px 0 24px; border-top: 1px solid #e2e8f0; margin-top: auto; }
 .dept-logo { height: 55px; width: auto; object-fit: contain; }
 .footer-right { text-align: right; }
 .footer-right p { font-size: 12px; color: #718096; margin: 2px 0; }
@@ -680,31 +1161,12 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 
 @media (max-width: 768px) {
     .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .condition-summary-bar { grid-template-columns: repeat(2, 1fr); }
     .agreement-row-grid { gap: 20px; }
     .panel-tabs { flex-wrap: wrap; }
+    .detail-body { grid-template-columns: 1fr; }
+    .detail-img-col { border-right: none; border-bottom: 1px solid #e2e8f0; }
+    .image-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    .admin-grid { grid-template-columns: 1fr; }
 }
-.bio-filter-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-.bio-filter-select { padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; background: white; }
-.bio-count { font-size: 12px; color: #718096; }
-.bio-review-list { display: flex; flex-direction: column; gap: 12px; }
-.bio-review-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; background: white; }
-.bio-review-header { display: flex; gap: 16px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
-.bio-review-amka { font-weight: 700; font-size: 13px; color: #2d3748; }
-.bio-review-doctor { font-size: 12px; color: #2b6cb0; font-weight: 600; }
-.bio-review-date { font-size: 11px; color: #a0aec0; margin-left: auto; }
-.bio-review-diagnoses { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-.bio-diag-chip { background: #ebf8ff; color: #2b6cb0; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; border: 1px solid #bee3f8; }
-.bio-markers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 4px; }
-.bio-marker-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; border-radius: 4px; font-size: 11px; background: #f7fafc; border: 1px solid #e2e8f0; }
-.bm-key { color: #4a5568; text-transform: capitalize; }
-.bm-val { font-weight: 700; font-size: 10px; padding: 1px 5px; border-radius: 3px; }
-.bio-marker-item.bm-yes .bm-val { background: #c6f6d5; color: #276749; }
-.bio-marker-item.bm-no .bm-val { background: #fed7d7; color: #9b2c2c; }
-.bio-marker-item.bm-inconclusive .bm-val { background: #fefcbf; color: #744210; }
-.bio-no-markers { font-size: 12px; color: #a0aec0; font-style: italic; }
-.dark .bio-filter-select { background: #2d3748; border-color: #4a5568; color: #e2e8f0; }
-.dark .bio-review-card { background: #2d3748; border-color: #4a5568; }
-.dark .bio-review-amka { color: #e2e8f0; }
-.dark .bio-marker-item { background: #1a202c; border-color: #4a5568; }
-.dark .bm-key { color: #a0aec0; }
 </style>

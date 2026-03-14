@@ -4,7 +4,7 @@
         <!-- Auth gate -->
         <div v-if="!authenticated" class="auth-gate">
             <div class="auth-box">
-                <div class="admin-logo">DDART<span>AI</span></div>
+                <img src="/DDART.png" style="height:30px;width:auto;object-fit:contain;" />
                 <h2>Admin Access</h2>
                 <p>Enter the administrator password to continue.</p>
                 <div class="field">
@@ -21,7 +21,7 @@
         <!-- Admin panel -->
         <div v-else class="admin-panel">
             <div class="admin-header">
-                <div class="admin-logo">DDART<span>AI</span></div>
+                <img src="/DDART.png" style="height:30px;width:auto;object-fit:contain;" />
                 <h1>Health Center Administration</h1>
                 <button class="btn-ghost" @click="authenticated = false; adminPassword = ''">Sign Out</button>
             </div>

@@ -31,7 +31,7 @@
         <transition name="modal-fade">
             <div v-if="showExpertiseModal" class="modal-backdrop">
                 <div class="modal-box">
-                    <div class="modal-logo">DDART<span>AI</span></div>
+                    <img src="/DDART.png" style="height:30px;width:auto;object-fit:contain;" />
                     <h3>Welcome, Dr. {{ doctorName }}</h3>
                     <p>Before you begin, please select your area of expertise.</p>
                     <p style="font-size:12px;color:#718096;margin:-4px 0 8px;">Select one specialty — you will only grade images for this condition.</p>
@@ -72,14 +72,13 @@
                 <button class="logout-btn" @click="logout">Sign Out</button>
             </div>
             <p class="university">Democritus University of Thrace – DDART spin-off company</p>
-            <p class="subtitle">Ophthalmology A.I. Screening Program — Research Study</p>
-            <div class="logo">DDART<span>AI</span></div>
+            <img src="/DDART.png" style="height:30px;width:auto;object-fit:contain;" />
         </div>
 
         <div class="panel-tabs">
 
             <button :class="['panel-tab', { active: tab === 'hc' }]" @click="tab = 'hc'; loadHCPending()">
-                Health Center Uploads
+            Pending examinations 
                 <span v-if="hcPending.length" class="badge hc-badge">{{ hcPending.length }}</span>
             </button>
             <button :class="['panel-tab', { active: tab === 'concluded' }]" @click="tab = 'concluded'; loadConcluded()">
@@ -87,7 +86,7 @@
             </button>
         </div>
 
-        <transition name="fade-slide" mode="out-in">
+    <transition name="fade-slide" mode="out-in">
 
             <!-- PENDING TAB -->
             <div v-if="tab === 'pending'" key="pending" class="panel-section">
@@ -181,7 +180,7 @@
                                 <img :src="'https://labiris.myiplist.com/research/hc-image/' + currentHC.id + '?doctor_id=' + doctorId" class="fundus-image zoomable" @click="openZoom('https://labiris.myiplist.com/research/hc-image/' + currentHC.id + '?doctor_id=' + doctorId)" />
                                 <div class="patient-info-panel">
                                     <div class="patient-info-row">
-                                        <span class="pi-label">AMKA</span>
+                                        <span class="pi-label">S.S.N.</span>
                                         <span class="pi-value amka">{{ currentHC.patient_amka }}</span>
                                     </div>
                                     <div class="patient-info-row">
@@ -200,7 +199,7 @@
 
                                 <!-- DR Final Diagnosis + Biometrics -->
                                 <div v-if="doctorExpertise.dr" class="diagnosis-group">
-                                    <label class="diagnosis-label">Diabetic Retinopathy — Final Result</label>
+                                    <label class="diagnosis-label">Referral for Diabetic Retinopathy</label>
                                     <div class="radio-group">
                                         <label class="radio-option" :class="{ selected: hcDiagnosis.dr === 'No_DR' }"><input type="radio" v-model="hcDiagnosis.dr" value="No_DR" /> No DR</label>
                                         <label class="radio-option" :class="{ selected: hcDiagnosis.dr === 'Mild' }"><input type="radio" v-model="hcDiagnosis.dr" value="Mild" /> Mild</label>
@@ -224,10 +223,10 @@
 
                                 <!-- Glaucoma Final Diagnosis + Biometrics -->
                                 <div v-if="doctorExpertise.glaucoma" class="diagnosis-group">
-                                    <label class="diagnosis-label">Glaucoma — Final Result</label>
+                                    <label class="diagnosis-label">Referral for Glaucoma</label>
                                     <div class="radio-group">
-                                        <label class="radio-option" :class="{ selected: hcDiagnosis.glaucoma === 'Glaucoma' }"><input type="radio" v-model="hcDiagnosis.glaucoma" value="Glaucoma" /> Glaucoma</label>
-                                        <label class="radio-option" :class="{ selected: hcDiagnosis.glaucoma === 'Healthy' }"><input type="radio" v-model="hcDiagnosis.glaucoma" value="Healthy" /> Healthy</label>
+                                        <label class="radio-option" :class="{ selected: hcDiagnosis.glaucoma === 'Glaucoma' }"><input type="radio" v-model="hcDiagnosis.glaucoma" value="Glaucoma" /> Yes</label>
+                                        <label class="radio-option" :class="{ selected: hcDiagnosis.glaucoma === 'Healthy' }"><input type="radio" v-model="hcDiagnosis.glaucoma" value="Healthy" /> No</label>
                                     </div>
                                     <div class="bio-table">
                                         <div class="bio-header"><span class="bio-name-col">GLAUCOMA</span><span>YES</span><span>NO</span><span>INCONCLUSIVE</span></div>
@@ -245,10 +244,10 @@
 
                                 <!-- AMD Final Diagnosis + Biometrics -->
                                 <div v-if="doctorExpertise.amd" class="diagnosis-group">
-                                    <label class="diagnosis-label">AMD — Final Result</label>
+                                    <label class="diagnosis-label">Referral for AMD</label>
                                     <div class="radio-group">
-                                        <label class="radio-option" :class="{ selected: hcDiagnosis.amd === 'AMD' }"><input type="radio" v-model="hcDiagnosis.amd" value="AMD" /> AMD</label>
-                                        <label class="radio-option" :class="{ selected: hcDiagnosis.amd === 'Normal' }"><input type="radio" v-model="hcDiagnosis.amd" value="Normal" /> Normal</label>
+                                        <label class="radio-option" :class="{ selected: hcDiagnosis.amd === 'AMD' }"><input type="radio" v-model="hcDiagnosis.amd" value="AMD" /> Yes</label>
+                                        <label class="radio-option" :class="{ selected: hcDiagnosis.amd === 'Normal' }"><input type="radio" v-model="hcDiagnosis.amd" value="Normal" /> No</label>
                                     </div>
                                     <div class="bio-table">
                                         <div class="bio-header"><span class="bio-name-col">AMD</span><span>YES</span><span>NO</span><span>INCONCLUSIVE</span></div>
@@ -290,29 +289,7 @@
                 </div>
                 <div v-else>
                     <div v-if="concludedImages.length > 0">
-                        <div class="agreement-banner">
-                            <div class="agreement-score">
-                                <p class="agreement-value">{{ overallAgreement }}%</p>
-                                <p class="agreement-label">Overall Agreement with AI</p>
-                            </div>
-                            <div class="agreement-breakdown">
-                                <div v-if="amdCount > 0" class="agreement-stat">
-                                    <span class="stat-label">AMD</span>
-                                    <span class="stat-value">{{ amdAgreement }}%</span>
-                                    <span class="stat-count">{{ amdCount }} images</span>
-                                </div>
-                                <div v-if="glaucomaCount > 0" class="agreement-stat">
-                                    <span class="stat-label">Glaucoma</span>
-                                    <span class="stat-value">{{ glaucomaAgreement }}%</span>
-                                    <span class="stat-count">{{ glaucomaCount }} images</span>
-                                </div>
-                                <div v-if="drCount > 0" class="agreement-stat">
-                                    <span class="stat-label">DR</span>
-                                    <span class="stat-value">{{ drAgreement }}%</span>
-                                    <span class="stat-count">{{ drCount }} images</span>
-                                </div>
-                            </div>
-                        </div>
+                        
                         <div class="concluded-list">
                             <div v-for="item in concludedImages" :key="item.id" class="concluded-item">
                                 <img :src="'https://labiris.myiplist.com/research/image/' + item.image_id" class="concluded-thumb zoomable" @click="openZoom('https://labiris.myiplist.com/research/image/' + item.image_id)" />
@@ -322,11 +299,9 @@
                                         <div class="category-badge" :class="'cat-' + item.category">{{ categoryLabel(item.category) }}</div>
                                     </div>
                                     <div class="comparison-grid">
-                                        <div class="comparison-header"><span>Your Diagnosis</span><span>AI Diagnosis</span><span>Match</span></div>
-                                        <div class="comparison-row">
+                                        <div class="comparison-header one-col"><span>Your Diagnosis</span></div>
+                                        <div class="comparison-row one-col">
                                             <span>{{ doctorAnswer(item) }}</span>
-                                            <span>{{ aiAnswer(item) }}</span>
-                                            <span :class="doctorAnswer(item) === aiAnswer(item) ? 'match-yes' : 'match-no'">{{ doctorAnswer(item) === aiAnswer(item) ? '✓ Match' : '✗ Differ' }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -341,32 +316,23 @@
                                 <img :src="'https://labiris.myiplist.com/research/hc-image/' + item.id + '?doctor_id=' + doctorId" class="concluded-thumb zoomable" @click="openZoom('https://labiris.myiplist.com/research/hc-image/' + item.id + '?doctor_id=' + doctorId)" />
                                 <div class="concluded-info">
                                     <div class="concluded-header">
-                                        <p class="concluded-title">AMKA: {{ item.patient_amka }}</p>
+                                        <p class="concluded-title">S.S.N.: {{ item.patient_amka }}</p>
                                         <span class="center-tag">{{ item.center_name }}</span>
                                         <span class="date-tag">{{ formatDate(item.uploaded_at) }}</span>
                                     </div>
                                     <div class="comparison-grid">
-                                        <div class="comparison-header five-col"><span>Condition</span><span>Your Answer</span><span>AI Answer</span><span>AI Conf.</span><span>Match</span></div>
-                                        <div v-if="item.ai_glaucoma_conf >= 90 && doctorExpertise.glaucoma" class="comparison-row five-col">
+                                        <div class="comparison-header two-col"><span>Condition</span><span>Your Answer</span></div>
+                                        <div v-if="item.ai_glaucoma_conf >= 90 && doctorExpertise.glaucoma" class="comparison-row two-col">
                                             <span class="cond-label">Glaucoma</span>
                                             <span>{{ item.doctor_glaucoma }}</span>
-                                            <span>{{ item.ai_glaucoma }}</span>
-                                            <span class="conf-reveal">{{ item.ai_glaucoma_conf }}%</span>
-                                            <span :class="item.doctor_glaucoma === item.ai_glaucoma ? 'match-yes' : 'match-no'">{{ item.doctor_glaucoma === item.ai_glaucoma ? '✓' : '✗' }}</span>
                                         </div>
-                                        <div v-if="item.ai_dr_conf >= 90 && doctorExpertise.dr" class="comparison-row five-col">
+                                        <div v-if="item.ai_dr_conf >= 90 && doctorExpertise.dr" class="comparison-row two-col">
                                             <span class="cond-label">DR</span>
                                             <span>{{ item.doctor_dr }}</span>
-                                            <span>{{ item.ai_dr }}</span>
-                                            <span class="conf-reveal">{{ item.ai_dr_conf }}%</span>
-                                            <span :class="item.doctor_dr === item.ai_dr ? 'match-yes' : 'match-no'">{{ item.doctor_dr === item.ai_dr ? '✓' : '✗' }}</span>
                                         </div>
-                                        <div v-if="item.ai_amd_conf >= 90 && doctorExpertise.amd" class="comparison-row five-col">
+                                        <div v-if="item.ai_amd_conf >= 90 && doctorExpertise.amd" class="comparison-row two-col">
                                             <span class="cond-label">AMD</span>
                                             <span>{{ item.doctor_amd }}</span>
-                                            <span>{{ item.ai_amd }}</span>
-                                            <span class="conf-reveal">{{ item.ai_amd_conf }}%</span>
-                                            <span :class="item.doctor_amd === item.ai_amd ? 'match-yes' : 'match-no'">{{ item.doctor_amd === item.ai_amd ? '✓' : '✗' }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -379,7 +345,7 @@
         </transition>
 
         <div class="footer">
-            <div class="footer-left"><img src="/democritus.png" class="dept-logo" /></div>
+            <div class="footer-left"><img src="/DDARTECH_Research-removebg-preview.png" class="dept-logo" /></div>
             <div class="footer-right">
                 <p>For technical support please call +3025510 30990 (office hours)</p>
                 <p>email: <a href="mailto:ddart@med.duth.gr">ddart@med.duth.gr</a></p>
@@ -410,7 +376,6 @@ export default {
             biomarkers: {},
             activeTip: null,
         drBiomarkers: [
-            { key: 'dr_referral', label: 'DR / Referral', tip: 'Overall assessment — does this image warrant referral for diabetic retinopathy?' },
             { key: 'microaneurysms', label: 'Microaneurysms', tip: 'Small balloon-like swellings in tiny blood vessels of the retina — earliest sign of DR.' },
             { key: 'hard_exudates', label: 'Hard exudates', tip: 'Lipid and protein deposits appearing as bright yellow-white spots with sharp margins.' },
             { key: 'dot_blot_hemorrhages', label: 'Dot-blot hemorrhages', tip: 'Small round hemorrhages in the inner nuclear layer, indicating capillary rupture.' },
@@ -427,17 +392,15 @@ export default {
             { key: 'dme', label: 'DME', tip: 'Diabetic macular edema — fluid in the macula causing vision distortion; can occur at any DR stage.' },
         ],
         glaucomaBiomarkers: [
-            { key: 'glaucoma_referral', label: 'Glaucoma / Referral', tip: 'Overall assessment — does this image warrant referral for glaucoma?' },
             { key: 'cup_disc_ratio', label: 'Cup to disc ratio > 0.6', tip: 'Enlarged cup-to-disc ratio (>0.6) suggests significant optic nerve head cupping from glaucoma.' },
             { key: 'rim_notching', label: 'Neuroretinal Rim Notching superiorly and/or inferiorly', tip: 'Focal loss of neuroretinal rim tissue, especially at superior/inferior poles — characteristic of glaucoma.' },
             { key: 'nfl_thinning', label: 'Thinning of the nerve fiber layer', tip: 'Loss of the retinal nerve fiber layer visible as a darker wedge-shaped defect.' },
             { key: 'disc_hemorrhage', label: 'Disc Hemorrhage', tip: 'Splinter hemorrhage at the disc margin — strongly associated with glaucomatous progression.' },
             { key: 'peripapillary_atrophy', label: 'Peripapillary Atrophy', tip: 'Atrophic changes in the retinal pigment epithelium surrounding the optic disc.' },
             { key: 'bayoneting', label: 'Bayoneting', tip: 'Blood vessels appear to bend at the disc margin then disappear — sign of deep excavation.' },
-            { key: 'glaucomatous_disc', label: 'GLAUCOMATOUS DISC', tip: 'Overall disc appearance consistent with glaucomatous damage.' },
+            { key: 'glaucomatous_disc', label: 'glaucomatous disc', tip: 'Overall disc appearance consistent with glaucomatous damage.' },
         ],
         amdBiomarkers: [
-            { key: 'amd_referral', label: 'AMD / Referral', tip: 'Overall assessment — does this image warrant referral for age-related macular degeneration?' },
             { key: 'drusen', label: 'Drusen >63μm', tip: 'Yellow extracellular deposits under the retina. Intermediate drusen (>63μm) indicate AMD risk.' },
             { key: 'pigmentation', label: 'Macular hyper- and/or hypopigmentation', tip: 'Abnormal RPE pigmentation changes in the macula — dark clumps or pale areas.' },
             { key: 'atrophy', label: 'Atrophy', tip: 'Geographic atrophy — well-defined area of RPE and photoreceptor loss in the macula.' },
@@ -887,6 +850,8 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .comparison-grid { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
 .comparison-header { display: grid; grid-template-columns: 1fr 1fr 100px; gap: 8px; font-weight: 700; color: #a0aec0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 4px; border-bottom: 1px solid #e2e8f0; margin-bottom: 4px; }
 .comparison-header.five-col, .comparison-row.five-col { grid-template-columns: 100px 1fr 1fr 60px 50px; }
+.comparison-header.two-col, .comparison-row.two-col { grid-template-columns: 120px 1fr; }
+.comparison-header.one-col, .comparison-row.one-col { grid-template-columns: 1fr; }
 .comparison-row { display: grid; grid-template-columns: 1fr 1fr 100px; gap: 8px; align-items: center; }
 .cond-label { font-weight: 700; color: #4a5568; font-size: 12px; }
 .conf-reveal { font-weight: 700; color: #2b6cb0; font-size: 12px; }

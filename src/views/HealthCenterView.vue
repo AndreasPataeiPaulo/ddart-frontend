@@ -59,7 +59,7 @@
             <div class="center-name">{{ centerName }}</div>
             <div class="center-meta">
                 <span :class="['specialty-badge-hc', centerSpecialty]">{{ specialtyLabelFull(centerSpecialty) }}</span>
-                <span class="ai-model-tag">AI: DDART AI 1.0</span>
+                <span class="ai-model-tag">AI: DDART AI 1.O</span>
             </div>
             <p class="center-subtitle">{{ t('Retinal Image Upload Portal', 'Πύλη Ανεβάσματος Εικόνων Αμφιβληστροειδούς') }}</p>
         </div>
@@ -106,6 +106,11 @@
                         </transition>
                     </div>
 
+                    <label class="consent-check" :class="{ checked: consentGiven }" @click="consentGiven = !consentGiven">
+                        <span class="consent-box">{{ consentGiven ? '✓' : '' }}</span>
+                        <span class="consent-text">{{ t('The patient has consented to the use of this image for AI analysis and research.', 'Ο ασθενής έχει συναινέσει στη χρήση αυτής της εικόνας για ανάλυση ΤΝ και έρευνα.') }}</span>
+                    </label>
+
                     <div
                         class="drop-zone"
                         :class="{ 'drop-active': isDragging, 'has-image': previewUrl }"
@@ -131,23 +136,12 @@
                         </transition>
                     </div>
 
-                    <!-- Consent checkbox -->
-                    <label class="consent-check" :class="{ checked: consentGiven }" @click="consentGiven = !consentGiven">
-                        <span class="consent-box">{{ consentGiven ? '✓' : '' }}</span>
-                        <span class="consent-text">{{ t('The patient has consented to the use of this image for AI analysis and research.', 'Ο ασθενής έχει συναινέσει στη χρήση αυτής της εικόνας για ανάλυση ΤΝ και έρευνα.') }}</span>
-                    </label>
-
                     <transition name="error-pop">
                         <p v-if="uploadError" class="error">{{ uploadError }}</p>
                     </transition>
 
-                    <div class="consent-check" :class="{ checked: consentChecked }" @click="consentChecked = !consentChecked">
-                        <div class="consent-box">{{ consentChecked ? '✓' : '' }}</div>
-                        <span class="consent-text">{{ t('The patient has consented to the use of this image for AI screening and research.', 'Ο ασθενής έχει δώσει συγκατάθεση για τη χρήση αυτής της εικόνας για ανάλυση ΤΝ και έρευνα.') }}</span>
-                    </div>
-
                     <button class="submit-btn" @click="uploadImage" :disabled="uploading || !selectedFile || !patientAmka || !consentGiven">
-                        <span class="btn-text">{{ uploading ? t('Analysing...', 'Ανάλυση...') : t('Upload and Analyse', 'Ανέβασμα και Ανάλυση') }}</span>
+                        <span class="btn-text">{{ uploading ? t('Analysing...', 'Ανάλυση...') : t('Upload', 'Ανέβασμα') }}</span>
                         <span v-if="uploading" class="btn-spinner"></span>
                     </button>
 
@@ -179,7 +173,6 @@ export default {
             centerName: '',
             healthCenterId: null,
             centerSpecialty: '',
-            consentChecked: false,
             patientAmka: '',
             amkaError: '',
             selectedFile: null,
@@ -188,7 +181,6 @@ export default {
             uploading: false,
             uploadError: '',
             showSuccess: false,
-            centerSpecialty: '',
             centerId: '',
             consentGiven: false,
             lastResult: {},
@@ -204,7 +196,6 @@ export default {
         const parsed = JSON.parse(hc)
         this.centerName = parsed.name
         this.healthCenterId = parsed.id
-        this.centerSpecialty = parsed.specialty || ''
         this.centerSpecialty = parsed.specialty || ''
         this.centerId = parsed.center_id || ''
     },
@@ -310,7 +301,6 @@ export default {
             this.previewUrl = null
             this.uploadError = ''
             this.lastResult = {}
-            this.consentChecked = false
             if (this.$refs.fileInput) this.$refs.fileInput.value = ''
         }
     }

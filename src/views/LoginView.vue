@@ -163,16 +163,15 @@
             </div>
             <transition name="header-fade" mode="out-in">
                 <div :key="lang" class="header-text">
-                    <p class="university">Democritus University of Thrace – DDART spin-off company</p>
-                    <p class="subtitle">{{ t('Ophthalmology A.I. Screening Program', 'Πρόγραμμα Οφθαλμολογικής Διάγνωσης Τ.Ν.') }}</p>
+                    <p class="university">Democritus University of Thrace – DDARTECH spin-off company</p>
                 </div>
             </transition>
-            <div class="logo">DDART<span>AI</span></div>
+            <img src="/DDART.png" style="height:30px;width:auto;object-fit:contain;" />
         </div>
 
         <div class="role-toggle">
             <button :class="['role-btn', { active: role === 'health-center' }]" @click="role = 'health-center'; error = ''">{{ t('Health Center', 'Κέντρο Υγείας') }}</button>
-            <button :class="['role-btn', { active: role === 'doctor' }]" @click="role = 'doctor'; error = ''">{{ t('Doctor / Staff', 'Ιατρός / Προσωπικό') }}</button>
+            <button :class="['role-btn', { active: role === 'doctor' }]" @click="role = 'doctor'; error = ''">{{ t('Expert', 'ειδικός γιατρός') }}</button>
         </div>
 
         <div class="main-card">
@@ -182,25 +181,12 @@
 
                         <div v-if="role === 'health-center'" key="hc-info" class="left-content">
                             <h2>{{ t('Health Center Portal', 'Πύλη Κέντρου Υγείας') }}</h2>
-                            <p>{{ t('Sign in with your health center credentials to upload patient retinal images for immediate AI screening and research review.', 'Συνδεθείτε με τα στοιχεία του κέντρου υγείας σας για να ανεβάσετε εικόνες αμφιβληστροειδούς για διάγνωση ΤΝ και αξιολόγηση από ερευνητές.') }}</p>
-                            <ul>
-                                <li>{{ t('Images analysed instantly by AI', 'Ακαριαία ανάλυση εικόνων από ΤΝ') }}</li>
-                                <li>{{ t('All three conditions screened', 'Έλεγχος και για τις τρεις παθήσεις') }}</li>
-                                <li>{{ t('Results reviewed by research team', 'Αποτελέσματα αξιολογούνται από ερευνητές') }}</li>
-                                <li>{{ t('Access granted by administrator', 'Πρόσβαση χορηγείται από διαχειριστή') }}</li>
-                            </ul>
+                            <p>{{ t('Sign in with your health center credentials to upload retinal images for immediate AI screening and research review.', 'Συνδεθείτε με τα στοιχεία του κέντρου υγείας σας για να ανεβάσετε εικόνες αμφιβληστροειδούς για διάγνωση ΤΝ και αξιολόγηση από ερευνητές.') }}</p>
                         </div>
 
                         <div v-else key="doctor-info" class="left-content">
-                            <h2>{{ t('Doctor Portal', 'Πύλη Ιατρών') }}</h2>
-                            <p>{{ t('Access the clinical dashboard to view patient screenings, statistics, and export data for research.', 'Πρόσβαση στον κλινικό πίνακα για προβολή εξετάσεων, στατιστικών και εξαγωγή δεδομένων.') }}</p>
-                            <ul>
-                                <li>{{ t('View all patient records', 'Προβολή όλων των ασθενών') }}</li>
-                                <li>{{ t('Aggregate statistics', 'Συγκεντρωτικά στατιστικά') }}</li>
-                                <li>{{ t('Export to CSV', 'Εξαγωγή σε CSV') }}</li>
-                                <li>{{ t('Research study participation', 'Συμμετοχή σε ερευνητική μελέτη') }}</li>
-                                <li>{{ t('Access approved by administrator', 'Πρόσβαση εγκεκριμένη από διαχειριστή') }}</li>
-                            </ul>
+                            <h2>{{ t('Expert Portal', 'Πύλη Ειδικών Ιατρών') }}</h2>
+                            <p>{{ t('Access the clinical dashboard to review and evaluate retinal images', 'Πρόσβαση στον κλινικό πίνακα για προβολή και καταχώρηση εικώνων.') }}</p>
                         </div>
 
                     </transition>
@@ -289,7 +275,7 @@
         </div>
 
         <div class="footer">
-            <div class="footer-left"><img src="/democritus.png" class="dept-logo" /></div>
+            <div class="footer-left"><img src="/DDARTECH_Research-removebg-preview.png" class="dept-logo" /></div>
             <div class="footer-right">
                 <p>{{ t('For technical support please call', 'Για τεχνική υποστήριξη καλέστε') }} +3025510 30990 ({{ t('office hours', 'ώρες γραφείου') }})</p>
                 <p>email: <a href="mailto:ddart@med.duth.gr">ddart@med.duth.gr</a></p>
