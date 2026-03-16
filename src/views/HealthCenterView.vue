@@ -16,25 +16,34 @@
                     <div class="ai-results">
                         <!-- Glaucoma result -->
                         <div v-if="centerSpecialty === 'glaucoma'" class="ai-result-row">
-                            <span class="ai-label">{{ t('Glaucoma', 'Γλαύκωμα') }}</span>
-                            <span v-if="lastResult.ai_glaucoma_conf >= 90" :class="['ai-value', lastResult.ai_glaucoma !== 'Healthy' ? 'positive' : 'negative']">
-                                {{ lastResult.ai_glaucoma }} ({{ lastResult.ai_glaucoma_conf }}%)
+                            <span class="ai-label">{{ t('Glaucoma Screening', 'Έλεγχος Γλαυκώματος') }}</span>
+                            <span v-if="lastResult.ai_glaucoma_conf >= 85 && lastResult.ai_glaucoma !== 'Healthy'" class="ai-value positive">
+                                {{ t('Referral for Glaucoma', 'Παραπομπή για Γλαύκωμα') }} ({{ lastResult.ai_glaucoma_conf }}%)
+                            </span>
+                            <span v-else-if="lastResult.ai_glaucoma_conf >= 85 && lastResult.ai_glaucoma === 'Healthy'" class="ai-value negative">
+                                {{ t('No Referral', 'Χωρίς Παραπομπή') }} ({{ lastResult.ai_glaucoma_conf }}%)
                             </span>
                             <span v-else class="ai-value inconclusive">{{ t('Inconclusive', 'Αναποφάσιστο') }} ({{ lastResult.ai_glaucoma_conf }}%)</span>
                         </div>
                         <!-- DR result -->
                         <div v-else-if="centerSpecialty === 'dr'" class="ai-result-row">
-                            <span class="ai-label">{{ t('Diabetic Retinopathy', 'Διαβητική Αμφιβληστροειδοπάθεια') }}</span>
-                            <span v-if="lastResult.ai_dr_conf >= 90" :class="['ai-value', lastResult.ai_dr !== 'No_DR' ? 'positive' : 'negative']">
-                                {{ lastResult.ai_dr }} ({{ lastResult.ai_dr_conf }}%)
+                            <span class="ai-label">{{ t('Diabetic Retinopathy Screening', 'Έλεγχος Διαβητικής Αμφιβληστροειδοπάθειας') }}</span>
+                            <span v-if="lastResult.ai_dr_conf >= 75 && lastResult.ai_dr !== 'No_DR'" class="ai-value positive">
+                                {{ t('Referral for DR', 'Παραπομπή για ΔΑ') }} — {{ lastResult.ai_dr }} ({{ lastResult.ai_dr_conf }}%)
+                            </span>
+                            <span v-else-if="lastResult.ai_dr_conf >= 75 && lastResult.ai_dr === 'No_DR'" class="ai-value negative">
+                                {{ t('No Referral', 'Χωρίς Παραπομπή') }} ({{ lastResult.ai_dr_conf }}%)
                             </span>
                             <span v-else class="ai-value inconclusive">{{ t('Inconclusive', 'Αναποφάσιστο') }} ({{ lastResult.ai_dr_conf }}%)</span>
                         </div>
                         <!-- AMD result -->
                         <div v-else-if="centerSpecialty === 'amd'" class="ai-result-row">
-                            <span class="ai-label">{{ t('AMD', 'ΗΩΕ') }}</span>
-                            <span v-if="lastResult.ai_amd_conf >= 90" :class="['ai-value', lastResult.ai_amd !== 'Normal' ? 'positive' : 'negative']">
-                                {{ lastResult.ai_amd }} ({{ lastResult.ai_amd_conf }}%)
+                            <span class="ai-label">{{ t('AMD Screening', 'Έλεγχος ΗΩΕ') }}</span>
+                            <span v-if="lastResult.ai_amd_conf >= 80 && lastResult.ai_amd !== 'Normal'" class="ai-value positive">
+                                {{ t('Referral for AMD', 'Παραπομπή για ΗΩΕ') }} ({{ lastResult.ai_amd_conf }}%)
+                            </span>
+                            <span v-else-if="lastResult.ai_amd_conf >= 80 && lastResult.ai_amd === 'Normal'" class="ai-value negative">
+                                {{ t('No Referral', 'Χωρίς Παραπομπή') }} ({{ lastResult.ai_amd_conf }}%)
                             </span>
                             <span v-else class="ai-value inconclusive">{{ t('Inconclusive', 'Αναποφάσιστο') }} ({{ lastResult.ai_amd_conf }}%)</span>
                         </div>
@@ -55,13 +64,13 @@
                 <button class="dark-btn" @click="toggleDark">{{ isDark ? 'Light' : 'Dark' }}</button>
                 <button class="logout-btn" @click="logout">{{ t('Sign Out', 'Αποσύνδεση') }}</button>
             </div>
-            <div class="logo">DDART<span>AI</span></div>
+            <p class="university">Democritus University of Thrace – DDARTECH spin-off company</p>
+            <img src="/DDART.png" style="height:36px;width:auto;object-fit:contain;margin:8px 0;" />
             <div class="center-name">{{ centerName }}</div>
             <div class="center-meta">
                 <span :class="['specialty-badge-hc', centerSpecialty]">{{ specialtyLabelFull(centerSpecialty) }}</span>
                 <span class="ai-model-tag">AI: DDART AI 1.O</span>
             </div>
-            <p class="center-subtitle">{{ t('Retinal Image Upload Portal', 'Πύλη Ανεβάσματος Εικόνων Αμφιβληστροειδούς') }}</p>
         </div>
 
         <!-- Upload card -->
@@ -69,31 +78,31 @@
             <div class="upload-card-inner">
 
                 <div class="upload-left">
-                    <h2>{{ t('Upload Patient Image', 'Ανέβασμα Εικόνας Ασθενούς') }}</h2>
-                    <p>{{ t('Upload a retinal fundus photograph for immediate AI analysis. As a ' + specialtyLabelFull(centerSpecialty) + ' center, the image will be screened specifically for this condition using ResNet-50.', 'Ανεβάστε φωτογραφία βυθού αμφιβληστροειδούς για ακαριαία ανάλυση ΤΝ με το μοντέλο ResNet-50.') }}</p>
+                    <h2>{{ t('Health center portal', 'Πύλη Κέντρου Υγείας') }}</h2>
+                    <p>{{ t('Upload a retinal fundus photograph for immediate AI analysis. As a ' + specialtyLabelFull(centerSpecialty) + ' center, the image will be screened specifically for this condition using DDARTECH AI', 'Ανεβάστε φωτογραφία βυθού αμφιβληστροειδούς για ακαριαία ανάλυση ΤΝ με το μοντέλο DDARTECH AI.') }}</p>
                     <div class="instructions">
                         <div class="instruction-step">
                             <span class="step-num">1</span>
-                            <span>{{ t('Enter the patient\'s social security number', 'Εισάγετε τον αριθμό ΑΜΚΑ του ασθενούς') }}</span>
+                            <span>{{ t('Secure patients written consent', 'Εξασφαλίστε την φόρμα συναίνεσης του ασθενή') }}</span>
                         </div>
                         <div class="instruction-step">
                             <span class="step-num">2</span>
-                            <span>{{ t('Select or drag a retinal fundus image', 'Επιλέξτε ή σύρετε εικόνα βυθού αμφιβληστροειδούς') }}</span>
+                            <span>{{ t("Enter the patient's social security number", 'Εισάγεται τον αριθμό ΑΜΚΑ του ασθενή') }}</span>
                         </div>
                         <div class="instruction-step">
                             <span class="step-num">3</span>
-                            <span>{{ t('Submit — AI analysis runs automatically', 'Υποβολή — η ανάλυση ΤΝ εκτελείται αυτόματα') }}</span>
+                            <span>{{ t('Select or drag a retinal fundus image', 'Επιλέξτε η σύρετε εικόνα αμφιβληστροειδή') }}</span>
                         </div>
                         <div class="instruction-step">
                             <span class="step-num">4</span>
-                            <span>{{ t('Results are sent to the research team for review', 'Τα αποτελέσματα αποστέλλονται στην ερευνητική ομάδα') }}</span>
+                            <span>{{ t('Press sent for review', 'Πατήστε ανέβασμα για αξιολόγηση') }}</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="upload-right">
                     <div class="field">
-                        <label>{{ t('Patient\'s social security number', 'ΑΜΚΑ Ασθενούς') }}</label>
+                        <label>{{ t("Patient's social security number", 'ΑΜΚΑ Ασθενούς') }}</label>
                         <input
                             v-model="patientAmka"
                             type="text"
@@ -108,7 +117,7 @@
 
                     <label class="consent-check" :class="{ checked: consentGiven }" @click="consentGiven = !consentGiven">
                         <span class="consent-box">{{ consentGiven ? '✓' : '' }}</span>
-                        <span class="consent-text">{{ t('The patient has consented to the use of this image for AI analysis and research.', 'Ο ασθενής έχει συναινέσει στη χρήση αυτής της εικόνας για ανάλυση ΤΝ και έρευνα.') }}</span>
+                        <span class="consent-text">{{ t('Consent form obtained', 'Ο ασθενής έχει συναινέσει στη χρήση αυτής της εικόνας για ανάλυση ΤΝ και έρευνα.') }}</span>
                     </label>
 
                     <div
@@ -141,7 +150,7 @@
                     </transition>
 
                     <button class="submit-btn" @click="uploadImage" :disabled="uploading || !selectedFile || !patientAmka || !consentGiven">
-                        <span class="btn-text">{{ uploading ? t('Analysing...', 'Ανάλυση...') : t('Upload', 'Ανέβασμα') }}</span>
+                        <span class="btn-text">{{ uploading ? t('Analysing...', 'Ανάλυση...') : t('Sent for review', 'Πατήστε για αξιολόγηση') }}</span>
                         <span v-if="uploading" class="btn-spinner"></span>
                     </button>
 
@@ -153,8 +162,11 @@
         </div>
 
         <div class="hc-footer">
-            <p>{{ t('For technical support contact', 'Για τεχνική υποστήριξη επικοινωνήστε') }} <a href="mailto:ddart@med.duth.gr">ddart@med.duth.gr</a></p>
-            <p class="made-by">Made by Andreas</p>
+            <div class="footer-left"><img src="/DDARTECH_Research-removebg-preview.png" class="dept-logo" /></div>
+            <div class="footer-right">
+                <p>{{ t('For technical support contact', 'Για τεχνική υποστήριξη επικοινωνήστε') }} <a href="mailto:ddart@med.duth.gr">ddart@med.duth.gr</a></p>
+                <p class="made-by">Made by Andreas</p>
+            </div>
         </div>
     </div>
 </template>
@@ -228,6 +240,7 @@ export default {
                     requestAnimationFrame(animate)
                 } else {
                     setTimeout(() => {
+                        sessionStorage.setItem('ddart_logout_anim', '1')
                         localStorage.removeItem('ddart_health_center')
                         this.$router.push('/login')
                     }, 100)
@@ -251,7 +264,7 @@ export default {
         setFile(file) {
             this.selectedFile = file
             this.uploadError = ''
-            this.consentGiven = false
+            // DO NOT reset consentGiven here — user should not have to re-check on each image
             const reader = new FileReader()
             reader.onload = (e) => { this.previewUrl = e.target.result }
             reader.readAsDataURL(file)
@@ -300,6 +313,7 @@ export default {
             this.selectedFile = null
             this.previewUrl = null
             this.uploadError = ''
+            this.consentGiven = false
             this.lastResult = {}
             if (this.$refs.fileInput) this.$refs.fileInput.value = ''
         }
@@ -312,42 +326,6 @@ export default {
 
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-family: 'Source Sans 3', sans-serif; overflow-x: hidden; }
-
-
-/* Logout / entry overlay */
-.entry-overlay { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(ellipse at center, #0d1f3c 0%, #060d1a 100%); display: flex; align-items: center; justify-content: center; }
-.entry-content { display: flex; flex-direction: column; align-items: center; gap: 20px; }
-.retinal-scanner { position: relative; width: 200px; height: 200px; animation: scanner-appear 0.5s ease both; }
-@keyframes scanner-appear { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
-.retina-svg { width: 100%; height: 100%; }
-.ring-draw { animation: ring-draw 1.8s 0.3s cubic-bezier(0.4,0,0.2,1) forwards; }
-@keyframes ring-draw { from { stroke-dashoffset: 565; } to { stroke-dashoffset: 0; } }
-.ring-draw-2 { animation: ring-draw-2 1.4s 0.5s cubic-bezier(0.4,0,0.2,1) forwards; }
-@keyframes ring-draw-2 { from { stroke-dashoffset: 415; } to { stroke-dashoffset: 0; } }
-.crosshair { opacity: 0; animation: lo-fade-in 0.4s 1s ease forwards; }
-@keyframes lo-fade-in { to { opacity: 1; } }
-.vessel { stroke-dasharray: 200; stroke-dashoffset: 200; animation: vessel-draw 1s 0.8s ease forwards; }
-@keyframes vessel-draw { to { stroke-dashoffset: 0; } }
-.bracket { opacity: 0; animation: lo-fade-in 0.5s 0.2s ease forwards; }
-.scanner-beam { transform-origin: 100px 100px; animation: scan-rotate 2s linear infinite; }
-@keyframes scan-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-.scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(99,179,237,0.0) 20%, rgba(99,179,237,0.6) 50%, rgba(99,179,237,0.0) 80%, transparent 100%); animation: scan-sweep 2s ease-in-out infinite; border-radius: 1px; }
-@keyframes scan-sweep { 0% { top: 10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
-.glint { position: absolute; width: 4px; height: 4px; background: #63b3ed; border-radius: 50%; animation: glint-pulse 2s ease-in-out infinite; box-shadow: 0 0 6px #63b3ed; }
-.glint-1 { top: 6px; left: 50%; animation-delay: 0s; }
-.glint-2 { top: 50%; right: 6px; animation-delay: 0.66s; }
-.glint-3 { bottom: 6px; left: 50%; animation-delay: 1.33s; }
-@keyframes glint-pulse { 0%,100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); } }
-.entry-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 22px; font-weight: 700; color: white; letter-spacing: 4px; display: flex; align-items: baseline; gap: 2px; animation: lo-logo-appear 0.6s 0.4s cubic-bezier(0.4,0,0.2,1) both; }
-.entry-ddart { color: white; }
-.entry-ai { color: #e53e3e; font-size: 72px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; line-height: 1; }
-.entry-bar { width: 200px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
-.entry-bar-fill { height: 100%; background: linear-gradient(90deg, #4299e1, #63b3ed); border-radius: 2px; transition: width 0.05s linear; }
-.entry-msg { color: rgba(255,255,255,0.55); font-size: 13px; font-weight: 400; letter-spacing: 1px; text-transform: uppercase; margin: 0; animation: lo-msg-appear 0.5s 0.6s cubic-bezier(0.4,0,0.2,1) both; }
-@keyframes lo-logo-appear { from { opacity: 0; transform: scale(0.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-@keyframes lo-msg-appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-.overlay-fade-enter-active, .overlay-fade-leave-active { transition: opacity 0.5s ease; }
-.overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
 
 .hc-container { display: flex; flex-direction: column; align-items: center; padding: 30px 20px 0; min-height: 100vh; background: #f0f4f8; transition: background 0.4s ease; }
 
@@ -380,8 +358,7 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .dark-btn:hover { background: #edf2f7; }
 .logout-btn { background: none; border: 1px solid #fed7d7; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 11px; font-weight: 700; color: #c53030; cursor: pointer; padding: 3px 10px; transition: background 0.2s ease; letter-spacing: 0.4px; }
 .logout-btn:hover { background: #fff5f5; }
-.logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 18px; font-weight: 700; color: #2c5282; letter-spacing: 3px; display: flex; align-items: baseline; justify-content: center; gap: 2px; transition: color 0.4s ease; }
-.logo span { color: #e53e3e; font-size: 48px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; }
+.university { font-size: 14px; color: #2c5282; font-weight: 600; margin: 0 0 4px; transition: color 0.4s ease; }
 .center-name { font-size: 16px; font-weight: 700; color: #2c5282; margin-top: 4px; transition: color 0.4s ease; }
 .center-subtitle { font-size: 13px; color: #718096; margin: 4px 0 0; transition: color 0.4s ease; }
 
@@ -422,7 +399,10 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .uploading-note { font-size: 12px; color: #718096; text-align: center; margin: 0; line-height: 1.5; }
 .error { color: #c53030; font-size: 13px; font-weight: 600; margin: 0; }
 
-.hc-footer { width: 100%; max-width: 860px; padding: 16px 0 24px; border-top: 1px solid #e2e8f0; text-align: center; transition: border-color 0.4s ease; }
+.hc-footer { width: 100%; max-width: 860px; padding: 16px 0 24px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.4s ease; }
+.footer-left { display: flex; align-items: center; }
+.footer-right { text-align: right; }
+.dept-logo { height: 55px; width: auto; object-fit: contain; }
 .hc-footer p { font-size: 12px; color: #718096; margin: 2px 0; transition: color 0.4s ease; }
 .hc-footer a { color: #2b6cb0; text-decoration: none; }
 .made-by { font-size: 10px; color: #cbd5e0; }
@@ -432,46 +412,10 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .error-pop-enter-from { opacity: 0; transform: translateY(-4px) scale(0.97); }
 .error-pop-leave-to { opacity: 0; }
 
-.dark
-/* Logout / entry overlay */
-.entry-overlay { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(ellipse at center, #0d1f3c 0%, #060d1a 100%); display: flex; align-items: center; justify-content: center; }
-.entry-content { display: flex; flex-direction: column; align-items: center; gap: 20px; }
-.retinal-scanner { position: relative; width: 200px; height: 200px; animation: scanner-appear 0.5s ease both; }
-@keyframes scanner-appear { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
-.retina-svg { width: 100%; height: 100%; }
-.ring-draw { animation: ring-draw 1.8s 0.3s cubic-bezier(0.4,0,0.2,1) forwards; }
-@keyframes ring-draw { from { stroke-dashoffset: 565; } to { stroke-dashoffset: 0; } }
-.ring-draw-2 { animation: ring-draw-2 1.4s 0.5s cubic-bezier(0.4,0,0.2,1) forwards; }
-@keyframes ring-draw-2 { from { stroke-dashoffset: 415; } to { stroke-dashoffset: 0; } }
-.crosshair { opacity: 0; animation: lo-fade-in 0.4s 1s ease forwards; }
-@keyframes lo-fade-in { to { opacity: 1; } }
-.vessel { stroke-dasharray: 200; stroke-dashoffset: 200; animation: vessel-draw 1s 0.8s ease forwards; }
-@keyframes vessel-draw { to { stroke-dashoffset: 0; } }
-.bracket { opacity: 0; animation: lo-fade-in 0.5s 0.2s ease forwards; }
-.scanner-beam { transform-origin: 100px 100px; animation: scan-rotate 2s linear infinite; }
-@keyframes scan-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-.scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(99,179,237,0.0) 20%, rgba(99,179,237,0.6) 50%, rgba(99,179,237,0.0) 80%, transparent 100%); animation: scan-sweep 2s ease-in-out infinite; border-radius: 1px; }
-@keyframes scan-sweep { 0% { top: 10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
-.glint { position: absolute; width: 4px; height: 4px; background: #63b3ed; border-radius: 50%; animation: glint-pulse 2s ease-in-out infinite; box-shadow: 0 0 6px #63b3ed; }
-.glint-1 { top: 6px; left: 50%; animation-delay: 0s; }
-.glint-2 { top: 50%; right: 6px; animation-delay: 0.66s; }
-.glint-3 { bottom: 6px; left: 50%; animation-delay: 1.33s; }
-@keyframes glint-pulse { 0%,100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); } }
-.entry-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 22px; font-weight: 700; color: white; letter-spacing: 4px; display: flex; align-items: baseline; gap: 2px; animation: lo-logo-appear 0.6s 0.4s cubic-bezier(0.4,0,0.2,1) both; }
-.entry-ddart { color: white; }
-.entry-ai { color: #e53e3e; font-size: 72px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; line-height: 1; }
-.entry-bar { width: 200px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
-.entry-bar-fill { height: 100%; background: linear-gradient(90deg, #4299e1, #63b3ed); border-radius: 2px; transition: width 0.05s linear; }
-.entry-msg { color: rgba(255,255,255,0.55); font-size: 13px; font-weight: 400; letter-spacing: 1px; text-transform: uppercase; margin: 0; animation: lo-msg-appear 0.5s 0.6s cubic-bezier(0.4,0,0.2,1) both; }
-@keyframes lo-logo-appear { from { opacity: 0; transform: scale(0.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-@keyframes lo-msg-appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-.overlay-fade-enter-active, .overlay-fade-leave-active { transition: opacity 0.5s ease; }
-.overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
-
 .dark.hc-container { background: #1a202c; }
+.dark .university { color: #90cdf4; }
 .dark .center-name { color: #90cdf4; }
 .dark .center-subtitle { color: #7fb3d3; }
-.dark .logo { color: #90cdf4; }
 .dark .upload-card { background: #2d3748; border-color: #4a5568; box-shadow: 0 2px 16px rgba(0,0,0,0.3); }
 .dark .upload-right { background: #2d3748; }
 .dark .field label { color: #a0aec0; }
@@ -497,31 +441,7 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .dark .success-content h3 { color: #e2e8f0; }
 .dark .ai-results { background: #1a202c; border-color: #4a5568; }
 .dark .ai-label { color: #a0aec0; }
-
-
-/* Center identity badge */
-.center-badge { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-.center-badge-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.badge-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.5px; }
-.badge-value { font-size: 13px; font-weight: 600; color: white; }
-.badge-value.mono { font-family: 'Courier New', monospace; letter-spacing: 2px; font-size: 14px; }
-.badge-specialty { font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 20px; letter-spacing: 0.3px; }
-.badge-specialty.glaucoma { background: rgba(72,187,120,0.2); color: #9ae6b4; border: 1px solid rgba(72,187,120,0.3); }
-.badge-specialty.dr { background: rgba(237,137,54,0.2); color: #fbd38d; border: 1px solid rgba(237,137,54,0.3); }
-.badge-specialty.amd { background: rgba(159,122,234,0.2); color: #d6bcfa; border: 1px solid rgba(159,122,234,0.3); }
-
-/* Consent checkbox */
-.consent-check { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 6px; cursor: pointer; background: white; transition: border-color 0.2s ease, background 0.2s ease; margin-bottom: 2px; }
-.consent-check:hover { border-color: #cbd5e0; }
-.consent-check.checked { border-color: #2b6cb0; background: #ebf8ff; }
-.consent-box { width: 18px; height: 18px; min-width: 18px; border: 2px solid #e2e8f0; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: white; background: white; margin-top: 1px; transition: background 0.2s ease, border-color 0.2s ease; }
-.consent-check.checked .consent-box { background: #2b6cb0; border-color: #2b6cb0; }
-.consent-text { font-size: 12px; color: #4a5568; line-height: 1.5; }
-.dark .consent-check { background: #1a202c; border-color: #4a5568; }
-.dark .consent-check.checked { background: #1a365d; border-color: #63b3ed; }
-.dark .consent-box { background: #1a202c; border-color: #4a5568; }
-.dark .consent-check.checked .consent-box { background: #2b6cb0; border-color: #63b3ed; }
-.dark .consent-text { color: #a0aec0; }
+.dark .ai-model-tag { background: #2d3748; border-color: #4a5568; color: #718096; }
 
 .center-meta { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 6px 0 2px; }
 .specialty-badge-hc { display: inline-flex; align-items: center; padding: 3px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.3px; }
@@ -529,7 +449,7 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .specialty-badge-hc.dr { background: #fff5f5; color: #c53030; }
 .specialty-badge-hc.amd { background: #faf5ff; color: #6b46c1; }
 .ai-model-tag { font-size: 11px; color: #a0aec0; font-weight: 600; letter-spacing: 0.3px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 2px 10px; }
-.ai-result-specialty-label { font-size: 11px; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; }
+
 .consent-check { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 6px; cursor: pointer; background: white; transition: border-color 0.2s, background 0.2s; }
 .consent-check:hover { border-color: #bee3f8; }
 .consent-check.checked { border-color: #2b6cb0; background: #ebf8ff; }
@@ -540,52 +460,13 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .dark .consent-check.checked { background: #1a365d; border-color: #63b3ed; }
 .dark .consent-check.checked .consent-box { background: #2b6cb0; border-color: #63b3ed; }
 .dark .consent-text { color: #a0aec0; }
-.dark .ai-model-tag { background: #2d3748; border-color: #4a5568; color: #718096; }
-.dark .ai-result-specialty-label { color: #718096; border-bottom-color: #4a5568; }
 
 @media (max-width: 768px) {
-    
-/* Logout / entry overlay */
-.entry-overlay { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(ellipse at center, #0d1f3c 0%, #060d1a 100%); display: flex; align-items: center; justify-content: center; }
-.entry-content { display: flex; flex-direction: column; align-items: center; gap: 20px; }
-.retinal-scanner { position: relative; width: 200px; height: 200px; animation: scanner-appear 0.5s ease both; }
-@keyframes scanner-appear { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
-.retina-svg { width: 100%; height: 100%; }
-.ring-draw { animation: ring-draw 1.8s 0.3s cubic-bezier(0.4,0,0.2,1) forwards; }
-@keyframes ring-draw { from { stroke-dashoffset: 565; } to { stroke-dashoffset: 0; } }
-.ring-draw-2 { animation: ring-draw-2 1.4s 0.5s cubic-bezier(0.4,0,0.2,1) forwards; }
-@keyframes ring-draw-2 { from { stroke-dashoffset: 415; } to { stroke-dashoffset: 0; } }
-.crosshair { opacity: 0; animation: lo-fade-in 0.4s 1s ease forwards; }
-@keyframes lo-fade-in { to { opacity: 1; } }
-.vessel { stroke-dasharray: 200; stroke-dashoffset: 200; animation: vessel-draw 1s 0.8s ease forwards; }
-@keyframes vessel-draw { to { stroke-dashoffset: 0; } }
-.bracket { opacity: 0; animation: lo-fade-in 0.5s 0.2s ease forwards; }
-.scanner-beam { transform-origin: 100px 100px; animation: scan-rotate 2s linear infinite; }
-@keyframes scan-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-.scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(99,179,237,0.0) 20%, rgba(99,179,237,0.6) 50%, rgba(99,179,237,0.0) 80%, transparent 100%); animation: scan-sweep 2s ease-in-out infinite; border-radius: 1px; }
-@keyframes scan-sweep { 0% { top: 10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
-.glint { position: absolute; width: 4px; height: 4px; background: #63b3ed; border-radius: 50%; animation: glint-pulse 2s ease-in-out infinite; box-shadow: 0 0 6px #63b3ed; }
-.glint-1 { top: 6px; left: 50%; animation-delay: 0s; }
-.glint-2 { top: 50%; right: 6px; animation-delay: 0.66s; }
-.glint-3 { bottom: 6px; left: 50%; animation-delay: 1.33s; }
-@keyframes glint-pulse { 0%,100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); } }
-.entry-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 22px; font-weight: 700; color: white; letter-spacing: 4px; display: flex; align-items: baseline; gap: 2px; animation: lo-logo-appear 0.6s 0.4s cubic-bezier(0.4,0,0.2,1) both; }
-.entry-ddart { color: white; }
-.entry-ai { color: #e53e3e; font-size: 72px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; line-height: 1; }
-.entry-bar { width: 200px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
-.entry-bar-fill { height: 100%; background: linear-gradient(90deg, #4299e1, #63b3ed); border-radius: 2px; transition: width 0.05s linear; }
-.entry-msg { color: rgba(255,255,255,0.55); font-size: 13px; font-weight: 400; letter-spacing: 1px; text-transform: uppercase; margin: 0; animation: lo-msg-appear 0.5s 0.6s cubic-bezier(0.4,0,0.2,1) both; }
-@keyframes lo-logo-appear { from { opacity: 0; transform: scale(0.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-@keyframes lo-msg-appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-.overlay-fade-enter-active, .overlay-fade-leave-active { transition: opacity 0.5s ease; }
-.overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
-
-.hc-container { padding: 16px 16px 0; }
+    .hc-container { padding: 16px 16px 0; }
     .header-controls { position: static; justify-content: flex-end; margin-bottom: 12px; }
     .upload-card-inner { grid-template-columns: 1fr; }
     .upload-left { padding: 20px; }
     .upload-right { padding: 20px; }
-    .logo span { font-size: 36px; }
 }
 @media (max-width: 480px) {
     .upload-right { padding: 16px; }

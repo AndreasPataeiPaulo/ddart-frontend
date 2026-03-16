@@ -30,7 +30,7 @@
                     <span class="user-bar-title">Study Official Dashboard</span>
                     <div class="user-bar-actions">
                         <button class="tab-pill" :class="{ active: mainTab === 'study' }" @click="mainTab = 'study'">📊 Study</button>
-                        <button class="tab-pill" :class="{ active: mainTab === 'admin' }" @click="mainTab = 'admin'; loadAdmin()">🛠 Admin</button>
+                        <button class="tab-pill" :class="{ active: mainTab === 'admin' }" @click="mainTab = 'admin'; loadAdmin(); loadThresholds()">🛠 Admin</button>
                         <button class="logout-btn" @click="logout">Sign Out</button>
                     </div>
                 </div>
@@ -61,15 +61,11 @@
                         <div class="stat-grid">
                             <div class="stat-card">
                                 <p class="stat-value">{{ stats.general.total_images }}</p>
-                                <p class="stat-label">Total Images</p>
-                            </div>
-                            <div class="stat-card">
-                                <p class="stat-value">{{ stats.general.total_reviews }}</p>
-                                <p class="stat-label">Total Reviews</p>
+                                <p class="stat-label">HC Images Uploaded</p>
                             </div>
                             <div class="stat-card">
                                 <p class="stat-value">{{ stats.general.hc_total_reviewed }}</p>
-                                <p class="stat-label">HC Uploads Reviewed</p>
+                                <p class="stat-label">Images Reviewed</p>
                             </div>
                             <div class="stat-card">
                                 <p class="stat-value">{{ stats.doctors.length }}</p>
@@ -78,7 +74,7 @@
                         </div>
 
                         <div class="section-card">
-                            <h4 class="section-title">Inter-Rater Agreement <span class="section-sub">(researchers vs each other)</span></h4>
+                            <h4 class="section-title">Inter-Rater Agreement <span class="section-sub">(when 2+ experts reviewed the same HC upload)</span></h4>
                             <div class="agreement-row-grid">
                                 <div class="agree-block">
                                     <div class="agree-ring" :style="ringStyle(stats.general.inter_rater_glaucoma)">
@@ -108,7 +104,7 @@
                         </div>
 
                         <div class="section-card">
-                            <h4 class="section-title">Expert vs AI Agreement on HC Uploads <span class="section-sub">(AI confidence ≥90% only)</span></h4>
+                            <h4 class="section-title">Expert vs AI Agreement on HC Uploads <span class="section-sub">(AI confidence ≥{{ confThreshold }}% only)</span></h4>
                             <p style="font-size:12px;color:#718096;margin:-12px 0 16px;">For HC uploads where the AI was highly confident (≥90%), this shows how often the reviewing expert agreed with the AI diagnosis.</p>
                             <div class="agreement-row-grid">
                                 <div class="agree-block">
@@ -155,44 +151,7 @@
                             </table>
                         </div>
 
-                        <div class="section-card">
-                            <h4 class="section-title">Condition Prevalence <span class="section-sub">(AI findings in research images)</span></h4>
-                            <div class="prevalence-grid">
-                                <div class="prev-bar-row">
-                                    <span class="prev-label">Glaucoma</span>
-                                    <div class="prev-bar-wrap"><div class="prev-bar glaucoma-bar" :style="{ width: prevPct(stats.general.prevalence_glaucoma) + '%' }"></div></div>
-                                    <span class="prev-count">{{ stats.general.prevalence_glaucoma }} / {{ stats.general.total_images }}</span>
-                                </div>
-                                <div class="prev-bar-row">
-                                    <span class="prev-label">DR</span>
-                                    <div class="prev-bar-wrap"><div class="prev-bar dr-bar" :style="{ width: prevPct(stats.general.prevalence_dr) + '%' }"></div></div>
-                                    <span class="prev-count">{{ stats.general.prevalence_dr }} / {{ stats.general.total_images }}</span>
-                                </div>
-                                <div class="prev-bar-row">
-                                    <span class="prev-label">AMD</span>
-                                    <div class="prev-bar-wrap"><div class="prev-bar amd-bar" :style="{ width: prevPct(stats.general.prevalence_amd) + '%' }"></div></div>
-                                    <span class="prev-count">{{ stats.general.prevalence_amd }} / {{ stats.general.total_images }}</span>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div class="section-card">
-                            <h4 class="section-title">Researcher Activity</h4>
-                            <table class="data-table">
-                                <thead><tr><th>Researcher</th><th>Images Reviewed</th><th>Share</th></tr></thead>
-                                <tbody>
-                                    <tr v-for="doc in stats.doctors" :key="doc.id">
-                                        <td>{{ doc.name }}</td>
-                                        <td>{{ doc.reviewed }}</td>
-                                        <td>
-                                            <div class="mini-bar-wrap">
-                                                <div class="mini-bar" :style="{ width: maxReviewed > 0 ? (doc.reviewed / maxReviewed * 100) + '%' : '0%' }"></div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
 
                     <!-- BIOMARKERS TAB -->
@@ -216,11 +175,11 @@
                                 <span class="bio-count">{{ filteredBioRows.length }} reviews</span>
                             </div>
                             <div v-if="bioLoading" class="loading-state"><div class="spinner"></div><p>Loading...</p></div>
-                            <div v-else-if="filteredBioRows.length === 0" class="empty-state">No biomarker data yet.</div>
+                            <div v-else-if="filteredBioRows.length === 0" class="empty-state">No reviews submitted yet.</div>
                             <div v-else class="bio-review-list">
                                 <div v-for="row in filteredBioRows" :key="row.id" class="bio-review-card">
                                     <div class="bio-review-header">
-                                        <span class="bio-review-img">Image #{{ row.image_id }}</span>
+                                        <span class="bio-review-img">{{ row.patient_amka }} — {{ row.center_name }}</span>
                                         <span class="bio-review-doctor">Dr. {{ row.doctor_name }}</span>
                                         <span class="bio-review-date">{{ row.reviewed_at ? row.reviewed_at.slice(0,10) : '' }}</span>
                                     </div>
@@ -229,7 +188,7 @@
                                         <span v-if="row.doctor_dr && row.doctor_dr !== 'N/A'" class="bio-diag-chip">DR: {{ row.doctor_dr }}</span>
                                         <span v-if="row.doctor_amd && row.doctor_amd !== 'N/A'" class="bio-diag-chip">AMD: {{ row.doctor_amd }}</span>
                                     </div>
-                                    <div v-if="row.biomarkers" class="bio-markers-grid">
+                                    <div v-if="row.biomarkers && Object.keys(row.biomarkers).length > 0" class="bio-markers-grid">
                                         <div v-for="(val, key) in row.biomarkers" :key="key" class="bio-marker-item" :class="'bm-' + val">
                                             <span class="bm-key">{{ key.replace(/_/g, ' ') }}</span>
                                             <span class="bm-val">{{ val }}</span>
@@ -277,7 +236,7 @@
                                     <option value="unreviewed">Unreviewed only</option>
                                     <option value="agree">All experts match AI</option>
                                     <option value="disagree">Any expert differs</option>
-                                    <option value="highconf">High confidence ≥90%</option>
+                                    <option value="highconf">High confidence ≥{{ confThreshold }}%</option>
                                 </select>
                             </div>
 
@@ -305,7 +264,7 @@
                                         <td class="amka-cell">{{ g.patient_amka }}</td>
                                         <td>{{ g.center_name }}</td>
                                         <td><span class="ai-chip" :class="aiChipClass(g.ai_result)">{{ g.ai_result }}</span></td>
-                                        <td><span :class="['conf-badge', g.ai_conf >= 90 ? 'conf-high' : 'conf-low']">{{ g.ai_conf }}%</span></td>
+                                        <td><span :class="['conf-badge', g.ai_conf >= confThreshold ? 'conf-high' : 'conf-low']">{{ g.ai_conf }}%</span></td>
                                         <td><span class="review-count-badge">{{ g.reviews.length }}</span></td>
                                         <td>
                                             <span v-if="g.reviews.length === 0" class="no-review">—</span>
@@ -388,6 +347,59 @@
                             </tbody>
                         </table>
                         <p class="admin-note">To register a new health center, run <code>python3 ~/register_hc.py</code> on the Pi.</p>
+                    </div>
+
+                    <!-- AI Threshold Controls -->
+                    <div class="section-card">
+                        <h4 class="section-title">AI Thresholds <span class="section-sub">(applies to future uploads only)</span></h4>
+                        <p class="threshold-info">Changes here affect new uploads going forward. Past results are never altered.</p>
+                        <div v-if="thresholdsLoading" class="threshold-loading">Loading thresholds...</div>
+                        <div v-else class="threshold-grid">
+                            <div class="threshold-group">
+                                <p class="threshold-group-title">HC Display Thresholds <span class="threshold-group-sub">Min confidence to show "Referral" vs "Inconclusive" to health center</span></p>
+                                <div class="threshold-row">
+                                    <span class="thr-label">Glaucoma</span>
+                                    <input type="range" min="50" max="99" step="1" v-model.number="thresholds.hc_threshold_glaucoma" class="thr-slider" />
+                                    <span class="thr-value" :class="thresholdColor(thresholds.hc_threshold_glaucoma)">{{ thresholds.hc_threshold_glaucoma }}%</span>
+                                </div>
+                                <div class="threshold-row">
+                                    <span class="thr-label">DR</span>
+                                    <input type="range" min="50" max="99" step="1" v-model.number="thresholds.hc_threshold_dr" class="thr-slider" />
+                                    <span class="thr-value" :class="thresholdColor(thresholds.hc_threshold_dr)">{{ thresholds.hc_threshold_dr }}%</span>
+                                </div>
+                                <div class="threshold-row">
+                                    <span class="thr-label">AMD</span>
+                                    <input type="range" min="50" max="99" step="1" v-model.number="thresholds.hc_threshold_amd" class="thr-slider" />
+                                    <span class="thr-value" :class="thresholdColor(thresholds.hc_threshold_amd)">{{ thresholds.hc_threshold_amd }}%</span>
+                                </div>
+                            </div>
+                            <div class="threshold-group">
+                                <p class="threshold-group-title">Expert Routing Thresholds <span class="threshold-group-sub">Min confidence to route image to expert for review</span></p>
+                                <div class="threshold-row">
+                                    <span class="thr-label">Glaucoma</span>
+                                    <input type="range" min="50" max="99" step="1" v-model.number="thresholds.expert_threshold_glaucoma" class="thr-slider" />
+                                    <span class="thr-value" :class="thresholdColor(thresholds.expert_threshold_glaucoma)">{{ thresholds.expert_threshold_glaucoma }}%</span>
+                                </div>
+                                <div class="threshold-row">
+                                    <span class="thr-label">DR</span>
+                                    <input type="range" min="50" max="99" step="1" v-model.number="thresholds.expert_threshold_dr" class="thr-slider" />
+                                    <span class="thr-value" :class="thresholdColor(thresholds.expert_threshold_dr)">{{ thresholds.expert_threshold_dr }}%</span>
+                                </div>
+                                <div class="threshold-row">
+                                    <span class="thr-label">AMD</span>
+                                    <input type="range" min="50" max="99" step="1" v-model.number="thresholds.expert_threshold_amd" class="thr-slider" />
+                                    <span class="thr-value" :class="thresholdColor(thresholds.expert_threshold_amd)">{{ thresholds.expert_threshold_amd }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="threshold-actions">
+                            <transition name="save-flash">
+                                <span v-if="thresholdSaved" class="threshold-saved">✓ Saved</span>
+                            </transition>
+                            <button class="thr-save-btn" @click="saveThresholds" :disabled="thresholdSaving">
+                                {{ thresholdSaving ? 'Saving...' : 'Save Thresholds' }}
+                            </button>
+                        </div>
                     </div>
 
                 </div>
@@ -480,7 +492,7 @@
                             <div style="margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                                 <span style="font-size:12px;color:#718096;font-weight:600;text-transform:capitalize">{{ hcDetail.specialty }} AI:</span>
                                 <span class="ai-chip" :class="aiChipClass(hcDetail.ai_result)">{{ hcDetail.ai_result }}</span>
-                                <span :class="['conf-badge', hcDetail.ai_conf >= 90 ? 'conf-high' : 'conf-low']">{{ hcDetail.ai_conf }}%</span>
+                                <span :class="['conf-badge', hcDetail.ai_conf >= confThreshold ? 'conf-high' : 'conf-low']">{{ hcDetail.ai_conf }}%</span>
                             </div>
                         </div>
                         <!-- Right: all expert reviews for this specialty -->
@@ -561,6 +573,11 @@ export default {
                 hc_upload_counts: []
             },
             bioRows: [],
+            timelineWeeks: [],
+            timelineLoading: false,
+            timelineChart: null,
+            exportLoading: false,
+            confThreshold: 90,
             bioLoading: false,
             bioFilter: 'all',
             conditionFilter: 'all',
@@ -570,6 +587,17 @@ export default {
             zoomError: false,
             // admin
             adminLoading: false,
+            thresholds: {
+                hc_threshold_glaucoma: 85,
+                hc_threshold_dr: 75,
+                hc_threshold_amd: 80,
+                expert_threshold_glaucoma: 90,
+                expert_threshold_dr: 90,
+                expert_threshold_amd: 90
+            },
+            thresholdsLoading: false,
+            thresholdSaving: false,
+            thresholdSaved: false,
             adminDoctors: [],
             adminHCs: [],
             actionLoading: null,
@@ -578,6 +606,17 @@ export default {
             resetCode: '',
             resetError: '',
             resetLoading: false
+        }
+    },
+
+    async created() {
+        if (!window.Chart) {
+            await new Promise((resolve, reject) => {
+                const s = document.createElement('script')
+                s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'
+                s.onload = resolve; s.onerror = reject
+                document.head.appendChild(s)
+            })
         }
     },
 
@@ -612,10 +651,9 @@ export default {
             return Math.max(...this.stats.hc_upload_counts.map(h => h.total), 1)
         },
         filteredBioRows() {
-            // Only show rows that actually have biomarkers in the biomarkers tab
-            const withBio = this.bioRows.filter(r => r.biomarkers && Object.keys(r.biomarkers).length > 0)
-            if (this.bioFilter === 'all') return withBio
-            return withBio.filter(r => {
+            const rows = this.bioRows
+            if (this.bioFilter === 'all') return rows
+            return rows.filter(r => {
                 if (this.bioFilter === 'glaucoma') return r.doctor_glaucoma && r.doctor_glaucoma !== 'N/A'
                 if (this.bioFilter === 'dr') return r.doctor_dr && r.doctor_dr !== 'N/A'
                 if (this.bioFilter === 'amd') return r.doctor_amd && r.doctor_amd !== 'N/A'
@@ -668,11 +706,15 @@ export default {
             if (this.conditionFilter === 'unreviewed') return rows.filter(g => g.reviews.length === 0)
             if (this.conditionFilter === 'agree') return rows.filter(g => g.allAgree)
             if (this.conditionFilter === 'disagree') return rows.filter(g => g.reviews.length > 0 && !g.allAgree)
-            if (this.conditionFilter === 'highconf') return rows.filter(g => g.ai_conf >= 90)
+            if (this.conditionFilter === 'highconf') return rows.filter(g => g.ai_conf >= this.confThreshold)
             return rows
         },
         totalReviewsForCondition() {
             return this.currentRows.reduce((s, r) => s + r.total_reviews, 0)
+        },
+        maxReviewed() {
+            if (!this.stats.doctors || !this.stats.doctors.length) return 1
+            return Math.max(...this.stats.doctors.map(d => d.reviewed), 1)
         },
         conditionAIAgree() {
             const rows = this.currentRows.filter(r => r.total_reviews > 0)
@@ -693,13 +735,13 @@ export default {
             this.authLoading = true
             this.authError = ''
             try {
-                const res = await fetch(`https://labiris.myiplist.com/study/stats?code=${encodeURIComponent(this.codeInput)}`)
+                const res = await fetch(`https://labiris.myiplist.com/study/stats?code=${encodeURIComponent(this.codeInput)}&conf_threshold=${this.confThreshold}`)
                 if (!res.ok) { this.authError = 'Invalid access code.'; return }
                 const data = await res.json()
                 this.stats = data
                 this.authenticated = true
-                // preload biomarkers
                 this.loadBiomarkers()
+                this.loadTimeline()
             } catch { this.authError = 'Connection failed.' }
             finally { this.authLoading = false }
         },
@@ -707,7 +749,7 @@ export default {
         async loadStats() {
             this.loading = true
             try {
-                const res = await fetch(`https://labiris.myiplist.com/study/stats?code=${encodeURIComponent(this.codeInput)}`)
+                const res = await fetch(`https://labiris.myiplist.com/study/stats?code=${encodeURIComponent(this.codeInput)}&conf_threshold=${this.confThreshold}`)
                 const data = await res.json()
                 this.stats = data
             } catch { } finally { this.loading = false }
@@ -719,6 +761,9 @@ export default {
                 await this.loadBiomarkers()
             } else {
                 await this.loadStats()
+                if (t === 'general') {
+                    await this.loadTimeline()
+                }
             }
         },
 
@@ -726,17 +771,63 @@ export default {
             this.bioLoading = true
             try {
                 const res = await fetch(`https://labiris.myiplist.com/study/biomarkers?code=${encodeURIComponent(this.codeInput)}`)
+                if (!res.ok) { console.error('Biomarkers fetch failed:', res.status); return }
                 const data = await res.json()
+                console.log('Biomarkers raw:', data)
                 this.bioRows = (data.rows || []).map(r => {
                     let bm = null
                     try {
-                        if (r.biomarkers) {
+                        if (r.biomarkers && r.biomarkers !== 'null' && r.biomarkers !== '{}') {
                             bm = typeof r.biomarkers === 'string' ? JSON.parse(r.biomarkers) : r.biomarkers
+                            if (bm && Object.keys(bm).length === 0) bm = null
                         }
                     } catch(e) { bm = null }
                     return { ...r, biomarkers: bm }
                 })
-            } catch { } finally { this.bioLoading = false }
+                console.log('Biomarkers parsed rows:', this.bioRows.length)
+            } catch(e) { console.error('Biomarkers error:', e) } finally { this.bioLoading = false }
+        },
+
+        thresholdColor(val) {
+            if (val >= 85) return 'thr-high'
+            if (val >= 70) return 'thr-mid'
+            return 'thr-low'
+        },
+
+        async loadThresholds() {
+            this.thresholdsLoading = true
+            try {
+                const res = await fetch(`https://labiris.myiplist.com/study/settings?code=${this.studyCode}`)
+                if (res.ok) {
+                    const data = await res.json()
+                    this.thresholds = {
+                        hc_threshold_glaucoma: data.hc_threshold_glaucoma ?? 85,
+                        hc_threshold_dr: data.hc_threshold_dr ?? 75,
+                        hc_threshold_amd: data.hc_threshold_amd ?? 80,
+                        expert_threshold_glaucoma: data.expert_threshold_glaucoma ?? 90,
+                        expert_threshold_dr: data.expert_threshold_dr ?? 90,
+                        expert_threshold_amd: data.expert_threshold_amd ?? 90
+                    }
+                }
+            } catch {}
+            finally { this.thresholdsLoading = false }
+        },
+
+        async saveThresholds() {
+            this.thresholdSaving = true
+            this.thresholdSaved = false
+            try {
+                const res = await fetch(`https://labiris.myiplist.com/study/settings?code=${this.studyCode}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.thresholds)
+                })
+                if (res.ok) {
+                    this.thresholdSaved = true
+                    setTimeout(() => { this.thresholdSaved = false }, 2500)
+                }
+            } catch {}
+            finally { this.thresholdSaving = false }
         },
 
         async loadAdmin() {
@@ -888,6 +979,7 @@ export default {
             localStorage.removeItem('ddart_study')
             this.authenticated = false
             this.codeInput = ''
+            sessionStorage.setItem('ddart_logout_anim', '1')
             this.$router.push('/login')
         },
 
@@ -902,10 +994,150 @@ export default {
             return Math.round(count / this.stats.general.total_images * 100)
         },
 
+        toggleConfThreshold() {
+            this.confThreshold = this.confThreshold === 90 ? 70 : 90
+            this.loadStats()
+        },
+
         aiChipClass(val) {
             if (!val) return ''
             const positive = ['Glaucoma', 'AMD', 'Mild', 'Moderate', 'Severe', 'Proliferative DR', 'Proliferate_DR']
             return positive.includes(val) ? 'chip-positive' : 'chip-negative'
+        },
+
+        async loadTimeline() {
+            this.timelineLoading = true
+            try {
+                const res = await fetch(`https://labiris.myiplist.com/study/timeline?code=${encodeURIComponent(this.codeInput)}`)
+                const data = await res.json()
+                this.timelineWeeks = data.weeks || []
+                await this.$nextTick()
+                this.renderTimelineChart()
+            } catch(e) { console.error(e) }
+            finally { this.timelineLoading = false }
+        },
+
+        renderTimelineChart() {
+            const canvas = this.$refs.timelineChart
+            if (!canvas || !this.timelineWeeks.length) return
+            if (this.timelineChart) { this.timelineChart.destroy(); this.timelineChart = null }
+            const labels = this.timelineWeeks.map(w => w.week)
+            const values = this.timelineWeeks.map(w => w.count)
+            this.timelineChart = new Chart(canvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Reviews',
+                        data: values,
+                        backgroundColor: 'rgba(43,108,176,0.7)',
+                        borderColor: '#2b6cb0',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                        x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+                    }
+                }
+            })
+        },
+
+        async exportFullCSV() {
+            this.exportLoading = true
+            try {
+                const res = await fetch(`https://labiris.myiplist.com/study/export?code=${encodeURIComponent(this.codeInput)}`)
+                const data = await res.json()
+                const rows = data.rows || []
+                if (!rows.length) { alert('No data to export.'); return }
+
+                // Collect all biomarker keys
+                const bmKeys = new Set()
+                rows.forEach(r => {
+                    if (r.biomarkers) {
+                        try {
+                            const bm = typeof r.biomarkers === 'string' ? JSON.parse(r.biomarkers) : r.biomarkers
+                            Object.keys(bm).forEach(k => bmKeys.add(k))
+                        } catch {}
+                    }
+                })
+                const bmArr = [...bmKeys]
+
+                const headers = ['Upload ID','Patient AMKA','Uploaded At','Health Center','Specialty',
+                    'AI Glaucoma','AI Glaucoma Conf%','AI DR','AI DR Conf%','AI AMD','AI AMD Conf%',
+                    'Reviewer','Expert Glaucoma','Expert DR','Expert AMD','Reviewed At',
+                    ...bmArr.map(k => 'BM: ' + k.replace(/_/g, ' '))]
+
+                const csvRows = rows.map(r => {
+                    let bm = {}
+                    try { bm = r.biomarkers ? (typeof r.biomarkers === 'string' ? JSON.parse(r.biomarkers) : r.biomarkers) : {} } catch {}
+                    return [
+                        r.upload_id, r.patient_amka, r.uploaded_at, r.center_name, r.specialty,
+                        r.ai_glaucoma, r.ai_glaucoma_conf, r.ai_dr, r.ai_dr_conf, r.ai_amd, r.ai_amd_conf,
+                        r.reviewer || '', r.doctor_glaucoma || '', r.doctor_dr || '', r.doctor_amd || '', r.reviewed_at || '',
+                        ...bmArr.map(k => bm[k] || '')
+                    ].map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')
+                })
+
+                const csv = [headers.join(','), ...csvRows].join('\n')
+                const a = document.createElement('a')
+                a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv)
+                a.download = `ddart_full_export_${new Date().toISOString().slice(0,10)}.csv`
+                a.click()
+            } catch(e) { console.error(e) }
+            finally { this.exportLoading = false }
+        },
+
+        async exportFullExcel() {
+            this.exportLoading = true
+            try {
+                const res = await fetch(`https://labiris.myiplist.com/study/export?code=${encodeURIComponent(this.codeInput)}`)
+                const data = await res.json()
+                const rows = data.rows || []
+                if (!rows.length) { alert('No data to export.'); return }
+
+                const bmKeys = new Set()
+                rows.forEach(r => {
+                    try {
+                        const bm = r.biomarkers ? (typeof r.biomarkers === 'string' ? JSON.parse(r.biomarkers) : r.biomarkers) : {}
+                        Object.keys(bm).forEach(k => bmKeys.add(k))
+                    } catch {}
+                })
+                const bmArr = [...bmKeys]
+
+                const headers = ['Upload ID','Patient AMKA','Uploaded At','Health Center','Specialty',
+                    'AI Glaucoma','AI Glaucoma Conf%','AI DR','AI DR Conf%','AI AMD','AI AMD Conf%',
+                    'Reviewer','Expert Glaucoma','Expert DR','Expert AMD','Reviewed At',
+                    ...bmArr.map(k => 'BM: ' + k.replace(/_/g, ' '))]
+
+                const tableRows = rows.map(r => {
+                    let bm = {}
+                    try { bm = r.biomarkers ? (typeof r.biomarkers === 'string' ? JSON.parse(r.biomarkers) : r.biomarkers) : {} } catch {}
+                    return [
+                        r.upload_id, r.patient_amka, r.uploaded_at, r.center_name, r.specialty,
+                        r.ai_glaucoma, r.ai_glaucoma_conf, r.ai_dr, r.ai_dr_conf, r.ai_amd, r.ai_amd_conf,
+                        r.reviewer || '', r.doctor_glaucoma || '', r.doctor_dr || '', r.doctor_amd || '', r.reviewed_at || '',
+                        ...bmArr.map(k => bm[k] || '')
+                    ]
+                })
+
+                let html = '<table><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>'
+                tableRows.forEach(row => {
+                    html += '<tr>' + row.map(v => `<td>${v ?? ''}</td>`).join('') + '</tr>'
+                })
+                html += '</table>'
+
+                const a = document.createElement('a')
+                a.href = 'data:application/vnd.ms-excel;charset=utf-8,' + encodeURIComponent(html)
+                a.download = `ddart_full_export_${new Date().toISOString().slice(0,10)}.xls`
+                a.click()
+            } catch(e) { console.error(e) }
+            finally { this.exportLoading = false }
         }
     }
 }
@@ -942,6 +1174,9 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .user-bar-actions { display: flex; align-items: center; gap: 8px; }
 .tab-pill { padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid #e2e8f0; background: white; color: #718096; font-family: 'Source Sans 3', sans-serif; transition: all 0.2s; }
 .tab-pill.active { background: #2b6cb0; color: white; border-color: #2b6cb0; }
+.conf-toggle-btn { padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid #feebc8; background: #fffaf0; color: #c05621; font-family: 'Source Sans 3', sans-serif; transition: all 0.2s; }
+.conf-toggle-btn:hover { background: #feebc8; }
+.conf-toggle-btn.conf-low-mode { background: #c05621; color: white; border-color: #c05621; }
 .logout-btn { padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-family: 'Source Sans 3', sans-serif; background: none; border: 1px solid #e2e8f0; color: #718096; }
 .logout-btn:hover { background: #f8fafc; }
 .university { font-size: 14px; color: #2c5282; font-weight: 600; margin: 0 0 4px; }
@@ -956,7 +1191,7 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .panel-section { width: 100%; display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
 
 /* Stat cards */
-.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .stat-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-align: center; }
 .stat-value { font-size: 36px; font-weight: 700; color: #2b6cb0; margin: 0; font-family: 'Playfair Display', serif; line-height: 1; }
 .stat-label { font-size: 11px; color: #a0aec0; margin: 6px 0 0; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -1169,4 +1404,30 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
     .image-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
     .admin-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Threshold controls ── */
+.threshold-info { font-size: 12px; color: #718096; margin: -8px 0 16px; font-style: italic; }
+.threshold-loading { font-size: 13px; color: #a0aec0; padding: 12px 0; }
+.threshold-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.threshold-group { display: flex; flex-direction: column; gap: 10px; }
+.threshold-group-title { font-size: 12px; font-weight: 700; color: #2c5282; text-transform: uppercase; letter-spacing: 0.4px; margin: 0 0 4px; display: flex; flex-direction: column; gap: 2px; }
+.threshold-group-sub { font-size: 11px; color: #a0aec0; font-weight: 400; text-transform: none; letter-spacing: 0; }
+.threshold-row { display: flex; align-items: center; gap: 12px; }
+.thr-label { font-size: 13px; font-weight: 600; color: #4a5568; min-width: 72px; }
+.thr-slider { flex: 1; height: 4px; accent-color: #2b6cb0; cursor: pointer; }
+.thr-value { font-size: 14px; font-weight: 700; min-width: 44px; text-align: right; font-family: 'Courier New', monospace; }
+.thr-high { color: #2b6cb0; }
+.thr-mid  { color: #d69e2e; }
+.thr-low  { color: #e53e3e; }
+.threshold-actions { display: flex; align-items: center; justify-content: flex-end; gap: 16px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e2e8f0; }
+.thr-save-btn { padding: 9px 24px; background: #2b6cb0; color: white; border: none; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s, transform 0.15s; }
+.thr-save-btn:hover:not(:disabled) { background: #2c5282; transform: translateY(-1px); }
+.thr-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.threshold-saved { font-size: 13px; font-weight: 700; color: #38a169; animation: savedPop 0.35s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes savedPop { from { opacity:0; transform: scale(0.8); } to { opacity:1; transform: scale(1); } }
+.save-flash-enter-active { transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+.save-flash-leave-active { transition: opacity 0.4s ease; }
+.save-flash-enter-from { opacity: 0; transform: scale(0.8); }
+.save-flash-leave-to { opacity: 0; }
+@media (max-width: 700px) { .threshold-grid { grid-template-columns: 1fr; } }
 </style>

@@ -1,8 +1,61 @@
 <template>
     <div class="login-container" :class="{ dark: isDark }">
 
+        <!-- Welcome animation -->
+        <transition name="welcome-fade">
+            <div v-if="showWelcome" class="welcome-overlay" @click="showWelcome = false">
+                <div class="welcome-particles" ref="wParticles"></div>
+                <div class="welcome-content">
+                    <div class="welcome-eye-wrap">
+                        <svg class="welcome-eye-svg" viewBox="0 0 260 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <radialGradient id="wIrisGrad" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="rgba(99,179,237,0.3)"/>
+                                    <stop offset="100%" stop-color="rgba(43,108,176,0.05)"/>
+                                </radialGradient>
+                            </defs>
+                            <path d="M10 60 Q65 5 130 5 Q195 5 250 60 Q195 115 130 115 Q65 115 10 60 Z"
+                                stroke="rgba(99,179,237,0.5)" stroke-width="1.2" fill="rgba(99,179,237,0.03)"
+                                class="w-eye-outline"/>
+                            <circle cx="130" cy="60" r="36" fill="url(#wIrisGrad)"
+                                stroke="rgba(99,179,237,0.7)" stroke-width="1.5" class="w-iris"/>
+                            <circle cx="130" cy="60" r="22" fill="rgba(43,108,176,0.12)"
+                                stroke="rgba(99,179,237,0.9)" stroke-width="1.2" class="w-pupil-ring"/>
+                            <circle cx="130" cy="60" r="10" fill="rgba(99,179,237,0.2)"
+                                stroke="rgba(99,179,237,1)" stroke-width="1" class="w-inner-pupil"/>
+                            <circle cx="130" cy="60" r="4" fill="#63b3ed" class="w-pupil-core"/>
+                            <circle cx="137" cy="53" r="2.5" fill="rgba(255,255,255,0.6)" class="w-highlight"/>
+                            <line x1="130" y1="5" x2="130" y2="0" stroke="rgba(99,179,237,0.5)" stroke-width="1" class="w-ray"/>
+                            <line x1="130" y1="115" x2="130" y2="120" stroke="rgba(99,179,237,0.5)" stroke-width="1" class="w-ray"/>
+                            <line x1="10" y1="60" x2="4" y2="60" stroke="rgba(99,179,237,0.4)" stroke-width="1" class="w-ray"/>
+                            <line x1="250" y1="60" x2="256" y2="60" stroke="rgba(99,179,237,0.4)" stroke-width="1" class="w-ray"/>
+                            <line x1="40" y1="22" x2="34" y2="16" stroke="rgba(99,179,237,0.3)" stroke-width="0.8" class="w-ray"/>
+                            <line x1="220" y1="22" x2="226" y2="16" stroke="rgba(99,179,237,0.3)" stroke-width="0.8" class="w-ray"/>
+                        </svg>
+                        <div class="w-scan-line"></div>
+                        <div class="w-scan-data w-sd1">OD: 0.42</div>
+                        <div class="w-scan-data w-sd2">MAC: 0.18</div>
+                        <div class="w-scan-data w-sd3">AI ✓</div>
+                    </div>
+                    <p class="w-label">Welcome to</p>
+                    <div class="w-logo-row">
+                        <span class="wl wl-1">D</span>
+                        <span class="wl wl-2">D</span>
+                        <span class="wl wl-3">A</span>
+                        <span class="wl wl-4">R</span>
+                        <span class="wl wl-5">T</span>
+                        <span class="wl-ai">AI</span>
+                    </div>
+                    <p class="w-tagline">Ophthalmology · Artificial Intelligence · Screening</p>
+                    <div class="w-bar-wrap"><div class="w-bar-fill"></div></div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- Existing entry overlay -->
         <transition name="overlay-fade">
             <div v-if="showOverlay" class="entry-overlay">
+                
                 <!-- Particle field -->
                 <div class="particle-field">
                     <div v-for="i in 24" :key="i" class="particle" :style="particleStyle(i)"></div>
@@ -171,7 +224,7 @@
 
         <div class="role-toggle">
             <button :class="['role-btn', { active: role === 'health-center' }]" @click="role = 'health-center'; error = ''">{{ t('Health Center', 'Κέντρο Υγείας') }}</button>
-            <button :class="['role-btn', { active: role === 'doctor' }]" @click="role = 'doctor'; error = ''">{{ t('Expert', 'ειδικός γιατρός') }}</button>
+            <button :class="['role-btn', { active: role === 'doctor' }]" @click="role = 'doctor'; error = ''">{{ t('Expert', 'Ειδικός Ιατρός') }}</button>
         </div>
 
         <div class="main-card">
@@ -181,12 +234,12 @@
 
                         <div v-if="role === 'health-center'" key="hc-info" class="left-content">
                             <h2>{{ t('Health Center Portal', 'Πύλη Κέντρου Υγείας') }}</h2>
-                            <p>{{ t('Sign in with your health center credentials to upload retinal images for immediate AI screening and research review.', 'Συνδεθείτε με τα στοιχεία του κέντρου υγείας σας για να ανεβάσετε εικόνες αμφιβληστροειδούς για διάγνωση ΤΝ και αξιολόγηση από ερευνητές.') }}</p>
+                            <p>{{ t('Sign in with your Health Center credentials to upload retinal images for AI screening and expert review.', 'Συνδεθείτε με τα στοιχεία του Κέντρου Υγείας σας για να ανεβάσετε εικόνες αμφιβληστροειδή για αξιολόγηση από ΤΝ και ειδικούς γιατρούς.') }}</p>
                         </div>
 
                         <div v-else key="doctor-info" class="left-content">
                             <h2>{{ t('Expert Portal', 'Πύλη Ειδικών Ιατρών') }}</h2>
-                            <p>{{ t('Access the clinical dashboard to review and evaluate retinal images', 'Πρόσβαση στον κλινικό πίνακα για προβολή και καταχώρηση εικώνων.') }}</p>
+                            <p>{{ t('Access the clinical dashboard to review and evaluate retinal images', 'Πρόσβαση στον κλινικό πίνακα για προβολή και αξιολόγηση εικόνων.') }}</p>
                         </div>
 
                     </transition>
@@ -203,11 +256,11 @@
                         <!-- HEALTH CENTER LOGIN -->
                         <div v-if="role === 'health-center' && mode === 'login'" key="hc-login" class="form">
                             <div class="field">
-                                <label>{{ t('Health Center ID', 'Κωδικός Κέντρου Υγείας') }}</label>
+                                <label>{{ t('Health Center ID', 'Κωδικος Κεντρου Υγειας') }}</label>
                                 <input v-model="centerId" type="text" maxlength="5" :placeholder="t('5-digit center ID', '5-ψήφιος κωδικός κέντρου')" />
                             </div>
                             <div class="field">
-                                <label>{{ t('Password', 'Κωδικός') }}</label>
+                                <label>{{ t('Password', 'Κωδικος') }}</label>
                                 <input v-model="password" type="password" :placeholder="t('Your password', 'Ο κωδικός σας')" @keyup.enter="healthCenterLogin" />
                             </div>
                             <transition name="error-pop">
@@ -217,7 +270,7 @@
                                 <span class="btn-text">{{ loading ? t('Signing in...', 'Σύνδεση...') : t('Sign In', 'Σύνδεση') }}</span>
                                 <span v-if="loading" class="btn-spinner"></span>
                             </button>
-                            <p class="access-note">{{ t('Sign in with your 5-digit center ID provided by the DDART administrator. Contact ddart@med.duth.gr to register.', 'Συνδεθείτε με τον 5-ψήφιο κωδικό κέντρου που σας έχει δοθεί από τον διαχειριστή DDART.') }}</p>
+                            <p class="access-note">{{ t('Sign in with your 5-digit center ID provided by the DDARTECH administrator. Contact ddart@med.duth.gr to register.', 'Συνδεθείτε με τον 5-ψήφιο κωδικό κέντρου που σας έχει δοθεί από τον διαχειριστή DDARTECH.') }}</p>
                         </div>
 
                         <!-- DOCTOR LOGIN -->
@@ -296,6 +349,7 @@ export default {
 
     data() {
         return {
+            showWelcome: false,
             role: 'health-center',
             mode: 'login',
             centerId: '',
@@ -313,11 +367,45 @@ export default {
     },
 
     mounted() {
-        if (localStorage.getItem('ddart_health_center')) this.$router.push('/health-center')
-        if (localStorage.getItem('ddart_doctor')) {
-            this.$router.push('/research')
+    if (localStorage.getItem('ddart_health_center')) this.$router.push('/health-center')
+    if (localStorage.getItem('ddart_doctor')) this.$router.push('/research')
+
+    if (sessionStorage.getItem('ddart_logout_anim')) {
+        sessionStorage.removeItem('ddart_logout_anim')
+        this.showOverlay = true
+        this.barWidth = 0
+        this.entryMessage = 'SIGNING OUT...'
+        const start = performance.now()
+        const duration = 2500
+        const animate = (now) => {
+            const progress = Math.min((now - start) / duration, 1)
+            this.barWidth = Math.round((1 - Math.pow(1 - progress, 3)) * 100)
+            if (progress < 1) requestAnimationFrame(animate)
+            else this.showOverlay = false
         }
-    },
+        requestAnimationFrame(animate)
+        return
+    }
+
+    if (!sessionStorage.getItem('ddart_welcomed')) {
+        sessionStorage.setItem('ddart_welcomed', '1')
+        this.showWelcome = true
+        setTimeout(() => { this.showWelcome = false }, 4200)
+    }
+    this.$nextTick(() => {
+    const container = this.$refs.wParticles
+    if (!container) return
+    for (let i = 0; i < 20; i++) {
+        const d = document.createElement('div')
+        const seed = i * 137.508
+        const x = (Math.sin(seed) * 0.5 + 0.5) * 100
+        const y = (Math.cos(seed * 1.3) * 0.5 + 0.5) * 100
+        const size = 1.5 + (i % 4) * 0.7
+        d.style.cssText = `position:absolute;border-radius:50%;background:#63b3ed;left:${x}%;top:${y}%;width:${size}px;height:${size}px;animation:particle-float linear ${4+(i%5)*1.1}s ${(i*0.3)%5}s infinite;box-shadow:0 0 4px rgba(99,179,237,0.6)`
+        container.appendChild(d)
+    }
+})
+},
 
     methods: {
         particleStyle(i) {
@@ -445,7 +533,7 @@ export default {
                 })
                 const data = await res.json()
                 if (!res.ok) { this.error = data.detail || this.t('Registration failed', 'Αποτυχία εγγραφής'); return }
-                alert(this.t('Account created! You can now sign in.', 'Ο λογαριασμός δημιουργήθηκε! Μπορείτε τώρα να συνδεθείτε.'))
+                alert(this.t('Account created! You account is pending approval by the administrator.', 'Ο λογαριασμός δημιουργήθηκε! Ο λογαριασμός σας πρέπει να αποδεχτεί από τον admin.'))
                 this.mode = 'login'
             } catch { this.error = this.t('Connection failed. Please try again.', 'Αποτυχία σύνδεσης. Δοκιμάστε ξανά.') }
             finally { this.loading = false }
@@ -466,7 +554,46 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
    ENTRY OVERLAY — CINEMATIC VERSION
    ══════════════════════════════════════════ */
 .entry-overlay { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(ellipse at 50% 40%, #0a1628 0%, #04080f 100%); display: flex; align-items: center; justify-content: center; overflow: hidden; }
-
+.welcome-overlay { position: fixed; inset: 0; z-index: 10000; background: radial-gradient(ellipse at 50% 40%, #071428 0%, #020810 100%); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; }
+.welcome-particles { position: absolute; inset: 0; pointer-events: none; }
+.welcome-content { display: flex; flex-direction: column; align-items: center; gap: 20px; position: relative; z-index: 2; }
+.welcome-eye-wrap { position: relative; width: 260px; height: 120px; animation: wEyeIn 0.9s 0.1s cubic-bezier(0.22,1,0.36,1) both; filter: drop-shadow(0 0 18px rgba(99,179,237,0.5)); }
+.welcome-eye-svg { width: 100%; height: 100%; }
+@keyframes wEyeIn { from { opacity:0; transform: scale(0.5) translateY(30px); } to { opacity:1; transform: scale(1) translateY(0); } }
+.w-eye-outline { stroke-dasharray: 600; stroke-dashoffset: 600; animation: wDraw 1.2s 0.3s ease forwards; }
+.w-iris { stroke-dasharray: 226; stroke-dashoffset: 226; animation: wDraw 0.6s 1.2s ease forwards; }
+.w-pupil-ring { stroke-dasharray: 138; stroke-dashoffset: 138; animation: wDraw 0.5s 1.5s ease forwards; }
+.w-inner-pupil { opacity: 0; animation: wFade 0.4s 1.8s ease forwards; }
+.w-pupil-core { opacity: 0; animation: wFade 0.4s 1.95s ease forwards; }
+.w-highlight { opacity: 0; animation: wFade 0.3s 2.0s ease forwards; }
+.w-ray { opacity: 0; animation: wFade 0.4s 2.1s ease forwards; }
+@keyframes wDraw { to { stroke-dashoffset: 0; } }
+@keyframes wFade { to { opacity: 1; } }
+.w-scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, rgba(99,179,237,0) 15%, rgba(99,179,237,0.95) 50%, rgba(99,179,237,0) 85%, transparent); animation: wScan 2s 1.2s ease-in-out infinite; }
+@keyframes wScan { 0% { top: 8%; opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } 100% { top: 92%; opacity: 0; } }
+.w-scan-data { position: absolute; font-family: 'Courier New', monospace; font-size: 10px; font-weight: 700; letter-spacing: 1px; opacity: 0; animation: wFade 0.4s ease forwards; }
+.w-sd1 { top: 22%; right: -44px; color: rgba(99,179,237,0.85); animation-delay: 2.2s; }
+.w-sd2 { top: 55%; left: -50px; color: rgba(229,62,62,0.85); animation-delay: 2.4s; }
+.w-sd3 { bottom: 18%; right: -36px; color: rgba(72,187,120,0.9); animation-delay: 2.6s; }
+.w-label { font-size: 12px; font-weight: 700; letter-spacing: 5px; color: rgba(99,179,237,0.5); text-transform: uppercase; margin: 0; opacity: 0; animation: wFade 0.6s 1.6s ease forwards; }
+.w-logo-row { display: flex; align-items: baseline; font-family: 'Arial Narrow', Arial, sans-serif; font-weight: 900; letter-spacing: 6px; }
+.wl { color: white; font-size: 46px; opacity: 0; display: inline-block; }
+.wl-1 { animation: wLetter 0.5s 1.8s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.wl-2 { animation: wLetter 0.5s 1.95s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.wl-3 { animation: wLetter 0.5s 2.1s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.wl-4 { animation: wLetter 0.5s 2.25s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.wl-5 { animation: wLetter 0.5s 2.4s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+@keyframes wLetter { from { opacity:0; transform: translateY(-40px) scale(0.6); } to { opacity:1; transform: translateY(0) scale(1); } }
+.wl-ai { color: #e53e3e; font-size: 88px; font-family: 'Arial Black', Arial, sans-serif; line-height: 1; margin-left: 10px; opacity: 0; animation: wAiSlam 0.7s 2.6s cubic-bezier(0.22,1,0.36,1) forwards; }
+@keyframes wAiSlam { 0% { opacity:0; transform: scale(4) translateY(-10px); filter: blur(16px); } 60% { opacity:1; filter: blur(0); } 80% { transform: scale(0.95); } 100% { opacity:1; transform: scale(1); filter: blur(0); } }
+.w-tagline { font-size: 11px; font-weight: 600; letter-spacing: 3px; color: rgba(99,179,237,0.4); text-transform: uppercase; margin: 0; opacity: 0; animation: wFade 0.6s 3.1s ease forwards; }
+.w-bar-wrap { width: 220px; height: 1px; background: rgba(255,255,255,0.06); overflow: hidden; opacity: 0; animation: wFade 0.3s 3.0s ease forwards; }
+.w-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #2b6cb0, #63b3ed, #90cdf4); animation: wBarFill 1.1s 3.1s cubic-bezier(0.4,0,0.2,1) forwards; }
+@keyframes wBarFill { to { width: 100%; } }
+.welcome-fade-enter-active { transition: opacity 0.4s ease; }
+.welcome-fade-leave-active { transition: opacity 0.8s ease, transform 0.8s ease, filter 0.8s ease; }
+.welcome-fade-enter-from { opacity: 0; }
+.welcome-fade-leave-to { opacity: 0; transform: scale(1.04); filter: blur(6px); }
 /* Background grid */
 .grid-lines { position: absolute; inset: 0; pointer-events: none; }
 .grid-h { position: absolute; left: 0; right: 0; height: 1px; background: rgba(99,179,237,0.04); animation: grid-fade-in 1s ease both; }
@@ -686,7 +813,7 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .study-official-btn:hover { color: #2b6cb0; border-color: #2b6cb0; background: #ebf8ff; }
 .dark .study-official-btn { color: #718096; border-color: #4a5568; }
 .dark .study-official-btn:hover { color: #63b3ed; border-color: #63b3ed; background: #1a365d; }
-
+@keyframes particle-float { 0%,100% { transform:translate(-50%,-50%) scale(1); opacity:0.12; } 50% { transform:translate(-50%,-65%) scale(1.5); opacity:0.45; } }
 @media (max-width: 768px) {
     .login-container { padding: 20px 16px 0; }
     .header-controls { top: 12px; right: 12px; }

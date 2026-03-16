@@ -36,3 +36,6 @@ ddart_reset_2025
 
 
 screen -r -d training
+
+ssh -t andreas@192.168.1.126 'sudo systemctl restart ddart'
+

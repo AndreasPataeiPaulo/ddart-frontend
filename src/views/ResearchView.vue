@@ -1,7 +1,6 @@
 <template>
     <div class="research-container">
 
-
         <!-- Fullscreen zoom overlay -->
         <transition name="zoom-fade">
             <div v-if="zoomSrc" class="zoom-backdrop" @click.self="closeZoom">
@@ -27,7 +26,7 @@
             </div>
         </transition>
 
-        <!-- Expertise modal — shown on first login only -->
+        <!-- Expertise modal -->
         <transition name="modal-fade">
             <div v-if="showExpertiseModal" class="modal-backdrop">
                 <div class="modal-box">
@@ -68,7 +67,7 @@
 
         <div class="header">
             <div class="user-bar">
-                <span>🔬 Dr. {{ doctorName }} — Research Mode</span>
+                <span>🔬 Dr. {{ doctorName }} — Expert Mode</span>
                 <button class="logout-btn" @click="logout">Sign Out</button>
             </div>
             <p class="university">Democritus University of Thrace – DDART spin-off company</p>
@@ -76,9 +75,8 @@
         </div>
 
         <div class="panel-tabs">
-
             <button :class="['panel-tab', { active: tab === 'hc' }]" @click="tab = 'hc'; loadHCPending()">
-            Pending examinations 
+                Pending examinations
                 <span v-if="hcPending.length" class="badge hc-badge">{{ hcPending.length }}</span>
             </button>
             <button :class="['panel-tab', { active: tab === 'concluded' }]" @click="tab = 'concluded'; loadConcluded()">
@@ -86,7 +84,7 @@
             </button>
         </div>
 
-    <transition name="fade-slide" mode="out-in">
+        <transition name="fade-slide" mode="out-in">
 
             <!-- PENDING TAB -->
             <div v-if="tab === 'pending'" key="pending" class="panel-section">
@@ -154,7 +152,7 @@
                 </div>
             </div>
 
-            <!-- HEALTH CENTER UPLOADS TAB — BLIND TEST -->
+            <!-- HEALTH CENTER UPLOADS TAB -->
             <div v-else-if="tab === 'hc'" key="hc" class="panel-section">
                 <div v-if="hcLoading" class="loading-state">
                     <div class="spinner"></div>
@@ -197,7 +195,7 @@
                                 <h3>Your Diagnosis</h3>
                                 <p class="diagnosis-hint">Diagnose the condition and complete the biometrics checklist below.</p>
 
-                                <!-- DR Final Diagnosis + Biometrics -->
+                                <!-- DR -->
                                 <div v-if="doctorExpertise.dr" class="diagnosis-group">
                                     <label class="diagnosis-label">Referral for Diabetic Retinopathy</label>
                                     <div class="radio-group">
@@ -209,7 +207,7 @@
                                     </div>
                                     <div class="bio-table">
                                         <div class="bio-header"><span class="bio-name-col">DIABETIC RETINOPATHY</span><span>YES</span><span>NO</span><span>INCONCLUSIVE</span></div>
-                                        <div v-for="item in drBiomarkers" :key="item.key" class="bio-row" @mouseenter="activeTip = item.key" @mouseleave="activeTip = null">
+                                        <div v-for="item in drBiomarkers" :key="item.key" class="bio-row" :class="{ 'bio-row-missing': biomarkerMissing(item.key) }" @mouseenter="activeTip = item.key" @mouseleave="activeTip = null">
                                             <span class="bio-name-col">
                                                 {{ item.label }}
                                                 <transition name="tip-fade"><span v-if="activeTip === item.key" class="bio-tip">{{ item.tip }}</span></transition>
@@ -221,7 +219,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Glaucoma Final Diagnosis + Biometrics -->
+                                <!-- Glaucoma -->
                                 <div v-if="doctorExpertise.glaucoma" class="diagnosis-group">
                                     <label class="diagnosis-label">Referral for Glaucoma</label>
                                     <div class="radio-group">
@@ -230,7 +228,7 @@
                                     </div>
                                     <div class="bio-table">
                                         <div class="bio-header"><span class="bio-name-col">GLAUCOMA</span><span>YES</span><span>NO</span><span>INCONCLUSIVE</span></div>
-                                        <div v-for="item in glaucomaBiomarkers" :key="item.key" class="bio-row" @mouseenter="activeTip = item.key" @mouseleave="activeTip = null">
+                                        <div v-for="item in glaucomaBiomarkers" :key="item.key" class="bio-row" :class="{ 'bio-row-missing': biomarkerMissing(item.key) }" @mouseenter="activeTip = item.key" @mouseleave="activeTip = null">
                                             <span class="bio-name-col">
                                                 {{ item.label }}
                                                 <transition name="tip-fade"><span v-if="activeTip === item.key" class="bio-tip">{{ item.tip }}</span></transition>
@@ -242,7 +240,7 @@
                                     </div>
                                 </div>
 
-                                <!-- AMD Final Diagnosis + Biometrics -->
+                                <!-- AMD -->
                                 <div v-if="doctorExpertise.amd" class="diagnosis-group">
                                     <label class="diagnosis-label">Referral for AMD</label>
                                     <div class="radio-group">
@@ -251,7 +249,7 @@
                                     </div>
                                     <div class="bio-table">
                                         <div class="bio-header"><span class="bio-name-col">AMD</span><span>YES</span><span>NO</span><span>INCONCLUSIVE</span></div>
-                                        <div v-for="item in amdBiomarkers" :key="item.key" class="bio-row" @mouseenter="activeTip = item.key" @mouseleave="activeTip = null">
+                                        <div v-for="item in amdBiomarkers" :key="item.key" class="bio-row" :class="{ 'bio-row-missing': biomarkerMissing(item.key) }" @mouseenter="activeTip = item.key" @mouseleave="activeTip = null">
                                             <span class="bio-name-col">
                                                 {{ item.label }}
                                                 <transition name="tip-fade"><span v-if="activeTip === item.key" class="bio-tip">{{ item.tip }}</span></transition>
@@ -265,10 +263,18 @@
 
                                 <div class="blind-notice">AI confidence scores are hidden during evaluation</div>
                                 <p v-if="hcSubmitError" class="error">{{ hcSubmitError }}</p>
-                                <button class="submit-btn" @click="submitHCDiagnosis" :disabled="hcSubmitting || !hcDiagnosisComplete">
-                                    {{ hcSubmitting ? 'Submitting...' : '✓ Submit Diagnosis' }}
-                                </button>
-                                <p v-if="!hcDiagnosisComplete" class="hint">Please select a final result above to submit.</p>
+
+                                <!-- Submit button with success flash -->
+                                <transition name="submit-flash" mode="out-in">
+                                    <button v-if="submitSuccess" key="success" class="submit-btn submit-btn-success" disabled>
+                                        <span class="success-check">✓</span> Diagnosis Submitted
+                                    </button>
+                                    <button v-else key="normal" class="submit-btn" @click="submitHCDiagnosis" :disabled="hcSubmitting || !hcDiagnosisComplete">
+                                        {{ hcSubmitting ? 'Submitting...' : '✓ Submit Diagnosis' }}
+                                    </button>
+                                </transition>
+
+                                <p v-if="!hcDiagnosisComplete && !submitSuccess" class="hint">Please select a diagnosis and fill in all biomarker fields to submit.</p>
                             </div>
                         </div>
                     </div>
@@ -289,7 +295,6 @@
                 </div>
                 <div v-else>
                     <div v-if="concludedImages.length > 0">
-                        
                         <div class="concluded-list">
                             <div v-for="item in concludedImages" :key="item.id" class="concluded-item">
                                 <img :src="'https://labiris.myiplist.com/research/image/' + item.image_id" class="concluded-thumb zoomable" @click="openZoom('https://labiris.myiplist.com/research/image/' + item.image_id)" />
@@ -300,9 +305,7 @@
                                     </div>
                                     <div class="comparison-grid">
                                         <div class="comparison-header one-col"><span>Your Diagnosis</span></div>
-                                        <div class="comparison-row one-col">
-                                            <span>{{ doctorAnswer(item) }}</span>
-                                        </div>
+                                        <div class="comparison-row one-col"><span>{{ doctorAnswer(item) }}</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -363,6 +366,7 @@ export default {
             tab: 'hc',
             showLogoutOverlay: false,
             logoutBarWidth: 0,
+            submitSuccess: false,
 
             // Expertise
             showExpertiseModal: false,
@@ -372,9 +376,10 @@ export default {
             expertiseSaving: false,
             expertiseError: '',
 
-            // Biometrics checklist
+            // Biometrics
             biomarkers: {},
             activeTip: null,
+            showMissingBiomarkers: false,
         drBiomarkers: [
             { key: 'microaneurysms', label: 'Microaneurysms', tip: 'Small balloon-like swellings in tiny blood vessels of the retina — earliest sign of DR.' },
             { key: 'hard_exudates', label: 'Hard exudates', tip: 'Lipid and protein deposits appearing as bright yellow-white spots with sharp margins.' },
@@ -456,6 +461,12 @@ export default {
             if (this.doctorExpertise.glaucoma && !this.hcDiagnosis.glaucoma) return false
             if (this.doctorExpertise.dr && !this.hcDiagnosis.dr) return false
             if (this.doctorExpertise.amd && !this.hcDiagnosis.amd) return false
+            const requiredBiomarkers = this.doctorExpertise.glaucoma ? this.glaucomaBiomarkers
+                : this.doctorExpertise.dr ? this.drBiomarkers
+                : this.doctorExpertise.amd ? this.amdBiomarkers : []
+            for (const item of requiredBiomarkers) {
+                if (!this.biomarkers[item.key]) return false
+            }
             return true
         },
 
@@ -488,7 +499,6 @@ export default {
         this.doctorName = doctor.name
         this.doctorId = doctor.id
 
-        // Load expertise from backend
         try {
             const res = await fetch(`https://labiris.myiplist.com/doctor/expertise/${doctor.id}`)
             const data = await res.json()
@@ -503,7 +513,6 @@ export default {
                 this.loadPending()
                 this.loadHCPending()
             } else {
-                // First time — show modal
                 this.showExpertiseModal = true
             }
         } catch {
@@ -513,11 +522,22 @@ export default {
 
     watch: {
         currentIndex() { this.currentDiagnosis = { glaucoma: null, dr: null, amd: null }; this.submitError = '' },
-        hcIndex() { this.hcDiagnosis = { glaucoma: null, dr: null, amd: null }; this.hcSubmitError = '' }
+        hcIndex() {
+            this.hcDiagnosis = { glaucoma: null, dr: null, amd: null }
+            this.hcSubmitError = ''
+            this.biomarkers = {}
+            this.showMissingBiomarkers = false
+            this.submitSuccess = false
+        }
     },
 
     methods: {
         categoryLabel(cat) { return { amd: 'AMD', glaucoma: 'Glaucoma', dr: 'DR' }[cat] || cat },
+
+        biomarkerMissing(key) {
+            if (!this.showMissingBiomarkers) return false
+            return !this.biomarkers[key]
+        },
 
         doctorAnswer(item) {
             if (item.category === 'amd') return item.doctor_amd
@@ -560,7 +580,6 @@ export default {
             try {
                 const res = await fetch(`https://labiris.myiplist.com/research/pending/${this.doctorId}`)
                 const data = await res.json()
-                // Filter by expertise
                 const exp = this.doctorExpertise
                 this.allPending = (data.images || []).filter(img => {
                     if (img.category === 'glaucoma') return exp.glaucoma
@@ -578,7 +597,6 @@ export default {
                 const res = await fetch(`https://labiris.myiplist.com/research/pending-hc?doctor_id=${this.doctorId}`)
                 const data = await res.json()
                 const exp = this.doctorExpertise
-                // Only include images where AI ≥ 90% on at least one condition within doctor's expertise
                 this.hcPending = (Array.isArray(data) ? data : []).filter(hc => {
                     if (exp.glaucoma && hc.ai_glaucoma_conf >= 90) return true
                     if (exp.dr && hc.ai_dr_conf >= 90) return true
@@ -625,8 +643,12 @@ export default {
         },
 
         async submitHCDiagnosis() {
-            if (!this.hcDiagnosisComplete) return
+            if (!this.hcDiagnosisComplete) {
+                this.showMissingBiomarkers = true
+                return
+            }
             this.hcSubmitting = true; this.hcSubmitError = ''
+            this.showMissingBiomarkers = false
             const hc = this.currentHC
             try {
                 const res = await fetch('https://labiris.myiplist.com/research/submit-hc', {
@@ -640,15 +662,22 @@ export default {
                     })
                 })
                 if (!res.ok) { this.hcSubmitError = 'Submission failed.'; return }
-                this.hcPending.splice(this.hcIndex, 1)
-                if (this.hcIndex >= this.hcPending.length && this.hcIndex > 0) this.hcIndex--
-                this.hcDiagnosis = { glaucoma: null, dr: null, amd: null }
-                this.biomarkers = {}
+
+                // Show success flash for 1.5 seconds, then advance
+                this.submitSuccess = true
+                setTimeout(() => {
+                    this.submitSuccess = false
+                    this.hcPending.splice(this.hcIndex, 1)
+                    if (this.hcIndex >= this.hcPending.length && this.hcIndex > 0) this.hcIndex--
+                    this.hcDiagnosis = { glaucoma: null, dr: null, amd: null }
+                    this.biomarkers = {}
+                }, 1500)
+
             } catch { this.hcSubmitError = 'Connection failed.' }
             finally { this.hcSubmitting = false }
         },
 
-        openZoom(src) { this.zoomSrc = src; this.zoomLevel = 1; this.panX = 0; this.panY = 0; this.zoomOrigin = "center center" },
+        openZoom(src) { this.zoomSrc = src; this.zoomLevel = 2.5; this.panX = 0; this.panY = 0; this.zoomOrigin = "center center" },
         closeZoom() { this.zoomSrc = null; this.zoomLevel = 1; this.panX = 0; this.panY = 0 },
         resetZoom() { this.zoomLevel = 1; this.panX = 0; this.panY = 0; this.zoomOrigin = "center center" },
         zoomIn() { this.zoomLevel = Math.min(this.zoomLevel + 0.25, 6) },
@@ -659,7 +688,6 @@ export default {
             const my = e.clientY - wrap.top
             const delta = e.deltaY > 0 ? -0.15 : 0.15
             const newLevel = Math.min(Math.max(this.zoomLevel + delta, 0.5), 6)
-            // Zoom toward cursor
             const ratio = newLevel / this.zoomLevel
             this.panX = mx - ratio * (mx - this.panX)
             this.panY = my - ratio * (my - this.panY)
@@ -691,6 +719,7 @@ export default {
                     requestAnimationFrame(animate)
                 } else {
                     setTimeout(() => {
+                        sessionStorage.setItem('ddart_logout_anim', '1')
                         localStorage.removeItem('ddart_doctor')
                         this.$router.push('/login')
                     }, 100)
@@ -707,8 +736,6 @@ export default {
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-family: 'Source Sans 3', sans-serif; }
 
-
-/* Logout / entry overlay */
 .entry-overlay { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(ellipse at center, #0d1f3c 0%, #060d1a 100%); display: flex; align-items: center; justify-content: center; }
 .entry-content { display: flex; flex-direction: column; align-items: center; gap: 20px; }
 .retinal-scanner { position: relative; width: 200px; height: 200px; animation: scanner-appear 0.5s ease both; }
@@ -753,12 +780,9 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 18px; font-weight: 700; color: #2c5282; letter-spacing: 3px; display: flex; align-items: baseline; justify-content: center; gap: 2px; }
 .logo span { color: #e53e3e; font-size: 48px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; }
 
-/* Expertise modal */
 .modal-backdrop { position: fixed; inset: 0; background: rgba(10,20,40,0.88); display: flex; align-items: center; justify-content: center; z-index: 9999; }
 .modal-box { background: white; border-radius: 12px; padding: 40px; width: 420px; display: flex; flex-direction: column; align-items: center; gap: 20px; animation: appear 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
 @keyframes appear { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-.modal-logo { font-family: 'Arial Narrow', Arial, sans-serif; font-size: 16px; font-weight: 700; color: #2c5282; letter-spacing: 3px; display: flex; align-items: baseline; gap: 2px; }
-.modal-logo span { color: #e53e3e; font-size: 36px; font-weight: 900; font-family: 'Arial Black', Arial, sans-serif; }
 .modal-box h3 { font-family: 'Playfair Display', serif; color: #2d3748; font-size: 20px; margin: 0; text-align: center; }
 .modal-box p { font-size: 13px; color: #718096; margin: 0; text-align: center; line-height: 1.6; }
 .expertise-options { display: flex; flex-direction: column; gap: 10px; width: 100%; }
@@ -821,23 +845,24 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .radio-option.selected { border-color: #2b6cb0; background: #ebf8ff; color: #2b6cb0; }
 .blind-notice { font-size: 11px; color: #a0aec0; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px 12px; text-align: center; font-style: italic; }
 
-.submit-btn { padding: 11px; background: #2b6cb0; color: white; border: none; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; width: 100%; }
+/* Submit button */
+.submit-btn { padding: 11px; background: #2b6cb0; color: white; border: none; border-radius: 4px; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .submit-btn:hover:not(:disabled) { background: #2c5282; }
 .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.hint { font-size: 11px; color: #a0aec0; margin: 0; }
 
+/* Success state */
+.submit-btn-success { background: #38a169 !important; opacity: 1 !important; cursor: default !important; animation: successPulse 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes successPulse { 0% { transform: scale(0.96); } 60% { transform: scale(1.03); } 100% { transform: scale(1); } }
+.success-check { font-size: 18px; animation: checkPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); display: inline-block; }
+@keyframes checkPop { from { transform: scale(0) rotate(-20deg); } to { transform: scale(1) rotate(0deg); } }
+.submit-flash-enter-active { transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.submit-flash-leave-active { transition: all 0.2s ease; }
+.submit-flash-enter-from { opacity: 0; transform: scale(0.95); }
+.submit-flash-leave-to { opacity: 0; transform: scale(0.95); }
+
+.hint { font-size: 11px; color: #a0aec0; margin: 0; }
 .progress-bar-container { height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden; }
 .progress-bar { height: 100%; background: #2b6cb0; border-radius: 2px; transition: width 0.4s ease; }
-
-.agreement-banner { background: white; border: 1px solid #e2e8f0; border-radius: 4px; padding: 24px; display: flex; align-items: center; gap: 32px; margin-bottom: 20px; }
-.agreement-score { text-align: center; min-width: 120px; }
-.agreement-value { font-size: 52px; font-weight: 700; color: #2b6cb0; margin: 0; font-family: 'Playfair Display', serif; line-height: 1; }
-.agreement-label { font-size: 12px; color: #718096; margin: 4px 0 0; text-transform: uppercase; letter-spacing: 0.5px; }
-.agreement-breakdown { display: flex; gap: 24px; flex: 1; justify-content: center; }
-.agreement-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.agreement-stat .stat-label { font-size: 11px; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.5px; }
-.agreement-stat .stat-value { font-size: 28px; font-weight: 700; color: #2d3748; }
-.agreement-stat .stat-count { font-size: 10px; color: #a0aec0; }
 
 .concluded-list { display: flex; flex-direction: column; gap: 12px; }
 .concluded-item { background: white; border: 1px solid #e2e8f0; border-radius: 4px; padding: 16px; display: flex; gap: 16px; align-items: flex-start; }
@@ -849,12 +874,10 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .date-tag { font-size: 11px; color: #a0aec0; }
 .comparison-grid { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
 .comparison-header { display: grid; grid-template-columns: 1fr 1fr 100px; gap: 8px; font-weight: 700; color: #a0aec0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 4px; border-bottom: 1px solid #e2e8f0; margin-bottom: 4px; }
-.comparison-header.five-col, .comparison-row.five-col { grid-template-columns: 100px 1fr 1fr 60px 50px; }
 .comparison-header.two-col, .comparison-row.two-col { grid-template-columns: 120px 1fr; }
 .comparison-header.one-col, .comparison-row.one-col { grid-template-columns: 1fr; }
 .comparison-row { display: grid; grid-template-columns: 1fr 1fr 100px; gap: 8px; align-items: center; }
 .cond-label { font-weight: 700; color: #4a5568; font-size: 12px; }
-.conf-reveal { font-weight: 700; color: #2b6cb0; font-size: 12px; }
 .match-yes { color: #38a169; font-weight: 700; }
 .match-no { color: #e53e3e; font-weight: 700; }
 .hc-concluded-section { margin-top: 28px; }
@@ -867,8 +890,6 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .fade-slide-enter-from { opacity: 0; transform: translateY(10px); }
 .fade-slide-leave-to { opacity: 0; transform: translateY(-6px); }
 
-
-/* Zoom overlay */
 .zoom-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
 .zoom-toolbar { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 6px 12px; }
 .zoom-btn { background: rgba(255,255,255,0.15); border: none; color: white; font-size: 16px; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; }
@@ -891,7 +912,6 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .footer-right a { color: #2b6cb0; text-decoration: none; }
 .made-by { font-size: 10px; color: #cbd5e0; margin-top: 4px; }
 
-/* ── Biomarkers table ── */
 .bio-table { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-top: 12px; font-size: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
 .bio-header { display: grid; grid-template-columns: 1fr 52px 52px 110px; background: #2b6cb0; padding: 8px 12px; font-size: 11px; font-weight: 700; color: white; letter-spacing: 0.5px; text-transform: uppercase; }
 .bio-header span:not(.bio-name-col) { text-align: center; display: flex; align-items: center; justify-content: center; }
@@ -899,6 +919,8 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .bio-row:last-child { border-bottom: none; }
 .bio-row:nth-child(even) { background: #f8fafc; }
 .bio-row:hover { background: #ebf8ff; }
+.bio-row-missing { background: #fff5f5 !important; border-left: 3px solid #fc8181; }
+.bio-row-missing .bio-name-col { color: #c53030; }
 .bio-name-col { color: #2d3748; font-size: 12px; line-height: 1.4; position: relative; }
 .bio-row span:not(.bio-name-col) { display: flex; align-items: center; justify-content: center; }
 .bio-row input[type=radio] { width: 15px; height: 15px; accent-color: #2b6cb0; cursor: pointer; }
@@ -906,12 +928,4 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .bio-tip::before { content: ''; position: absolute; top: -4px; left: 12px; border-left: 4px solid transparent; border-right: 4px solid transparent; border-bottom: 4px solid #2d3748; }
 .tip-fade-enter-active, .tip-fade-leave-active { transition: opacity 0.15s ease; }
 .tip-fade-enter-from, .tip-fade-leave-to { opacity: 0; }
-.dark .bio-table { border-color: #4a5568; }
-.dark .bio-header { background: #1a365d; }
-.dark .bio-row { border-bottom-color: #2d3748; }
-.dark .bio-row:nth-child(even) { background: #1e2a3a; }
-.dark .bio-row:hover { background: #1a365d; }
-.dark .bio-name-col { color: #e2e8f0; }
-.dark .bio-tip { background: #e2e8f0; color: #2d3748; }
-.dark .bio-tip::before { border-bottom-color: #e2e8f0; }
 </style>
