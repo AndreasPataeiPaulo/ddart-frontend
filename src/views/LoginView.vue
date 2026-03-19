@@ -6,41 +6,69 @@
             <div v-if="showWelcome" class="welcome-overlay" @click="showWelcome = false">
                 <div class="welcome-particles" ref="wParticles"></div>
                 <div class="welcome-content">
-                    <div class="welcome-eye-wrap">
-                        <svg class="welcome-eye-svg" viewBox="0 0 260 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <div class="wl-center-logo">
+                        <svg viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg" class="wl-center-svg">
                             <defs>
-                                <radialGradient id="wIrisGrad" cx="50%" cy="50%" r="50%">
-                                    <stop offset="0%" stop-color="rgba(99,179,237,0.3)"/>
-                                    <stop offset="100%" stop-color="rgba(43,108,176,0.05)"/>
+                                <radialGradient id="beaconGrad" cx="50%" cy="0%" r="100%" fx="50%" fy="0%">
+                                    <stop offset="0%" stop-color="#90cdf4" stop-opacity="0.9"/>
+                                    <stop offset="100%" stop-color="#90cdf4" stop-opacity="0"/>
+                                </radialGradient>
+                                <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="#63b3ed" stop-opacity="0.6"/>
+                                    <stop offset="100%" stop-color="#63b3ed" stop-opacity="0"/>
                                 </radialGradient>
                             </defs>
-                            <path d="M10 60 Q65 5 130 5 Q195 5 250 60 Q195 115 130 115 Q65 115 10 60 Z"
-                                stroke="rgba(99,179,237,0.5)" stroke-width="1.2" fill="rgba(99,179,237,0.03)"
-                                class="w-eye-outline"/>
-                            <circle cx="130" cy="60" r="36" fill="url(#wIrisGrad)"
-                                stroke="rgba(99,179,237,0.7)" stroke-width="1.5" class="w-iris"/>
-                            <circle cx="130" cy="60" r="22" fill="rgba(43,108,176,0.12)"
-                                stroke="rgba(99,179,237,0.9)" stroke-width="1.2" class="w-pupil-ring"/>
-                            <circle cx="130" cy="60" r="10" fill="rgba(99,179,237,0.2)"
-                                stroke="rgba(99,179,237,1)" stroke-width="1" class="w-inner-pupil"/>
-                            <circle cx="130" cy="60" r="4" fill="#63b3ed" class="w-pupil-core"/>
-                            <circle cx="137" cy="53" r="2.5" fill="rgba(255,255,255,0.6)" class="w-highlight"/>
-                            <line x1="130" y1="5" x2="130" y2="0" stroke="rgba(99,179,237,0.5)" stroke-width="1" class="w-ray"/>
-                            <line x1="130" y1="115" x2="130" y2="120" stroke="rgba(99,179,237,0.5)" stroke-width="1" class="w-ray"/>
-                            <line x1="10" y1="60" x2="4" y2="60" stroke="rgba(99,179,237,0.4)" stroke-width="1" class="w-ray"/>
-                            <line x1="250" y1="60" x2="256" y2="60" stroke="rgba(99,179,237,0.4)" stroke-width="1" class="w-ray"/>
-                            <line x1="40" y1="22" x2="34" y2="16" stroke="rgba(99,179,237,0.3)" stroke-width="0.8" class="w-ray"/>
-                            <line x1="220" y1="22" x2="226" y2="16" stroke="rgba(99,179,237,0.3)" stroke-width="0.8" class="w-ray"/>
+                            <circle cx="120" cy="120" r="108" stroke="rgba(255,255,255,0.04)" stroke-width="12" fill="none"/>
+                            <circle cx="120" cy="120" r="82"  stroke="rgba(43,108,176,0.08)"  stroke-width="10" fill="none"/>
+                            <g class="wl-arc-outer-g">
+                                <path d="M120 12 A108 108 0 1 1 12 120" stroke="#c8d0dc" stroke-width="12" stroke-linecap="round" fill="none" class="wl-arc-outer"/>
+                            </g>
+                            <g class="wl-arc-inner-g">
+                                <path d="M120 38 A82 82 0 1 1 38 120" stroke="#2b6cb0" stroke-width="10" stroke-linecap="round" fill="none" class="wl-arc-inner"/>
+                            </g>
+                            <g class="wl-lh-g">
+                                <rect x="90" y="158" width="60" height="10" rx="3" fill="#1a3a5c" class="wlh wlh1"/>
+                                <rect x="95" y="152" width="50" height="8"  rx="2" fill="#1e4570" class="wlh wlh1"/>
+                                <path d="M103,152 L117,152 L114,96 L106,96 Z" fill="#2d4a6b" class="wlh wlh2"/>
+                                <path d="M103.8,145 L116.2,145 L115.8,138 L104.2,138 Z" fill="#1a3352" class="wlh wlh2"/>
+                                <path d="M104.8,132 L115.2,132 L114.8,125 L105.2,125 Z" fill="#1a3352" class="wlh wlh2"/>
+                                <path d="M105.5,119 L114.5,119 L114.2,112 L105.8,112 Z" fill="#1a3352" class="wlh wlh2"/>
+                                <path d="M106,106 L114,106 L113.8,100 L106.2,100 Z"     fill="#1a3352" class="wlh wlh2"/>
+                                <rect x="108" y="140" width="4" height="3"  rx="0.5" fill="#63b3ed" opacity="0.8" class="wlh wlh2"/>
+                                <rect x="108" y="127" width="4" height="3"  rx="0.5" fill="#63b3ed" opacity="0.8" class="wlh wlh2"/>
+                                <rect x="108" y="114" width="4" height="3"  rx="0.5" fill="#63b3ed" opacity="0.8" class="wlh wlh2"/>
+                                <rect x="108" y="101" width="4" height="3"  rx="0.5" fill="#63b3ed" opacity="0.8" class="wlh wlh2"/>
+                                <rect x="107" y="148" width="6" height="10" rx="3" fill="#0f2540" class="wlh wlh1"/>
+                                <rect x="100" y="92" width="20" height="4" rx="1.5" fill="#2b6cb0" class="wlh wlh3"/>
+                                <rect x="101" y="89" width="1.5" height="4" fill="#1e4570" class="wlh wlh3"/>
+                                <rect x="104" y="89" width="1.5" height="4" fill="#1e4570" class="wlh wlh3"/>
+                                <rect x="107" y="89" width="1.5" height="4" fill="#1e4570" class="wlh wlh3"/>
+                                <rect x="110" y="89" width="1.5" height="4" fill="#1e4570" class="wlh wlh3"/>
+                                <rect x="113" y="89" width="1.5" height="4" fill="#1e4570" class="wlh wlh3"/>
+                                <rect x="116" y="89" width="1.5" height="4" fill="#1e4570" class="wlh wlh3"/>
+                                <rect x="100" y="88" width="20" height="1.5" fill="#3d82c4" class="wlh wlh3"/>
+                                <rect x="104" y="70" width="12" height="20" rx="2" fill="#1e3a5c" class="wlh wlh4"/>
+                                <rect x="105.5" y="72" width="4"  height="8" rx="0.5" fill="#90cdf4" opacity="0.7" class="wlh wlh4"/>
+                                <rect x="110.5" y="72" width="4"  height="8" rx="0.5" fill="#90cdf4" opacity="0.7" class="wlh wlh4"/>
+                                <rect x="104"   y="76" width="12" height="1" fill="#1a3352" class="wlh wlh4"/>
+                                <rect x="110"   y="70" width="1"  height="20" fill="#1a3352" class="wlh wlh4"/>
+                                <path d="M102,70 L118,70 L113,60 L107,60 Z" fill="#2b6cb0" class="wlh wlh5"/>
+                                <rect x="119" y="52" width="2.5" height="9" rx="1" fill="#2b6cb0" class="wlh wlh6"/>
+                                <rect x="119" y="49" width="2.5" height="4" rx="1" fill="#63b3ed" class="wlh wlh6"/>
+                                <circle cx="120" cy="49" r="2.5" fill="#90cdf4" class="wlh wlh7"/>
+                                <polygon points="121.5,49 129,52 121.5,55" fill="#e53e3e" opacity="0.85" class="wlh wlh7"/>
+                                <circle cx="120" cy="80" r="18" fill="url(#glowGrad)" class="wl-lh-glow"/>
+                                <g class="wl-beacon-beam wl-beacon-on">
+                                    <path d="M120,80 L70,30 L80,20 L120,80 Z" fill="url(#beaconGrad)" opacity="0.25"/>
+                                </g>
+                                <circle cx="120" cy="80" r="4" fill="#e2f8ff" class="wlh wlh7"/>
+                                <circle cx="120" cy="80" r="2" fill="white"  class="wlh wlh7"/>
+                            </g>
                         </svg>
-                        <div class="w-scan-line"></div>
-                        <div class="w-scan-data w-sd1">OD: 0.42</div>
-                        <div class="w-scan-data w-sd2">MAC: 0.18</div>
-                        <div class="w-scan-data w-sd3">AI ✓</div>
                     </div>
-                    <p class="w-label">Welcome to</p>
                     <div class="w-logo-row">
-                        <span class="wl wl-1">D</span><span class="wl wl-2">D</span><span class="wl wl-3">A</span><span class="wl wl-4">R</span>
-                        <span class="wl-ai">TECH</span>
+                        <span class="wl wl-1">D</span><span class="wl wl-2">D</span><span class="wl wl-3">A</span><span class="wl wl-4">R</span><span class="wl wl-5">T</span>
+                        <span class="wl wl-ai-text">AI</span>
                     </div>
                     <p class="w-tagline">Ophthalmology · Artificial Intelligence · Screening</p>
                     <div class="w-bar-wrap"><div class="w-bar-fill"></div></div>
@@ -372,7 +400,7 @@ export default {
         if (!sessionStorage.getItem('ddart_welcomed')) {
             sessionStorage.setItem('ddart_welcomed', '1')
             this.showWelcome = true
-            setTimeout(() => { this.showWelcome = false }, 4200)
+            setTimeout(() => { this.showWelcome = false }, 3500)
         }
         this.$nextTick(() => {
             const container = this.$refs.wParticles
@@ -515,41 +543,62 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 
 /* ── Welcome overlay ── */
 .entry-overlay { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(ellipse at 50% 40%, #0a1628 0%, #04080f 100%); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+/* ── Welcome overlay — lighthouse animation (3s total) ── */
 .welcome-overlay { position: fixed; inset: 0; z-index: 10000; background: radial-gradient(ellipse at 50% 40%, #071428 0%, #020810 100%); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; }
 .welcome-particles { position: absolute; inset: 0; pointer-events: none; }
 .welcome-content { display: flex; flex-direction: column; align-items: center; gap: 20px; position: relative; z-index: 2; }
-.welcome-eye-wrap { position: relative; width: 260px; height: 120px; animation: wEyeIn 0.9s 0.1s cubic-bezier(0.22,1,0.36,1) both; filter: drop-shadow(0 0 18px rgba(99,179,237,0.5)); }
-.welcome-eye-svg { width: 100%; height: 100%; }
-@keyframes wEyeIn { from { opacity:0; transform: scale(0.5) translateY(30px); } to { opacity:1; transform: scale(1) translateY(0); } }
-.w-eye-outline { stroke-dasharray: 600; stroke-dashoffset: 600; animation: wDraw 1.2s 0.3s ease forwards; }
-.w-iris { stroke-dasharray: 226; stroke-dashoffset: 226; animation: wDraw 0.6s 1.2s ease forwards; }
-.w-pupil-ring { stroke-dasharray: 138; stroke-dashoffset: 138; animation: wDraw 0.5s 1.5s ease forwards; }
-.w-inner-pupil { opacity: 0; animation: wFade 0.4s 1.8s ease forwards; }
-.w-pupil-core { opacity: 0; animation: wFade 0.4s 1.95s ease forwards; }
-.w-highlight { opacity: 0; animation: wFade 0.3s 2.0s ease forwards; }
-.w-ray { opacity: 0; animation: wFade 0.4s 2.1s ease forwards; }
-@keyframes wDraw { to { stroke-dashoffset: 0; } }
-@keyframes wFade { to { opacity: 1; } }
-.w-scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, rgba(99,179,237,0) 15%, rgba(99,179,237,0.95) 50%, rgba(99,179,237,0) 85%, transparent); animation: wScan 2s 1.2s ease-in-out infinite; }
-@keyframes wScan { 0% { top: 8%; opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } 100% { top: 92%; opacity: 0; } }
-.w-scan-data { position: absolute; font-family: 'Courier New', monospace; font-size: 10px; font-weight: 700; letter-spacing: 1px; opacity: 0; animation: wFade 0.4s ease forwards; }
-.w-sd1 { top: 22%; right: -44px; color: rgba(99,179,237,0.85); animation-delay: 2.2s; }
-.w-sd2 { top: 55%; left: -50px; color: rgba(229,62,62,0.85); animation-delay: 2.4s; }
-.w-sd3 { bottom: 18%; right: -36px; color: rgba(72,187,120,0.9); animation-delay: 2.6s; }
-.w-label { font-size: 12px; font-weight: 700; letter-spacing: 5px; color: rgba(99,179,237,0.5); text-transform: uppercase; margin: 0; opacity: 0; animation: wFade 0.6s 1.6s ease forwards; }
+
+/* Center logo container */
+.wl-center-logo { opacity: 0; animation: wLogoAppear 0.5s 0.1s cubic-bezier(0.22,1,0.36,1) forwards; filter: drop-shadow(0 0 24px rgba(43,108,176,0.4)); }
+.wl-center-svg { width: 200px; height: 200px; }
+@keyframes wLogoAppear { from { opacity:0; transform: scale(0.75); } to { opacity:1; transform: scale(1); } }
+
+/* Both arcs spin clockwise — outer slower, inner faster */
+.wl-arc-outer-g { transform-origin: 120px 120px; animation: wSpin 7s 0.2s linear infinite; }
+.wl-arc-inner-g { transform-origin: 120px 120px; animation: wSpin 4s 0.2s linear infinite; }
+@keyframes wSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Arcs draw in quickly */
+.wl-arc-outer { stroke-dasharray: 680; stroke-dashoffset: 680; animation: wArcDraw 0.7s 0.2s cubic-bezier(0.4,0,0.2,1) forwards; }
+.wl-arc-inner { stroke-dasharray: 515; stroke-dashoffset: 515; animation: wArcDraw 0.6s 0.45s cubic-bezier(0.4,0,0.2,1) forwards; }
+@keyframes wArcDraw { to { stroke-dashoffset: 0; } }
+
+/* Lighthouse group fades in as a unit */
+.wl-lh-g { opacity: 0; animation: wFadeIn 0.1s 0.85s forwards; }
+@keyframes wFadeIn { to { opacity: 1; } }
+
+/* Parts build bottom to top — compressed into 0.85s–1.7s window */
+.wlh { opacity: 0; transform-box: fill-box; transform-origin: center bottom; }
+.wlh1 { animation: wlhPop 0.22s 0.9s  cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.wlh2 { animation: wlhPop 0.22s 1.08s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.wlh3 { animation: wlhPop 0.2s  1.26s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.wlh4 { animation: wlhPop 0.2s  1.44s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.wlh5 { animation: wlhPop 0.18s 1.6s  cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.wlh6 { animation: wlhPop 0.18s 1.74s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.wlh7 { animation: wlhPop 0.18s 1.86s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+@keyframes wlhPop { from { opacity:0; transform: scaleY(0); } to { opacity:1; transform: scaleY(1); } }
+
+/* Beacon rotates and glows */
+.wl-beacon-beam { transform-origin: 120px 80px; animation: wBeaconSpin 2.4s 2s linear infinite; }
+.wl-beacon-on { opacity: 0; animation: wFadeIn2 0.3s 2s forwards; }
+@keyframes wBeaconSpin { to { transform: rotate(360deg); } }
+@keyframes wFadeIn2 { to { opacity: 1; } }
+.wl-lh-glow { opacity: 0; animation: wGlowPulse 2.4s 2s ease-in-out infinite; }
+@keyframes wGlowPulse { 0%,100% { opacity:0.25; } 50% { opacity:0.85; } }
+
+/* DDART AI letters drop in — 2.0s to 2.75s */
 .w-logo-row { display: flex; align-items: baseline; font-family: 'Arial Narrow', Arial, sans-serif; font-weight: 900; letter-spacing: 6px; }
-.wl { color: white; font-size: 46px; opacity: 0; display: inline-block; }
-.wl-1 { animation: wLetter 0.5s 1.8s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-.wl-2 { animation: wLetter 0.5s 1.95s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-.wl-3 { animation: wLetter 0.5s 2.1s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-.wl-4 { animation: wLetter 0.5s 2.25s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-.wl-5 { animation: wLetter 0.5s 2.4s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-@keyframes wLetter { from { opacity:0; transform: translateY(-40px) scale(0.6); } to { opacity:1; transform: translateY(0) scale(1); } }
-.wl-ai { color: #e53e3e; font-size: 88px; font-family: 'Arial Black', Arial, sans-serif; line-height: 1; margin-left: 10px; opacity: 0; animation: wAiSlam 0.7s 2.6s cubic-bezier(0.22,1,0.36,1) forwards; }
-@keyframes wAiSlam { 0% { opacity:0; transform: scale(4) translateY(-10px); filter: blur(16px); } 60% { opacity:1; filter: blur(0); } 80% { transform: scale(0.95); } 100% { opacity:1; transform: scale(1); filter: blur(0); } }
-.w-tagline { font-size: 11px; font-weight: 600; letter-spacing: 3px; color: rgba(99,179,237,0.4); text-transform: uppercase; margin: 0; opacity: 0; animation: wFade 0.6s 3.1s ease forwards; }
-.w-bar-wrap { width: 220px; height: 1px; background: rgba(255,255,255,0.06); overflow: hidden; opacity: 0; animation: wFade 0.3s 3.0s ease forwards; }
-.w-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #2b6cb0, #63b3ed, #90cdf4); animation: wBarFill 1.1s 3.1s cubic-bezier(0.4,0,0.2,1) forwards; }
+.wl { color: white; font-size: 42px; opacity: 0; display: inline-block; }
+.wl-1 { animation: wLetter 0.3s 2.0s  cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.wl-2 { animation: wLetter 0.3s 2.1s  cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.wl-3 { animation: wLetter 0.3s 2.2s  cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.wl-4 { animation: wLetter 0.3s 2.3s  cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.wl-5 { animation: wLetter 0.3s 2.4s  cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.wl-ai-text { color: #e53e3e; font-size: 42px; font-family: 'Arial Black', Arial, sans-serif; opacity: 0; margin-left: 8px; animation: wLetter 0.35s 2.52s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+@keyframes wLetter { from { opacity:0; transform: translateY(-28px) scale(0.65); } to { opacity:1; transform: translateY(0) scale(1); } }
+.w-tagline { font-size: 11px; font-weight: 600; letter-spacing: 3px; color: rgba(99,179,237,0.4); text-transform: uppercase; margin: 0; opacity: 0; animation: wFade 0.4s 2.7s ease forwards; }
+.w-bar-wrap { width: 220px; height: 1px; background: rgba(255,255,255,0.06); overflow: hidden; opacity: 0; animation: wFade 0.2s 2.65s ease forwards; }
+.w-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #2b6cb0, #63b3ed, #90cdf4); animation: wBarFill 0.6s 2.7s cubic-bezier(0.4,0,0.2,1) forwards; }
 @keyframes wBarFill { to { width: 100%; } }
 .welcome-fade-enter-active { transition: opacity 0.4s ease; }
 .welcome-fade-leave-active { transition: opacity 0.8s ease, transform 0.8s ease, filter 0.8s ease; }

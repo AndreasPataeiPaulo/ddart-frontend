@@ -177,24 +177,34 @@
                             <div v-if="bioLoading" class="loading-state"><div class="spinner"></div><p>Loading...</p></div>
                             <div v-else-if="filteredBioRows.length === 0" class="empty-state">No reviews submitted yet.</div>
                             <div v-else class="bio-review-list">
-                                <div v-for="row in filteredBioRows" :key="row.id" class="bio-review-card">
-                                    <div class="bio-review-header">
-                                        <span class="bio-review-img">{{ row.patient_amka }} — {{ row.center_name }}</span>
-                                        <span class="bio-review-doctor">Dr. {{ row.doctor_name }}</span>
-                                        <span class="bio-review-date">{{ row.reviewed_at ? row.reviewed_at.slice(0,10) : '' }}</span>
+                                <!-- Group by upload_id — same image reviews shown side by side -->
+                                <div v-for="group in groupedBioRows" :key="group.upload_id" class="bio-group-card">
+                                    <!-- Image header -->
+                                    <div class="bio-group-header">
+                                        <span class="bio-review-img">{{ group.patient_amka }} — {{ group.center_name }}</span>
+                                        <span class="bio-group-count" v-if="group.reviews.length > 1">{{ group.reviews.length }} doctors reviewed</span>
                                     </div>
-                                    <div class="bio-review-diagnoses">
-                                        <span v-if="row.doctor_glaucoma && row.doctor_glaucoma !== 'N/A'" class="bio-diag-chip">Glaucoma: {{ row.doctor_glaucoma }}</span>
-                                        <span v-if="row.doctor_dr && row.doctor_dr !== 'N/A'" class="bio-diag-chip">DR: {{ row.doctor_dr }}</span>
-                                        <span v-if="row.doctor_amd && row.doctor_amd !== 'N/A'" class="bio-diag-chip">AMD: {{ row.doctor_amd }}</span>
-                                    </div>
-                                    <div v-if="row.biomarkers && Object.keys(row.biomarkers).length > 0" class="bio-markers-grid">
-                                        <div v-for="(val, key) in row.biomarkers" :key="key" class="bio-marker-item" :class="'bm-' + val">
-                                            <span class="bm-key">{{ key.replace(/_/g, ' ') }}</span>
-                                            <span class="bm-val">{{ val }}</span>
+                                    <!-- Reviews side by side -->
+                                    <div class="bio-group-reviews" :class="{ 'bio-group-split': group.reviews.length >= 2 }">
+                                        <div v-for="row in group.reviews" :key="row.id" class="bio-review-card">
+                                            <div class="bio-review-header">
+                                                <span class="bio-review-doctor">Dr. {{ row.doctor_name }}</span>
+                                                <span class="bio-review-date">{{ row.reviewed_at ? row.reviewed_at.slice(0,10) : '' }}</span>
+                                            </div>
+                                            <div class="bio-review-diagnoses">
+                                                <span v-if="row.doctor_glaucoma && row.doctor_glaucoma !== 'N/A'" class="bio-diag-chip">Glaucoma: {{ row.doctor_glaucoma }}</span>
+                                                <span v-if="row.doctor_dr && row.doctor_dr !== 'N/A'" class="bio-diag-chip">DR: {{ row.doctor_dr }}</span>
+                                                <span v-if="row.doctor_amd && row.doctor_amd !== 'N/A'" class="bio-diag-chip">AMD: {{ row.doctor_amd }}</span>
+                                            </div>
+                                            <div v-if="row.biomarkers && Object.keys(row.biomarkers).length > 0" class="bio-markers-grid">
+                                                <div v-for="(val, key) in row.biomarkers" :key="key" class="bio-marker-item" :class="'bm-' + val">
+                                                    <span class="bm-key">{{ key.replace(/_/g, ' ') }}</span>
+                                                    <span class="bm-val">{{ val }}</span>
+                                                </div>
+                                            </div>
+                                            <div v-else class="bio-no-markers">No biomarkers recorded.</div>
                                         </div>
                                     </div>
-                                    <div v-else class="bio-no-markers">No biomarkers recorded.</div>
                                 </div>
                             </div>
                         </div>
@@ -246,9 +256,10 @@
                                 <thead>
                                     <tr>
                                         <th>Image</th>
-                                        <th>AMKA</th>
+                                        <th>Patient ID</th>
                                         <th>Health Center</th>
                                         <th>AI Result</th>
+                                        <th>Referral</th>
                                         <th>Confidence</th>
                                         <th>Reviews</th>
                                         <th>Agreement</th>
@@ -264,6 +275,7 @@
                                         <td class="amka-cell">{{ g.patient_amka }}</td>
                                         <td>{{ g.center_name }}</td>
                                         <td><span class="ai-chip" :class="aiChipClass(g.ai_result)">{{ g.ai_result }}</span></td>
+                                        <td><span :class="['referral-badge', isReferral(g.ai_result, tab) ? 'referral-yes' : 'referral-no']">{{ isReferral(g.ai_result, tab) ? 'Referral' : 'No Referral' }}</span></td>
                                         <td><span :class="['conf-badge', g.ai_conf >= confThreshold ? 'conf-high' : 'conf-low']">{{ g.ai_conf }}%</span></td>
                                         <td><span class="review-count-badge">{{ g.reviews.length }}</span></td>
                                         <td>
@@ -402,6 +414,28 @@
                         </div>
                     </div>
 
+                    <!-- ── Danger Zone ── -->
+                    <div class="section-card danger-zone-card">
+                        <h4 class="section-title danger-title">⚠ Danger Zone</h4>
+                        <p class="danger-desc">These actions are destructive and cannot be undone. Use with caution.</p>
+                        <div class="danger-actions">
+                            <div class="danger-action-item">
+                                <div class="danger-action-info">
+                                    <span class="danger-action-label">Delete Pending Examinations</span>
+                                    <span class="danger-action-sub">Removes all HC uploads that have not yet been reviewed by any expert.</span>
+                                </div>
+                                <button class="danger-btn" @click="showDeletePendingModal = true">Delete Pending</button>
+                            </div>
+                            <div class="danger-action-item">
+                                <div class="danger-action-info">
+                                    <span class="danger-action-label">Reset All Study Data</span>
+                                    <span class="danger-action-sub">Permanently deletes all reviews, diagnoses, biomarker records and uploaded images.</span>
+                                </div>
+                                <button class="danger-btn danger-btn-strong" @click="showResetModal = true">Reset Study</button>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -436,7 +470,7 @@
                                 No reviews yet for this image.
                             </div>
 
-                            <div v-else class="detail-reviews-list">
+                            <div v-else class="detail-reviews-list" :class="{ 'detail-reviews-side-by-side': Object.keys(detailImage.doctor_answers).length >= 2 }">
                                 <div v-for="(answer, docName) in detailImage.doctor_answers" :key="docName" class="detail-review-row">
                                     <div class="detail-review-header">
                                         <span class="detail-doc-name">Dr. {{ docName }}</span>
@@ -449,7 +483,6 @@
                                     </div>
                                     <!-- Biomarkers for this doctor + image -->
                                     <div v-if="getBiomarkersFor(detailImage.image_id, docName)" class="detail-biomarkers">
-                                        <span class="detail-bio-title">Biomarkers:</span>
                                         <div class="bio-markers-grid" style="margin-top:4px">
                                             <div v-for="(val, key) in getBiomarkersFor(detailImage.image_id, docName)"
                                                 :key="key" class="bio-marker-item" :class="'bm-' + val">
@@ -499,7 +532,7 @@
                         <div class="detail-reviews-col">
                             <h5 class="detail-reviews-title">Expert Reviews ({{ hcDetail.reviews.length }})</h5>
                             <div v-if="hcDetail.reviews.length === 0" class="empty-state" style="padding:20px">Not yet reviewed by any expert.</div>
-                            <div v-else class="detail-reviews-list">
+                            <div v-else class="detail-reviews-list" :class="{ 'detail-reviews-side-by-side': hcDetail.reviews.length >= 2 }">
                                 <div v-for="r in hcDetail.reviews" :key="r.reviewer" class="detail-review-row">
                                     <div class="detail-review-header">
                                         <span class="detail-doc-name">Dr. {{ r.reviewer }}</span>
@@ -510,6 +543,18 @@
                                         <span :class="['answer-chip', r.answer === hcDetail.ai_result ? 'chip-match' : 'chip-differ']">{{ r.answer || '—' }}</span>
                                         <span :class="r.answer === hcDetail.ai_result ? 'match-yes' : 'match-no'">{{ r.answer === hcDetail.ai_result ? '✓ matches AI' : '✗ differs from AI' }}</span>
                                     </div>
+                                    <!-- Biomarkers for this doctor -->
+                                    <div v-if="getBiomarkersFor(hcDetail.upload_id, r.reviewer)" class="detail-biomarkers" style="margin-top:10px">
+                                        <p style="font-size:10px;font-weight:700;color:#a0aec0;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 6px">Biomarkers</p>
+                                        <div class="bio-markers-grid">
+                                            <div v-for="(val, key) in getBiomarkersFor(hcDetail.upload_id, r.reviewer)"
+                                                :key="key" class="bio-marker-item" :class="'bm-' + val">
+                                                <span class="bm-key">{{ key.replace(/_/g, ' ') }}</span>
+                                                <span class="bm-val">{{ val }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-else class="bio-no-markers" style="margin-top:8px">No biomarkers recorded.</div>
                                 </div>
                             </div>
                         </div>
@@ -536,7 +581,25 @@
             </div>
         </transition>
 
-        <button class="reset-study-btn" @click="showResetModal = true" title="Reset study data">⟳ Reset Study</button>
+        <!-- Delete pending examinations modal -->
+        <transition name="modal-fade">
+            <div v-if="showDeletePendingModal" class="modal-backdrop">
+                <div class="modal-box">
+                    <h3 style="color:#c53030;margin:0;">⚠ Delete Pending Examinations</h3>
+                    <p style="text-align:center;color:#718096;font-size:13px;">This will permanently delete all HC uploads that have <strong>not yet been reviewed</strong> by any expert. This <strong>cannot</strong> be undone.</p>
+                    <div class="field">
+                        <input v-model="deletePendingCode" type="password" placeholder="Enter admin access code" @keyup.enter="deletePendingExams" />
+                    </div>
+                    <p v-if="deletePendingError" class="error">{{ deletePendingError }}</p>
+                    <button class="submit-btn" style="background:#c53030" @click="deletePendingExams" :disabled="deletePendingLoading">
+                        {{ deletePendingLoading ? 'Deleting...' : 'Confirm Delete' }}
+                    </button>
+                    <button class="back-btn" @click="showDeletePendingModal = false; deletePendingCode = ''; deletePendingError = ''">Cancel</button>
+                </div>
+            </div>
+        </transition>
+
+
 
         <div v-if="authenticated" class="footer">
             <div class="footer-left"><img src="/DDARTECH_Research-removebg-preview.png" class="dept-logo" /></div>
@@ -605,7 +668,11 @@ export default {
             showResetModal: false,
             resetCode: '',
             resetError: '',
-            resetLoading: false
+            resetLoading: false,
+            showDeletePendingModal: false,
+            deletePendingCode: '',
+            deletePendingError: '',
+            deletePendingLoading: false
         }
     },
 
@@ -659,6 +726,23 @@ export default {
                 if (this.bioFilter === 'amd') return r.doctor_amd && r.doctor_amd !== 'N/A'
                 return true
             })
+        },
+        groupedBioRows() {
+            const rows = this.filteredBioRows
+            const map = new Map()
+            for (const row of rows) {
+                const key = row.upload_id || row.image_id || row.id
+                if (!map.has(key)) {
+                    map.set(key, {
+                        upload_id: key,
+                        patient_amka: row.patient_amka,
+                        center_name: row.center_name,
+                        reviews: []
+                    })
+                }
+                map.get(key).reviews.push(row)
+            }
+            return [...map.values()]
         },
         hcRowsForCondition() {
             if (!this.stats.hc_rows) return []
@@ -788,6 +872,13 @@ export default {
             } catch(e) { console.error('Biomarkers error:', e) } finally { this.bioLoading = false }
         },
 
+        isReferral(aiResult, condition) {
+            if (condition === 'glaucoma') return aiResult === 'Glaucoma'
+            if (condition === 'dr') return aiResult !== 'No_DR' && aiResult !== null && aiResult !== ''
+            if (condition === 'amd') return aiResult === 'AMD'
+            return false
+        },
+
         thresholdColor(val) {
             if (val >= 85) return 'thr-high'
             if (val >= 70) return 'thr-mid'
@@ -897,7 +988,7 @@ export default {
         },
 
         getBiomarkersFor(imageId, docName) {
-            const row = this.bioRows.find(r => r.image_id === imageId && r.doctor_name === docName)
+            const row = this.bioRows.find(r => (r.upload_id === imageId || r.image_id === imageId) && r.doctor_name === docName)
             if (!row || !row.biomarkers) return null
             const bm = typeof row.biomarkers === 'string' ? JSON.parse(row.biomarkers) : row.biomarkers
             return Object.keys(bm).length > 0 ? bm : null
@@ -973,6 +1064,22 @@ export default {
                 alert('Study data has been reset successfully.')
             } catch { this.resetError = 'Connection failed.' }
             finally { this.resetLoading = false }
+        },
+
+        async deletePendingExams() {
+            if (!this.deletePendingCode) { this.deletePendingError = 'Please enter the access code.'; return }
+            this.deletePendingLoading = true
+            this.deletePendingError = ''
+            try {
+                const res = await fetch(`https://labiris.myiplist.com/study/delete-pending?code=${encodeURIComponent(this.deletePendingCode)}`, { method: 'POST' })
+                if (!res.ok) { this.deletePendingError = 'Invalid code or deletion failed.'; return }
+                const data = await res.json()
+                this.showDeletePendingModal = false
+                this.deletePendingCode = ''
+                await this.loadStats()
+                alert(`Deleted ${data.deleted ?? 'all'} pending examinations successfully.`)
+            } catch { this.deletePendingError = 'Connection failed.' }
+            finally { this.deletePendingLoading = false }
         },
 
         logout() {
@@ -1309,8 +1416,16 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .bio-filter-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .bio-filter-select { padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; background: white; font-family: 'Source Sans 3', sans-serif; }
 .bio-count { font-size: 12px; color: #718096; }
-.bio-review-list { display: flex; flex-direction: column; gap: 12px; }
-.bio-review-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; background: #f8fafc; }
+.bio-review-list { display: flex; flex-direction: column; gap: 16px; }
+.bio-group-card { border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; background: white; }
+.bio-group-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #f0f4f8; border-bottom: 1px solid #e2e8f0; }
+.bio-group-count { font-size: 11px; font-weight: 700; color: #2b6cb0; background: #ebf8ff; padding: 2px 8px; border-radius: 10px; }
+.bio-group-reviews { display: flex; flex-direction: column; }
+.bio-group-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.bio-group-split .bio-review-card { border-radius: 0; border: none; border-right: 1px solid #e2e8f0; }
+.bio-group-split .bio-review-card:last-child { border-right: none; }
+.bio-review-card { border: none; border-bottom: 1px solid #f0f4f8; padding: 14px; background: #f8fafc; }
+.bio-review-card:last-child { border-bottom: none; }
 .bio-review-header { display: flex; gap: 16px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
 .bio-review-img { font-weight: 700; font-size: 13px; color: #2b6cb0; }
 .bio-review-doctor { font-size: 12px; color: #553c9a; font-weight: 600; }
@@ -1363,8 +1478,20 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .center-id-code { background: #f0f4f8; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #2b6cb0; font-weight: 700; }
 
 /* Reset button */
-.reset-study-btn { position: fixed; bottom: 20px; right: 20px; background: #fff5f5; border: 1px solid #fed7d7; color: #c53030; font-family: 'Source Sans 3', sans-serif; font-size: 11px; font-weight: 700; padding: 7px 14px; border-radius: 6px; cursor: pointer; transition: all 0.2s; z-index: 100; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-.reset-study-btn:hover { background: #fed7d7; }
+.danger-zone-card { border-color: #fed7d7 !important; }
+.danger-title { color: #c53030 !important; }
+.danger-desc { font-size: 12px; color: #a0aec0; margin: -8px 0 16px; font-style: italic; }
+.danger-actions { display: flex; flex-direction: column; gap: 0; }
+.danger-action-item { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid #fff5f5; }
+.danger-action-item:last-child { border-bottom: none; }
+.danger-action-info { display: flex; flex-direction: column; gap: 3px; }
+.danger-action-label { font-size: 13px; font-weight: 700; color: #2d3748; }
+.danger-action-sub { font-size: 12px; color: #a0aec0; line-height: 1.5; }
+.danger-btn { padding: 7px 16px; background: #fff5f5; border: 1px solid #fed7d7; border-radius: 6px; color: #c53030; font-family: 'Source Sans 3', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.danger-btn:hover { background: #fed7d7; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(197,48,48,0.15); }
+.danger-btn:active { transform: scale(0.96); }
+.danger-btn-strong { background: #e53e3e; border-color: #c53030; color: white; }
+.danger-btn-strong:hover { background: #c53030; box-shadow: 0 2px 8px rgba(197,48,48,0.3); }
 
 /* Loading */
 .loading-state { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 60px; color: #718096; }
@@ -1430,4 +1557,13 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .save-flash-enter-from { opacity: 0; transform: scale(0.8); }
 .save-flash-leave-to { opacity: 0; }
 @media (max-width: 700px) { .threshold-grid { grid-template-columns: 1fr; } }
+
+/* ── Referral badge ── */
+.referral-badge { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+.referral-yes { background: #fff5f5; color: #c53030; }
+.referral-no { background: #f0fff4; color: #276749; }
+
+/* ── Side-by-side biomarkers when 2+ doctors reviewed same image ── */
+.detail-reviews-side-by-side { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.detail-reviews-side-by-side .detail-review-row { margin: 0; }
 </style>
