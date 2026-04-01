@@ -1,21 +1,6 @@
 cd ~/Desktop/ai_app
 npm run dev
 
-For dataset purposes only:
-
--- See all registered patients
-SELECT id, full_name, created_at FROM patients;
-
--- See all screening results
-SELECT p.full_name, s.screening_type, s.result, s.confidence, s.created_at 
-FROM screening_history s 
-JOIN patients p ON s.patient_id = p.id 
-ORDER BY s.created_at DESC;
-
--- Exit when done
-.quit
-
-
 Manage access;
 sqlite3 ~/ddart-backend/patients.db
 SELECT id, full_name, email, created_at FROM doctors WHERE approved = 0;
@@ -30,12 +15,23 @@ python3 ~/register_hc.py
 91127 
 andreas
 
-full reser code 
+full reset code 
 ddart_reset_2025
-
+ddart
 
 
 screen -r -d training
-
+scp ~/Downloads/app.py andreas@192.168.1.126:/home/andreas/ddart-backend/app.py
 ssh -t andreas@192.168.1.126 'sudo systemctl restart ddart'
 
+cd /Users/andreaslabiris/Desktop/ai_app
+npm run build
+scp -r dist/* andreas@192.168.1.126:/home/andreas/ddart-frontend
+
+
+ssh andreas@192.168.1.126
+sqlite3 /home/andreas/ddart-backend/patients.db
+UPDATE study_settings SET value = '55' WHERE key = 'hc_threshold_dr';
+UPDATE study_settings SET value = '55' WHERE key = 'expert_threshold_dr';
+SELECT key, value FROM study_settings;
+.quit

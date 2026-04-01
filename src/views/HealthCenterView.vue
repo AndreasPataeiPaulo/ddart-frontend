@@ -5,6 +5,7 @@
         <transition name="overlay-fade">
             <div v-if="showSuccess" class="success-overlay">
                 <div class="success-content">
+                    <button class="success-close-btn" @click="resetForm" :title="t('Close', 'Κλείσιμο')">&#x2715;</button>
                     <div class="success-icon">
                         <svg viewBox="0 0 52 52" fill="none">
                             <circle cx="26" cy="26" r="25" stroke="#48bb78" stroke-width="2"/>
@@ -17,10 +18,10 @@
                         <!-- Glaucoma result -->
                         <div v-if="centerSpecialty === 'glaucoma'" class="ai-result-row">
                             <span class="ai-label">{{ t('Glaucoma Screening', 'Έλεγχος Γλαυκώματος') }}</span>
-                            <span v-if="lastResult.ai_glaucoma_conf >= 85 && lastResult.ai_glaucoma !== 'Healthy'" class="ai-value positive">
+                            <span v-if="lastResult.ai_glaucoma_conf >= thresholds.hc_threshold_glaucoma && lastResult.ai_glaucoma !== 'Healthy'" class="ai-value positive">
                                 {{ t('Referral for Glaucoma', 'Παραπομπή για Γλαύκωμα') }} ({{ lastResult.ai_glaucoma_conf }}%)
                             </span>
-                            <span v-else-if="lastResult.ai_glaucoma_conf >= 85 && lastResult.ai_glaucoma === 'Healthy'" class="ai-value negative">
+                            <span v-else-if="lastResult.ai_glaucoma_conf >= thresholds.hc_threshold_glaucoma && lastResult.ai_glaucoma === 'Healthy'" class="ai-value negative">
                                 {{ t('No Referral', 'Χωρίς Παραπομπή') }} ({{ lastResult.ai_glaucoma_conf }}%)
                             </span>
                             <span v-else class="ai-value inconclusive">{{ t('Inconclusive', 'Αναποφάσιστο') }} ({{ lastResult.ai_glaucoma_conf }}%)</span>
@@ -28,10 +29,10 @@
                         <!-- DR result -->
                         <div v-else-if="centerSpecialty === 'dr'" class="ai-result-row">
                             <span class="ai-label">{{ t('Diabetic Retinopathy Screening', 'Έλεγχος Διαβητικής Αμφιβληστροειδοπάθειας') }}</span>
-                            <span v-if="lastResult.ai_dr_conf >= 75 && lastResult.ai_dr !== 'No_DR'" class="ai-value positive">
+                            <span v-if="lastResult.ai_dr_conf >= thresholds.hc_threshold_dr && lastResult.ai_dr !== 'No_DR'" class="ai-value positive">
                                 {{ t('Referral for DR', 'Παραπομπή για ΔΑ') }} — {{ lastResult.ai_dr }} ({{ lastResult.ai_dr_conf }}%)
                             </span>
-                            <span v-else-if="lastResult.ai_dr_conf >= 75 && lastResult.ai_dr === 'No_DR'" class="ai-value negative">
+                            <span v-else-if="lastResult.ai_dr_conf >= thresholds.hc_threshold_dr && lastResult.ai_dr === 'No_DR'" class="ai-value negative">
                                 {{ t('No Referral', 'Χωρίς Παραπομπή') }} ({{ lastResult.ai_dr_conf }}%)
                             </span>
                             <span v-else class="ai-value inconclusive">{{ t('Inconclusive', 'Αναποφάσιστο') }} ({{ lastResult.ai_dr_conf }}%)</span>
@@ -39,10 +40,10 @@
                         <!-- AMD result -->
                         <div v-else-if="centerSpecialty === 'amd'" class="ai-result-row">
                             <span class="ai-label">{{ t('AMD Screening', 'Έλεγχος ΗΩΕ') }}</span>
-                            <span v-if="lastResult.ai_amd_conf >= 80 && lastResult.ai_amd !== 'Normal'" class="ai-value positive">
+                            <span v-if="lastResult.ai_amd_conf >= thresholds.hc_threshold_amd && lastResult.ai_amd !== 'Normal'" class="ai-value positive">
                                 {{ t('Referral for AMD', 'Παραπομπή για ΗΩΕ') }} ({{ lastResult.ai_amd_conf }}%)
                             </span>
-                            <span v-else-if="lastResult.ai_amd_conf >= 80 && lastResult.ai_amd === 'Normal'" class="ai-value negative">
+                            <span v-else-if="lastResult.ai_amd_conf >= thresholds.hc_threshold_amd && lastResult.ai_amd === 'Normal'" class="ai-value negative">
                                 {{ t('No Referral', 'Χωρίς Παραπομπή') }} ({{ lastResult.ai_amd_conf }}%)
                             </span>
                             <span v-else class="ai-value inconclusive">{{ t('Inconclusive', 'Αναποφάσιστο') }} ({{ lastResult.ai_amd_conf }}%)</span>
@@ -214,11 +215,16 @@ export default {
             isDark: localStorage.getItem('ddart_dark') === 'true',
             showLogoutOverlay: false,
             logoutBarWidth: 0,
-            focusedField: ''
+            focusedField: '',
+            thresholds: {
+                hc_threshold_glaucoma: 85,
+                hc_threshold_dr: 60,
+                hc_threshold_amd: 80
+            }
         }
     },
 
-    mounted() {
+    async mounted() {
         const hc = localStorage.getItem('ddart_health_center')
         if (!hc) { this.$router.push('/login'); return }
         const parsed = JSON.parse(hc)
@@ -226,6 +232,16 @@ export default {
         this.healthCenterId = parsed.id
         this.centerSpecialty = parsed.specialty || ''
         this.centerId = parsed.center_id || ''
+        // Fetch live thresholds from server
+        try {
+            const res = await fetch('https://labiris.myiplist.com/health-center/thresholds')
+            if (res.ok) {
+                const data = await res.json()
+                this.thresholds.hc_threshold_glaucoma = data.hc_threshold_glaucoma ?? 85
+                this.thresholds.hc_threshold_dr       = data.hc_threshold_dr       ?? 60
+                this.thresholds.hc_threshold_amd      = data.hc_threshold_amd      ?? 80
+            }
+        } catch { /* keep defaults */ }
     },
 
     watch: {
@@ -347,8 +363,10 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 
 /* ── Success overlay ── */
 .success-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(10,20,40,0.92); display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
-.success-content { background: white; border-radius: 14px; padding: 40px; max-width: 480px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 16px; animation: success-appear 0.45s cubic-bezier(0.34,1.56,0.64,1) both; box-shadow: 0 24px 60px rgba(0,0,0,0.2); }
-@keyframes success-appear { from { opacity: 0; transform: scale(0.88) translateY(24px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.success-content { position: relative; background: white; border-radius: 14px; padding: 40px; max-width: 480px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 16px; animation: success-appear 0.45s cubic-bezier(0.34,1.56,0.64,1) both; box-shadow: 0 24px 60px rgba(0,0,0,0.2); }
+.success-close-btn { position: absolute; top: 14px; right: 14px; width: 30px; height: 30px; border: none; background: #f1f5f9; border-radius: 50%; cursor: pointer; font-size: 14px; color: #64748b; display: flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s; line-height: 1; }
+.success-close-btn:hover { background: #e2e8f0; color: #1e293b; }
+@keyframes success-appear { from { opacity: 0; transform: scale(0.88) translateY(24px); } to { opacity: 1; transform: scale(1) (0); } }
 .success-icon svg { width: 64px; height: 64px; filter: drop-shadow(0 4px 12px rgba(72,187,120,0.3)); }
 .check-draw { stroke-dasharray: 40; stroke-dashoffset: 40; animation: checkDraw 0.5s 0.2s cubic-bezier(0.4,0,0.2,1) forwards; }
 @keyframes checkDraw { to { stroke-dashoffset: 0; } }
@@ -523,6 +541,8 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .dark .hc-footer p { color: #718096; }
 .dark .hc-footer a { color: #63b3ed; }
 .dark .success-content { background: #2d3748; }
+.dark .success-close-btn { background: #4a5568; color: #a0aec0; }
+.dark .success-close-btn:hover { background: #718096; color: #e2e8f0; }
 .dark .success-content h3 { color: #e2e8f0; }
 .dark .ai-results { background: #1a202c; border-color: #4a5568; }
 .dark .ai-label { color: #a0aec0; }

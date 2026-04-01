@@ -129,6 +129,44 @@
                         </div>
 
                         <div class="section-card">
+                            <h4 class="section-title">Extended Agreement <span class="section-sub">(AI match + Referral for Other Reason — excluded from standard metrics)</span></h4>
+                            <p style="font-size:12px;color:#718096;margin:-12px 0 16px;line-height:1.6;">Per condition: % of expert reviews where the expert either agreed with the AI <strong>or</strong> flagged a referral for an independent reason. Inconclusive reviews excluded. Not counted in AI agreement or inter-rater statistics.</p>
+                            <div class="agreement-row-grid">
+                                <div class="agree-block">
+                                    <div class="agree-ring" :style="ringStyle(stats.general.ref_ext_glaucoma ? stats.general.ref_ext_glaucoma.pct : 0)">
+                                        <span class="agree-pct">{{ stats.general.ref_ext_glaucoma ? stats.general.ref_ext_glaucoma.pct : 0 }}%</span>
+                                    </div>
+                                    <p class="agree-label">Glaucoma</p>
+                                    <p class="ref-sub" v-if="stats.general.ref_ext_glaucoma && stats.general.ref_ext_glaucoma.total">
+                                        <span class="ref-chip ref-agree">✓ {{ stats.general.ref_ext_glaucoma.agree_count }} agree AI</span>
+                                        <span class="ref-chip ref-other">⚑ {{ stats.general.ref_ext_glaucoma.other_count }} other</span>
+                                    </p>
+                                </div>
+                                <div class="agree-block">
+                                    <div class="agree-ring" :style="ringStyle(stats.general.ref_ext_dr ? stats.general.ref_ext_dr.pct : 0)">
+                                        <span class="agree-pct">{{ stats.general.ref_ext_dr ? stats.general.ref_ext_dr.pct : 0 }}%</span>
+                                    </div>
+                                    <p class="agree-label">DR</p>
+                                    <p class="ref-sub" v-if="stats.general.ref_ext_dr && stats.general.ref_ext_dr.total">
+                                        <span class="ref-chip ref-agree">✓ {{ stats.general.ref_ext_dr.agree_count }} agree AI</span>
+                                        <span class="ref-chip ref-other">⚑ {{ stats.general.ref_ext_dr.other_count }} other</span>
+                                    </p>
+                                </div>
+                                <div class="agree-block">
+                                    <div class="agree-ring" :style="ringStyle(stats.general.ref_ext_amd ? stats.general.ref_ext_amd.pct : 0)">
+                                        <span class="agree-pct">{{ stats.general.ref_ext_amd ? stats.general.ref_ext_amd.pct : 0 }}%</span>
+                                    </div>
+                                    <p class="agree-label">AMD</p>
+                                    <p class="ref-sub" v-if="stats.general.ref_ext_amd && stats.general.ref_ext_amd.total">
+                                        <span class="ref-chip ref-agree">✓ {{ stats.general.ref_ext_amd.agree_count }} agree AI</span>
+                                        <span class="ref-chip ref-other">⚑ {{ stats.general.ref_ext_amd.other_count }} other</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <p style="font-size:11px;color:#a0aec0;margin:16px 0 0;font-style:italic;">Total referrals for other reason across all conditions: <strong>{{ stats.general.referral_other_count }}</strong></p>
+                        </div>
+
+                        <div class="section-card">
                             <h4 class="section-title">Health Center Uploads</h4>
                             <div v-if="!stats.hc_upload_counts || stats.hc_upload_counts.length === 0" class="empty-state">No uploads yet.</div>
                             <table v-else class="data-table">
@@ -151,6 +189,13 @@
                             </table>
                         </div>
 
+                    <!-- Inconclusive studies button -->
+                    <div style="display:flex;justify-content:flex-start;">
+                        <button class="inconclusive-studies-btn" @click="loadInconclusive(); showInconclusiveModal = true">
+                            ⚠ Inconclusive Studies
+                            <span v-if="inconclusiveRows.length" class="inconclusive-count-badge">{{ inconclusiveRows.length }}</span>
+                        </button>
+                    </div>
 
                     </div>
 
@@ -513,7 +558,12 @@
                 <div class="detail-box">
                     <div class="detail-toolbar">
                         <span class="zoom-title">Image #{{ hcDetail.upload_id }} — AMKA: {{ hcDetail.patient_amka }} | {{ hcDetail.center_name }}</span>
-                        <button class="zoom-close-btn" @click="hcDetail = null">✕ Close</button>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <button class="delete-upload-btn" @click="deleteUpload(hcDetail.upload_id)" :disabled="deletingUploadId === hcDetail.upload_id">
+                                {{ deletingUploadId === hcDetail.upload_id ? 'Deleting...' : '🗑 Delete Image' }}
+                            </button>
+                            <button class="zoom-close-btn" @click="hcDetail = null">✕ Close</button>
+                        </div>
                     </div>
                     <div class="detail-body">
                         <!-- Left: image + AI result for this specialty only -->
@@ -601,6 +651,38 @@
 
 
 
+        <!-- Inconclusive Studies Modal -->
+        <transition name="modal-fade">
+            <div v-if="showInconclusiveModal" class="modal-backdrop" @click.self="showInconclusiveModal = false">
+                <div class="inconclusive-modal-box">
+                    <div class="inconclusive-modal-header">
+                        <h3>⚠ Inconclusive Studies</h3>
+                        <button class="zoom-close-btn" @click="showInconclusiveModal = false">✕ Close</button>
+                    </div>
+                    <div v-if="inconclusiveLoading" class="loading-state"><div class="spinner"></div><p>Loading...</p></div>
+                    <div v-else-if="inconclusiveRows.length === 0" class="empty-state">No inconclusive studies submitted yet.</div>
+                    <div v-else class="inconclusive-list">
+                        <div v-for="row in inconclusiveRows" :key="row.id" class="inconclusive-item">
+                            <div class="inconclusive-item-header">
+                                <span class="inconclusive-amka">{{ row.patient_amka }}</span>
+                                <span class="inconclusive-center">{{ row.center_name }}</span>
+                                <span :class="['specialty-chip', row.specialty]">{{ row.specialty || '—' }}</span>
+                                <span class="inconclusive-doctor">Dr. {{ row.doctor_name }}</span>
+                                <span class="inconclusive-date">{{ row.reviewed_at ? row.reviewed_at.slice(0,10) : '' }}</span>
+                            </div>
+                            <div v-if="row.biomarkers && Object.keys(row.biomarkers).length > 0" class="bio-markers-grid" style="margin-top:8px">
+                                <div v-for="(val, key) in row.biomarkers" :key="key" class="bio-marker-item" :class="'bm-' + val">
+                                    <span class="bm-key">{{ key.replace(/_/g, ' ') }}</span>
+                                    <span class="bm-val">{{ val }}</span>
+                                </div>
+                            </div>
+                            <p v-else class="bio-no-markers">No biomarkers recorded.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
         <div v-if="authenticated" class="footer">
             <div class="footer-left"><img src="/DDARTECH_Research-removebg-preview.png" class="dept-logo" /></div>
             <div class="footer-right">
@@ -630,7 +712,9 @@ export default {
                     inter_rater_glaucoma: 0, inter_rater_dr: 0, inter_rater_amd: 0,
                     ai_agree_glaucoma: 0, ai_agree_dr: 0, ai_agree_amd: 0,
                     prevalence_glaucoma: 0, prevalence_dr: 0, prevalence_amd: 0,
-                    hc_ai_agree_glaucoma: 0, hc_ai_agree_dr: 0, hc_ai_agree_amd: 0
+                    hc_ai_agree_glaucoma: 0, hc_ai_agree_dr: 0, hc_ai_agree_amd: 0,
+                    referral_other_count: 0, referral_other_pct: 0,
+                    ref_ext_glaucoma: null, ref_ext_dr: null, ref_ext_amd: null
                 },
                 glaucoma_rows: [], dr_rows: [], amd_rows: [], hc_rows: [],
                 hc_upload_counts: []
@@ -672,7 +756,11 @@ export default {
             showDeletePendingModal: false,
             deletePendingCode: '',
             deletePendingError: '',
-            deletePendingLoading: false
+            deletePendingLoading: false,
+            deletingUploadId: null,
+            showInconclusiveModal: false,
+            inconclusiveRows: [],
+            inconclusiveLoading: false
         }
     },
 
@@ -888,7 +976,7 @@ export default {
         async loadThresholds() {
             this.thresholdsLoading = true
             try {
-                const res = await fetch(`https://labiris.myiplist.com/study/settings?code=${this.studyCode}`)
+                const res = await fetch(`https://labiris.myiplist.com/study/settings?code=${encodeURIComponent(this.codeInput)}`)
                 if (res.ok) {
                     const data = await res.json()
                     this.thresholds = {
@@ -908,7 +996,7 @@ export default {
             this.thresholdSaving = true
             this.thresholdSaved = false
             try {
-                const res = await fetch(`https://labiris.myiplist.com/study/settings?code=${this.studyCode}`, {
+                const res = await fetch(`https://labiris.myiplist.com/study/settings?code=${encodeURIComponent(this.codeInput)}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(this.thresholds)
@@ -1064,6 +1152,42 @@ export default {
                 alert('Study data has been reset successfully.')
             } catch { this.resetError = 'Connection failed.' }
             finally { this.resetLoading = false }
+        },
+
+        async deleteUpload(uploadId) {
+            if (!confirm('Permanently delete this image and all its reviews? This cannot be undone.')) return
+            this.deletingUploadId = uploadId
+            try {
+                const res = await fetch(`https://labiris.myiplist.com/study/delete-upload/${uploadId}?code=${encodeURIComponent(this.codeInput)}`, { method: 'DELETE' })
+                if (!res.ok) { alert('Delete failed.'); return }
+                this.hcDetail = null
+                await this.loadStats()
+                // Remove from local hc_rows so table updates immediately
+                if (this.stats.hc_rows) {
+                    this.stats.hc_rows = this.stats.hc_rows.filter(r => r.id !== uploadId)
+                }
+            } catch { alert('Connection failed.') }
+            finally { this.deletingUploadId = null }
+        },
+
+        async loadInconclusive() {
+            this.inconclusiveLoading = true
+            try {
+                const res = await fetch(`https://labiris.myiplist.com/study/inconclusive?code=${encodeURIComponent(this.codeInput)}`)
+                if (!res.ok) return
+                const data = await res.json()
+                this.inconclusiveRows = (data.rows || []).map(r => {
+                    let bm = null
+                    try {
+                        if (r.biomarkers && r.biomarkers !== 'null' && r.biomarkers !== '{}') {
+                            bm = typeof r.biomarkers === 'string' ? JSON.parse(r.biomarkers) : r.biomarkers
+                            if (bm && Object.keys(bm).length === 0) bm = null
+                        }
+                    } catch { bm = null }
+                    return { ...r, biomarkers: bm }
+                })
+            } catch (e) { console.error(e) }
+            finally { this.inconclusiveLoading = false }
         },
 
         async deletePendingExams() {
@@ -1559,6 +1683,11 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 @media (max-width: 700px) { .threshold-grid { grid-template-columns: 1fr; } }
 
 /* ── Referral badge ── */
+.ref-sub { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; margin: 4px 0 0; }
+.ref-chip { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 8px; white-space: nowrap; }
+.ref-agree { background: #f0fff4; color: #276749; }
+.ref-other { background: #fffaf0; color: #b7791f; }
+
 .referral-badge { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
 .referral-yes { background: #fff5f5; color: #c53030; }
 .referral-no { background: #f0fff4; color: #276749; }
@@ -1566,4 +1695,23 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 /* ── Side-by-side biomarkers when 2+ doctors reviewed same image ── */
 .detail-reviews-side-by-side { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
 .detail-reviews-side-by-side .detail-review-row { margin: 0; }
+
+/* ── Inconclusive studies ── */
+.delete-upload-btn { padding: 6px 14px; background: #fff5f5; border: 1px solid #fed7d7; border-radius: 6px; color: #c53030; font-family: 'Source Sans 3', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.delete-upload-btn:hover:not(:disabled) { background: #fed7d7; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(197,48,48,0.15); }
+.delete-upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.inconclusive-studies-btn { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #fffaf0; border: 1.5px solid #feebc8; border-radius: 8px; color: #b7791f; font-family: 'Source Sans 3', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }
+.inconclusive-studies-btn:hover { background: #feebc8; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(214,158,46,0.15); }
+.inconclusive-count-badge { background: #d69e2e; color: white; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px; }
+.inconclusive-modal-box { background: white; border-radius: 12px; width: 90vw; max-width: 760px; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,0.2); }
+.inconclusive-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid #e2e8f0; background: #fffaf0; }
+.inconclusive-modal-header h3 { font-family: 'Playfair Display', serif; font-size: 16px; color: #b7791f; margin: 0; }
+.inconclusive-list { overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+.inconclusive-item { border: 1px solid #feebc8; border-radius: 8px; padding: 14px; background: #fffaf0; }
+.inconclusive-item-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+.inconclusive-amka { font-family: monospace; font-size: 13px; font-weight: 700; color: #2b6cb0; letter-spacing: 1px; }
+.inconclusive-center { font-size: 12px; color: #4a5568; font-weight: 600; }
+.inconclusive-doctor { font-size: 12px; color: #553c9a; font-weight: 600; }
+.inconclusive-date { font-size: 11px; color: #a0aec0; margin-left: auto; }
 </style>

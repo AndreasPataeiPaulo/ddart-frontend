@@ -177,6 +177,7 @@
                                         <label class="radio-option" :class="{ selected: hcDiagnosis.dr === 'Moderate' }"><input type="radio" v-model="hcDiagnosis.dr" value="Moderate" /> Moderate</label>
                                         <label class="radio-option" :class="{ selected: hcDiagnosis.dr === 'Severe' }"><input type="radio" v-model="hcDiagnosis.dr" value="Severe" /> Severe</label>
                                         <label class="radio-option" :class="{ selected: hcDiagnosis.dr === 'Proliferate_DR' }"><input type="radio" v-model="hcDiagnosis.dr" value="Proliferate_DR" /> Proliferative</label>
+                                        <label class="radio-option other-reason-pill" :class="{ selected: referralOtherReason }" @click.prevent="referralOtherReason = !referralOtherReason"><input type="checkbox" style="display:none" /> ⚑ Other Reason</label>
                                     </div>
                                     <div class="bio-table">
                                         <div class="bio-header"><span class="bio-name-col">DIABETIC RETINOPATHY</span><span>YES</span><span>NO</span><span>INCONCLUSIVE</span></div>
@@ -195,6 +196,7 @@
                                     <div class="radio-group">
                                         <label class="radio-option" :class="{ selected: hcDiagnosis.glaucoma === 'Glaucoma' }"><input type="radio" v-model="hcDiagnosis.glaucoma" value="Glaucoma" /> Yes</label>
                                         <label class="radio-option" :class="{ selected: hcDiagnosis.glaucoma === 'Healthy' }"><input type="radio" v-model="hcDiagnosis.glaucoma" value="Healthy" /> No</label>
+                                        <label class="radio-option other-reason-pill" :class="{ selected: referralOtherReason }" @click.prevent="referralOtherReason = !referralOtherReason"><input type="checkbox" style="display:none" /> ⚑ Referral for Other Reason</label>
                                     </div>
                                     <div class="bio-table">
                                         <div class="bio-header"><span class="bio-name-col">GLAUCOMA</span><span>YES</span><span>NO</span><span>INCONCLUSIVE</span></div>
@@ -213,6 +215,7 @@
                                     <div class="radio-group">
                                         <label class="radio-option" :class="{ selected: hcDiagnosis.amd === 'AMD' }"><input type="radio" v-model="hcDiagnosis.amd" value="AMD" /> Yes</label>
                                         <label class="radio-option" :class="{ selected: hcDiagnosis.amd === 'Normal' }"><input type="radio" v-model="hcDiagnosis.amd" value="Normal" /> No</label>
+                                        <label class="radio-option other-reason-pill" :class="{ selected: referralOtherReason }" @click.prevent="referralOtherReason = !referralOtherReason"><input type="checkbox" style="display:none" /> ⚑ Other Reason</label>
                                     </div>
                                     <div class="bio-table">
                                         <div class="bio-header"><span class="bio-name-col">AMD</span><span>YES</span><span>NO</span><span>INCONCLUSIVE</span></div>
@@ -225,6 +228,11 @@
                                     </div>
                                 </div>
 
+                                <div class="inconclusive-toggle" :class="{ active: isInconclusive }" @click="isInconclusive = !isInconclusive">
+                                    <span class="inconclusive-icon">⚠</span>
+                                    <span class="inconclusive-label">Mark as Inconclusive</span>
+                                    <span class="inconclusive-check">{{ isInconclusive ? '✓' : '' }}</span>
+                                </div>
                                 <div class="blind-notice">AI confidence scores are hidden during evaluation</div>
                                 <p v-if="hcSubmitError" class="error">{{ hcSubmitError }}</p>
 
@@ -347,7 +355,7 @@ export default {
                 { key: 'disc_hemorrhage', label: 'Disc Hemorrhage', tip: 'Splinter hemorrhage at the disc margin — strongly associated with glaucomatous progression.' },
                 { key: 'peripapillary_atrophy', label: 'Peripapillary Atrophy', tip: 'Atrophic changes in the retinal pigment epithelium surrounding the optic disc.' },
                 { key: 'bayoneting', label: 'Bayoneting', tip: 'Blood vessels appear to bend at the disc margin then disappear — sign of deep excavation.' },
-                { key: 'glaucomatous_disc', label: 'Glaucomatous disc', tip: 'Overall disc appearance consistent with glaucomatous damage.' },
+    
             ],
             amdBiomarkers: [
                 { key: 'drusen', label: 'Drusen >63μm', tip: 'Yellow extracellular deposits under the retina. Intermediate drusen (>63μm) indicate AMD risk.' },
@@ -367,6 +375,8 @@ export default {
             hcIndex: 0,
             hcDiagnosis: { glaucoma: null, dr: null, amd: null },
             hcSubmitting: false, hcSubmitError: '',
+            isInconclusive: false,
+            referralOtherReason: false,
             concludedImages: [], hcConcluded: [], concludedLoading: false,
             zoomSrc: null, zoomLevel: 1, zoomOrigin: "center center",
             panX: 0, panY: 0, isPanning: false,
@@ -388,6 +398,7 @@ export default {
         hcDiagnosisComplete() {
             const hc = this.currentHC
             if (!hc.id) return false
+            if (this.isInconclusive) return true
             if (this.doctorExpertise.glaucoma && !this.hcDiagnosis.glaucoma) return false
             if (this.doctorExpertise.dr && !this.hcDiagnosis.dr) return false
             if (this.doctorExpertise.amd && !this.hcDiagnosis.amd) return false
@@ -438,7 +449,7 @@ export default {
 
     watch: {
         currentIndex() { this.currentDiagnosis = { glaucoma: null, dr: null, amd: null }; this.submitError = '' },
-        hcIndex() { this.hcDiagnosis = { glaucoma: null, dr: null, amd: null }; this.hcSubmitError = ''; this.biomarkers = {}; this.showMissingBiomarkers = false; this.submitSuccess = false }
+        hcIndex() { this.hcDiagnosis = { glaucoma: null, dr: null, amd: null }; this.hcSubmitError = ''; this.biomarkers = {}; this.showMissingBiomarkers = false; this.submitSuccess = false; this.isInconclusive = false; this.referralOtherReason = false }
     },
 
     methods: {
@@ -496,11 +507,13 @@ export default {
             try {
                 const res = await fetch(`https://labiris.myiplist.com/research/pending-hc?doctor_id=${this.doctorId}`)
                 const data = await res.json()
+                // Backend already filters by expert routing thresholds from study_settings
+                // We only filter here by the doctor's specialty
                 const exp = this.doctorExpertise
                 this.hcPending = (Array.isArray(data) ? data : []).filter(hc => {
-                    if (exp.glaucoma && hc.ai_glaucoma_conf >= 90) return true
-                    if (exp.dr && hc.ai_dr_conf >= 90) return true
-                    if (exp.amd && hc.ai_amd_conf >= 90) return true
+                    if (exp.glaucoma && hc.ai_glaucoma_conf > 0) return true
+                    if (exp.dr && hc.ai_dr_conf > 0) return true
+                    if (exp.amd && hc.ai_amd_conf > 0) return true
                     return false
                 })
                 this.hcIndex = 0
@@ -540,7 +553,7 @@ export default {
             try {
                 const res = await fetch('https://labiris.myiplist.com/research/submit-hc', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ upload_id: hc.id, doctor_id: this.doctorId, doctor_glaucoma: this.hcDiagnosis.glaucoma || 'N/A', doctor_dr: this.hcDiagnosis.dr || 'N/A', doctor_amd: this.hcDiagnosis.amd || 'N/A', biomarkers: JSON.stringify(this.biomarkers) })
+                    body: JSON.stringify({ upload_id: hc.id, doctor_id: this.doctorId, doctor_glaucoma: this.hcDiagnosis.glaucoma || 'N/A', doctor_dr: this.hcDiagnosis.dr || 'N/A', doctor_amd: this.hcDiagnosis.amd || 'N/A', biomarkers: JSON.stringify(this.biomarkers), is_inconclusive: this.isInconclusive ? 1 : 0, referral_other_reason: this.referralOtherReason ? 1 : 0 })
                 })
                 if (!res.ok) { this.hcSubmitError = 'Submission failed.'; return }
                 this.submitSuccess = true
@@ -550,6 +563,8 @@ export default {
                     if (this.hcIndex >= this.hcPending.length && this.hcIndex > 0) this.hcIndex--
                     this.hcDiagnosis = { glaucoma: null, dr: null, amd: null }
                     this.biomarkers = {}
+                    this.isInconclusive = false
+                    this.referralOtherReason = false
                 }, 1500)
             } catch { this.hcSubmitError = 'Connection failed.' }
             finally { this.hcSubmitting = false }
@@ -760,6 +775,21 @@ html, body { margin: 0; padding: 0; min-height: 100%; background: #f0f4f8; font-
 .bio-tip::before { content: ''; position: absolute; top: -4px; left: 12px; border-left: 4px solid transparent; border-right: 4px solid transparent; border-bottom: 4px solid #2d3748; }
 .tip-fade-enter-active, .tip-fade-leave-active { transition: opacity 0.15s ease; }
 .tip-fade-enter-from, .tip-fade-leave-to { opacity: 0; }
+
+/* ── Other reason pill ── */
+.other-reason-pill { border-color: #d69e2e !important; color: #92600a !important; background: white !important; }
+.other-reason-pill:hover { background: #fffaf0 !important; border-color: #b7791f !important; box-shadow: 0 2px 8px rgba(214,158,46,0.15) !important; }
+.other-reason-pill.selected { background: #fffaf0 !important; border-color: #d69e2e !important; color: #92600a !important; box-shadow: 0 2px 8px rgba(214,158,46,0.2) !important; }
+
+/* ── Inconclusive toggle ── */
+.inconclusive-toggle { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; cursor: pointer; background: white; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); user-select: none; }
+.inconclusive-toggle:hover { border-color: #d69e2e; background: #fffaf0; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(214,158,46,0.12); }
+.inconclusive-toggle.active { border-color: #d69e2e; background: #fffaf0; box-shadow: 0 2px 8px rgba(214,158,46,0.15); }
+.inconclusive-icon { font-size: 14px; }
+.inconclusive-label { font-size: 12px; font-weight: 700; color: #718096; flex: 1; transition: color 0.2s; }
+.inconclusive-toggle.active .inconclusive-label { color: #b7791f; }
+.inconclusive-check { width: 18px; height: 18px; border: 2px solid #e2e8f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; background: white; transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+.inconclusive-toggle.active .inconclusive-check { background: #d69e2e; border-color: #d69e2e; transform: scale(1.1); }
 
 /* ── Transitions ── */
 .modal-fade-enter-active { transition: opacity 0.3s ease; }
